@@ -10,8 +10,6 @@ import com.enoughfolders.util.DebugLogger;
 
 import mezz.jei.api.runtime.IJeiRuntime;
 import mezz.jei.api.ingredients.ITypedIngredient;
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
 
 import java.util.Optional;
 
@@ -30,9 +28,7 @@ public class JEIAddToFolderHandler {
         FolderManager folderManager = EnoughFolders.getInstance().getFolderManager();
         Optional<Folder> activeFolder = folderManager.getActiveFolder();
         if (activeFolder.isEmpty()) {
-            // No active folder, display a message to the user
-            Minecraft.getInstance().player.displayClientMessage(
-                Component.translatable("enoughfolders.message.no_active_folder"), false);
+            // No active folder, but don't display a message
             DebugLogger.debug(DebugLogger.Category.INPUT, "No active folder available for adding ingredient");
             return;
         }
@@ -84,15 +80,11 @@ public class JEIAddToFolderHandler {
             
             if (!found) {
                 EnoughFolders.LOGGER.debug("No JEI ingredient found under mouse cursor in any overlay");
-                
-                Minecraft.getInstance().player.displayClientMessage(
-                    Component.translatable("enoughfolders.message.no_ingredient_under_cursor"), false);
+                // Don't show message to user
             }
         } else {
             EnoughFolders.LOGGER.debug("JEI ingredient list is not displayed");
-           
-            Minecraft.getInstance().player.displayClientMessage(
-                Component.translatable("enoughfolders.message.jei_not_visible"), false);
+            // Don't show message to user
         }
     }
     

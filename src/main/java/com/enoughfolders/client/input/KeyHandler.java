@@ -12,7 +12,6 @@ import com.enoughfolders.util.DebugLogger;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.network.chat.Component;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
@@ -110,9 +109,7 @@ public class KeyHandler {
         FolderManager folderManager = EnoughFolders.getInstance().getFolderManager();
         Optional<Folder> activeFolder = folderManager.getActiveFolder();
         if (activeFolder.isEmpty()) {
-            // No active folder, display a message to the user
-            Minecraft.getInstance().player.displayClientMessage(
-                Component.translatable("enoughfolders.message.no_active_folder"), false);
+            // No active folder, but don't display a message
             DebugLogger.debug(DebugLogger.Category.INPUT, "No active folder available for adding ingredient");
             return;
         }
