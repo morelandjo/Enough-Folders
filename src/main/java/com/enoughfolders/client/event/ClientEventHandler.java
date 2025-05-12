@@ -140,9 +140,19 @@ public class ClientEventHandler {
     public static void onScreenMouseClicked(ScreenEvent.MouseButtonPressed.Pre event) {
         if (event.getScreen() instanceof AbstractContainerScreen<?> containerScreen) {
             FolderScreen folderScreen = FOLDER_SCREENS.get(containerScreen);
-            if (folderScreen != null && folderScreen.isVisible(event.getMouseX(), event.getMouseY())) {
-                if (folderScreen.mouseClicked(event.getMouseX(), event.getMouseY(), event.getButton())) {
-                    event.setCanceled(true);
+            if (folderScreen != null) {
+                // Always save the folder screen before any click processing to ensure it's available
+                IntegrationRegistry.getIntegration(JEIIntegration.class).ifPresent(jeiIntegration -> {
+                    com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler.saveLastFolderScreen(folderScreen);
+                    DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, 
+                        "Saved folder screen in mouse click handler to preserve it during JEI navigation");
+                });
+                
+                // Process the click if it's in the folder UI area
+                if (folderScreen.isVisible(event.getMouseX(), event.getMouseY())) {
+                    if (folderScreen.mouseClicked(event.getMouseX(), event.getMouseY(), event.getButton())) {
+                        event.setCanceled(true);
+                    }
                 }
             }
         }

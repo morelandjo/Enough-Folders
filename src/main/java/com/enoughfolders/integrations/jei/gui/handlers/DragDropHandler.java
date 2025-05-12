@@ -23,6 +23,14 @@ import java.util.Optional;
  */
 public class DragDropHandler implements IGhostIngredientHandler<Screen> {
     
+    /**
+     * Gets the targets that can receive the dragged ingredient.
+     *
+     * @param gui The screen being displayed
+     * @param ingredient The ingredient being dragged
+     * @param doStart Whether this is the start of the drag operation
+     * @return A list of possible targets for the dragged ingredient
+     */
     @Nonnull
     public List<Target<?>> getTargets(@Nonnull Screen gui, @Nonnull Object ingredient, boolean doStart) {
         List<Target<?>> targets = new ArrayList<>();

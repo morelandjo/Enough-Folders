@@ -85,7 +85,6 @@ public class FolderInputHandler {
      * @param nextPageButton The next page button
      * @param newFolderNameInput The new folder name input field
      * @param isAddingFolder Whether we're currently adding a folder
-     * @param folderButtonClickedCallback Callback for folder button clicks
      * @param hasActiveFolder Whether there's an active folder
      * @return true if the click was handled, false otherwise
      */

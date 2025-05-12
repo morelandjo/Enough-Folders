@@ -25,6 +25,10 @@ public class IngredientHelper {
 
     /**
      * Converts a JEI ITypedIngredient to StoredIngredient.
+     * 
+     * @param <T> The type of ingredient
+     * @param ingredientObject The ingredient object to convert
+     * @return A StoredIngredient representation of the ingredient, or null if conversion failed
      */
     public static <T> StoredIngredient createStoredIngredient(Object ingredientObject) {
         // Get the JEI integration instance before trying to access runtime
@@ -79,6 +83,10 @@ public class IngredientHelper {
 
     /**
      * Converts StoredIngredient back to a JEI ITypedIngredient.
+     * 
+     * @param <T> The ingredient type
+     * @param storedIngredient The stored ingredient to convert
+     * @return The JEI typed ingredient, or null if conversion failed
      */
     @SuppressWarnings("unchecked")
     public static <T> ITypedIngredient<T> getTypedIngredientFromStored(StoredIngredient storedIngredient) {
