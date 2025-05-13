@@ -69,14 +69,13 @@ public class FolderButton extends Button {
         
         // The texture coordinates are for a 16x16 icon in a 64x64 texture atlas
         guiGraphics.blit(TEXTURE, getX(), getY(), textureU, textureV, 16, 16, 64, 64);
-        
-        // Draw folder name
+          // Draw folder name
         String shortName = folder.getShortName();
         guiGraphics.drawString(
                 Minecraft.getInstance().font, 
                 shortName,
                 getX() + (width - Minecraft.getInstance().font.width(shortName)) / 2,
-                getY() + height + 2,
+                getY() + height, // Moved up by 5 pixels (from +2 to -3)
                 0xFFFFFF
         );
         
