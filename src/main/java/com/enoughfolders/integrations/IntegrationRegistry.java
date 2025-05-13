@@ -2,6 +2,7 @@ package com.enoughfolders.integrations;
 
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.StoredIngredient;
+import com.enoughfolders.integrations.ftb.core.FTBLibraryIntegration;
 import com.enoughfolders.integrations.jei.core.JEIIntegration;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -36,6 +37,7 @@ public class IntegrationRegistry {
         
         // Register all integrations here
         integrations.add(new JEIIntegration());
+        integrations.add(new FTBLibraryIntegration());
         
         // Initialize all integrations
         integrations.forEach(integration -> integration.initialize());

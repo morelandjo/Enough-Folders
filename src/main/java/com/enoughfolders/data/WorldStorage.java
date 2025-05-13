@@ -17,7 +17,7 @@ import java.util.List;
 
 
 /**
- * Handles saving and loading folder data for specific Minecraft worlds.
+ * Handles saving and loading folder data for Minecraft worlds.
  */
 public class WorldStorage {
     /** Directory name for Minecraft config folder */

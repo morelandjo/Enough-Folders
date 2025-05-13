@@ -139,6 +139,9 @@ public class FolderScreen implements FolderGhostIngredientTarget {
         leftPos = 5;
         topPos = 5;
         
+        // Check for FTB sidebar overlap and adjust position if necessary
+        adjustPositionForFTBSidebar();
+        
         // Set position and dimensions for all component managers
         buttonManager.setPositionAndDimensions(leftPos, width);
         gridManager.setPositionAndDimensions(leftPos, topPos, width);
@@ -472,5 +475,31 @@ public class FolderScreen implements FolderGhostIngredientTarget {
     @Override
     public List<FolderButtonTarget> getFolderButtonTargets() {
         return buttonManager.getFolderButtonTargets();
+    }
+
+    /**
+     * Checks if FTB Library is loaded and if the sidebar would overlap with our folder GUI.
+     * Adjusts the position if necessary.
+     */
+    private void adjustPositionForFTBSidebar() {
+        // Check for FTB Library integration
+        if (com.enoughfolders.integrations.ftb.FTBIntegration.isFTBLibraryLoaded()) {
+            DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Checking for FTB sidebar overlap");
+            
+            // Create a rectangle representing our current folder GUI position
+            Rect2i folderRect = new Rect2i(leftPos, topPos, width, 100); // Use approximate height
+            
+            // Ask FTB integration to adjust the position if needed
+            Rect2i adjustedRect = com.enoughfolders.integrations.ftb.FTBIntegration.avoidExclusionAreas(folderRect);
+            
+            // If position was adjusted, update our position
+            if (adjustedRect.getY() != topPos) {
+                DebugLogger.debugValues(DebugLogger.Category.INTEGRATION,
+                    "FTB sidebar detected, adjusted Y position from {} to {}", 
+                    topPos, adjustedRect.getY());
+                
+                topPos = adjustedRect.getY();
+            }
+        }
     }
 }

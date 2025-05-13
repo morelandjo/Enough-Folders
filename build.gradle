@@ -38,6 +38,15 @@ repositories {
         name = "ModMaven"
         url = "https://modmaven.dev"
     }
+    
+    // CurseMaven repository for FTB Library
+    maven {
+        name = "CurseMaven"
+        url = "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
 }
 
 base {
@@ -129,6 +138,9 @@ dependencies {
     implementation("mezz.jei:jei-${mc_version}-neoforge:${jei_version}") {
         exclude group: 'net.minecraftforge'
     }
+    
+    // FTB Library as an optional dependency from CurseMaven
+    compileOnly "curse.maven:ftb-library-forge-404465:6466106"
     
     // Test dependencies
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
