@@ -33,15 +33,15 @@ public class DebugConfig {
     private static final Map<DebugLogger.Category, Boolean> DEFAULT_SETTINGS = new HashMap<>();
     
     static {
-        // Initialize default settings
-        DEFAULT_SETTINGS.put(DebugLogger.Category.INITIALIZATION, true);
+        // Initialize all default settings to false
+        DEFAULT_SETTINGS.put(DebugLogger.Category.INITIALIZATION, false);
         DEFAULT_SETTINGS.put(DebugLogger.Category.RENDERING, false);
-        DEFAULT_SETTINGS.put(DebugLogger.Category.INPUT, true);
-        DEFAULT_SETTINGS.put(DebugLogger.Category.FOLDER_MANAGER, true);
-        DEFAULT_SETTINGS.put(DebugLogger.Category.INTEGRATION, true);
-        DEFAULT_SETTINGS.put(DebugLogger.Category.GUI_STATE, true);
+        DEFAULT_SETTINGS.put(DebugLogger.Category.INPUT, false);
+        DEFAULT_SETTINGS.put(DebugLogger.Category.FOLDER_MANAGER, false);
+        DEFAULT_SETTINGS.put(DebugLogger.Category.INTEGRATION, false);
+        DEFAULT_SETTINGS.put(DebugLogger.Category.GUI_STATE, false);
         DEFAULT_SETTINGS.put(DebugLogger.Category.MOUSE, false);
-        DEFAULT_SETTINGS.put(DebugLogger.Category.JEI_INTEGRATION, true);
+        DEFAULT_SETTINGS.put(DebugLogger.Category.JEI_INTEGRATION, false);
     }
     
     /**
@@ -83,7 +83,7 @@ public class DebugConfig {
             // Apply settings from JSON
             for (DebugLogger.Category category : DebugLogger.Category.values()) {
                 String categoryId = category.getId();
-                boolean enabled = DEFAULT_SETTINGS.get(category);
+                boolean enabled = DEFAULT_SETTINGS.getOrDefault(category, false);
                 
                 if (json.has(categoryId)) {
                     enabled = json.get(categoryId).getAsBoolean();
@@ -140,7 +140,7 @@ public class DebugConfig {
      */
     private static void applyDefaultSettings() {
         for (DebugLogger.Category category : DebugLogger.Category.values()) {
-            boolean defaultEnabled = DEFAULT_SETTINGS.getOrDefault(category, true);
+            boolean defaultEnabled = DEFAULT_SETTINGS.getOrDefault(category, false);
             DebugLogger.setEnabled(category, defaultEnabled);
         }
         EnoughFolders.LOGGER.info("Applied default debug settings");
