@@ -83,17 +83,20 @@ public class ClientEventHandler {
         // Save current folder screen if transitioning to JEI recipe view
         if (event.getScreen() instanceof AbstractContainerScreen<?> containerScreen) {
             
-            // When navigating to JEI recipes/usages, JEI calls Screen.close() on the current screen
+            // Check if JEI is loaded before trying to detect JEI recipe transitions
             try {
-                // We need to check if this closure is due to JEI opening a recipe view
-                StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-                for (StackTraceElement element : stackTrace) {
-                    // Check if JEI recipe classes are in the stack trace
-                    if (element.getClassName().contains("mezz.jei") && 
-                        (element.getMethodName().contains("show") || 
-                         element.getClassName().contains("RecipesGui"))) {
-                        goingToRecipeScreen = true;
-                        break;
+                // Only check for JEI transitions if JEI is available
+                if (IntegrationRegistry.getIntegration(JEIIntegration.class).isPresent()) {
+                    // We need to check if this closure is due to JEI opening a recipe view
+                    StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+                    for (StackTraceElement element : stackTrace) {
+                        // Check if JEI recipe classes are in the stack trace
+                        if (element.getClassName().contains("mezz.jei") && 
+                            (element.getMethodName().contains("show") || 
+                             element.getClassName().contains("RecipesGui"))) {
+                            goingToRecipeScreen = true;
+                            break;
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -109,7 +112,10 @@ public class ClientEventHandler {
         if (!goingToRecipeScreen) {
             DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, 
                 "Screen closing but not going to JEI - clearing folder screen");
-            com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler.clearLastFolderScreen();
+            // Only try to access JEIRecipeGuiHandler if JEI is available
+            if (IntegrationRegistry.getIntegration(JEIIntegration.class).isPresent()) {
+                com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler.clearLastFolderScreen();
+            }
         }
     }
     
@@ -156,16 +162,27 @@ public class ClientEventHandler {
                 }
             }
         }
-        else if (event.getScreen() instanceof mezz.jei.api.runtime.IRecipesGui && 
-                com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler.getLastFolderScreen().isPresent()) {
-            // Get access to recipe screen handler
-            IntegrationRegistry.getIntegration(JEIIntegration.class).ifPresent(jeiIntegration -> {
-                boolean handled = com.enoughfolders.integrations.jei.drag.managers.RecipeGuiManager.handleMouseClick(
-                    event.getScreen(), event.getMouseX(), event.getMouseY(), event.getButton());
-                if (handled) {
-                    event.setCanceled(true);
+        else {
+            // Check for JEI recipe GUI screen without directly referencing the class
+            // to avoid ClassNotFoundException if JEI is not installed
+            try {
+                // Only try to access JEI classes if JEI integration is available
+                Optional<JEIIntegration> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegration.class);
+                if (jeiIntegration.isPresent() && 
+                    com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler.getLastFolderScreen().isPresent()) {
+                    // Use reflection to avoid direct class reference
+                    Class<?> recipesGuiClass = Class.forName("mezz.jei.api.runtime.IRecipesGui");
+                    if (recipesGuiClass.isInstance(event.getScreen())) {
+                        boolean handled = com.enoughfolders.integrations.jei.drag.managers.RecipeGuiManager.handleMouseClick(
+                            event.getScreen(), event.getMouseX(), event.getMouseY(), event.getButton());
+                        if (handled) {
+                            event.setCanceled(true);
+                        }
+                    }
                 }
-            });
+            } catch (ClassNotFoundException e) {
+                // JEI is not installed, ignore silently
+            }
         }
     }
     

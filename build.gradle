@@ -126,7 +126,7 @@ configurations {
 }
 
 dependencies {
-    // Use specific NeoForge JEI dependencies and exclude any transitive Forge dependencies
+    // JEI dependencies marked as compileOnly to make them optional at runtime
     compileOnly("mezz.jei:jei-${mc_version}-common-api:${jei_version}") {
         exclude group: 'net.minecraftforge'
     }
@@ -134,8 +134,8 @@ dependencies {
         exclude group: 'net.minecraftforge'
     }
     
-    // Full JEI implementation for development
-    implementation("mezz.jei:jei-${mc_version}-neoforge:${jei_version}") {
+    // JEI implementation as runtimeOnly for development, not required at compile time
+    runtimeOnly("mezz.jei:jei-${mc_version}-neoforge:${jei_version}") {
         exclude group: 'net.minecraftforge'
     }
     

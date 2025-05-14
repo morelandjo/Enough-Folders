@@ -80,10 +80,10 @@ license="${mod_license}"
         ordering="NONE"
         side="BOTH"
         
-    # JEI dependency
+    # JEI dependency (optional)
     [[dependencies.${mod_id}]]
         modId="jei"
-        type="required"
+        type="optional"
         versionRange="[19.0.0,)"
         ordering="AFTER"
         side="CLIENT"
