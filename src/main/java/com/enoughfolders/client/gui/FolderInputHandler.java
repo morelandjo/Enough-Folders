@@ -133,11 +133,8 @@ public class FolderInputHandler {
             }
         }
         
-        for (IngredientSlot slot : ingredientSlots) {
-            if (slot.mouseClicked((int) mouseX, (int) mouseY, button)) {
-                return true;
-            }
-        }
+        // Note: Ingredient slots are now handled in FolderScreen.mouseClicked
+        // before this method is called, so we don't need to check them again here
         
         if (isAddingFolder && newFolderNameInput.isMouseOver(mouseX, mouseY)) {
             newFolderNameInput.setFocused(true);
@@ -248,6 +245,33 @@ public class FolderInputHandler {
             return newFolderNameInput.charTyped(codePoint, modifiers);
         }
         
+        return false;
+    }
+    
+    /**
+     * Process a click on an ingredient slot, notifying externally registered handlers.
+     * 
+     * @param folderScreen The folder screen that contains the slots
+     * @param slot The slot that was clicked
+     * @param mouseX The mouse X position
+     * @param mouseY The mouse Y position 
+     * @param button The mouse button used
+     * @return true if the click was handled by any handler, false otherwise
+     */
+    public boolean processIngredientClick(FolderScreen folderScreen, IngredientSlot slot, double mouseX, double mouseY, int button) {
+        if (slot.isHovered((int)mouseX, (int)mouseY)) {
+            // Get modifier keys
+            boolean shiftHeld = net.minecraft.client.gui.screens.Screen.hasShiftDown();
+            boolean ctrlHeld = net.minecraft.client.gui.screens.Screen.hasControlDown();
+            
+            // Notify registered handlers first
+            if (folderScreen.notifyIngredientClickHandlers(slot, button, shiftHeld, ctrlHeld)) {
+                return true;
+            }
+            
+            // Fall back to default behavior if no handler processed it
+            return slot.mouseClicked((int)mouseX, (int)mouseY, button);
+        }
         return false;
     }
 }

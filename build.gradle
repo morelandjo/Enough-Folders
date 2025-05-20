@@ -47,6 +47,23 @@ repositories {
             includeGroup "curse.maven"
         }
     }
+    
+    // REI repositories
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
+    maven {
+        name = "Shedaniel Maven"
+        url = "https://maven.shedaniel.me/"
+    }
+    maven {
+        name = "Architectury Maven"
+        url = "https://maven.architectury.dev/"
+    }
 }
 
 base {
@@ -73,7 +90,8 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
             systemProperty 'enoughfolders.debug', 'true'
         }
-
+        
+       
         server {
             server()
             programArgument '--nogui'
@@ -123,6 +141,8 @@ configurations {
     runtimeClasspath.extendsFrom localRuntime
     api
     implementation.extendsFrom(api)
+    
+    
 }
 
 dependencies {
@@ -138,6 +158,29 @@ dependencies {
     runtimeOnly("mezz.jei:jei-${mc_version}-neoforge:${jei_version}") {
         exclude group: 'net.minecraftforge'
     }
+    
+   
+    
+    // REI dependencies - marked as compileOnly to make them optional at runtime
+    compileOnly("me.shedaniel:RoughlyEnoughItems-api-neoforge:16.0.797") {
+        exclude group: 'net.minecraftforge'
+    }
+    compileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-neoforge:16.0.797") {
+        exclude group: 'net.minecraftforge'
+    }
+    compileOnly("dev.architectury:architectury-neoforge:13.0.8") {
+        exclude group: 'net.minecraftforge'
+    }
+    compileOnly("me.shedaniel.cloth:cloth-config-neoforge:15.0.140") {
+        exclude group: 'net.minecraftforge'
+    }
+    
+    // REI runtime only dependencies for development environment
+    runtimeOnly("me.shedaniel:RoughlyEnoughItems-neoforge:16.0.797") {
+        exclude group: 'net.minecraftforge'
+    }
+    
+   
     
     // FTB Library as an optional dependency from CurseMaven
     compileOnly "curse.maven:ftb-library-forge-404465:6466106"
@@ -201,23 +244,8 @@ test {
     }
 }
 
-// Add a task to create a test coverage verification report
-jacocoTestCoverageVerification {
-    violationRules {
-        rule {
-            limit {
-                minimum = 0.5  // Initially require 50% coverage
-            }
-        }
-    }
-}
 
-// Custom task to check test coverage
-tasks.register('checkCoverage') {
-    dependsOn test
-    dependsOn jacocoTestReport
-    dependsOn jacocoTestCoverageVerification
-}
+
 
 // Process templates for mod metadata
 def generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

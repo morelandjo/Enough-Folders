@@ -10,5 +10,6 @@
   "key.categories.enoughfolders": "Enough Folders",
   "key.enoughfolders.add_to_folder": "Add to Active Folder",
   "enoughfolders.message.no_active_folder": "No active folder selected",
-  "enoughfolders.message.added_to_folder": "Added to folder: %s"
+  "enoughfolders.message.ingredient_added_to_folder": "Added to folder: %s",
+  "enoughfolders.message.no_ingredient_found": "No ingredient found under cursor"
 }

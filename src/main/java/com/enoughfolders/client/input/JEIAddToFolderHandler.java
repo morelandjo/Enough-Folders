@@ -5,21 +5,20 @@ import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.FolderManager;
 import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.integrations.IntegrationRegistry;
-import com.enoughfolders.integrations.jei.core.JEIIntegration;
+import com.enoughfolders.integrations.ModIntegration;
 import com.enoughfolders.util.DebugLogger;
-
-import mezz.jei.api.runtime.IJeiRuntime;
-import mezz.jei.api.ingredients.ITypedIngredient;
 
 import java.util.Optional;
 
 /**
  * Dedicated handler for adding JEI ingredients to folders via keyboard shortcuts.
+ * This class uses reflection to avoid direct JEI class references in imports.
  */
 public class JEIAddToFolderHandler {
 
     /**
      * Handles the key press to add a JEI ingredient to the active folder.
+     * Safe to call even if JEI is not present.
      */
     public static void handleAddToFolderKeyPress() {
         EnoughFolders.LOGGER.info("JEI Add to Folder handler activated");
@@ -35,96 +34,96 @@ public class JEIAddToFolderHandler {
         
         EnoughFolders.LOGGER.debug("Active folder found: {}", activeFolder.get().getName());
         
-        // Use the JEI integration to check for ingredients
-        IntegrationRegistry.getIntegration(JEIIntegration.class).ifPresent(jeiIntegration -> {
-            jeiIntegration.getJeiRuntime().ifPresent(jeiRuntime -> {
-                EnoughFolders.LOGGER.debug("JEI runtime found, checking for ingredients under mouse");
+        // Use reflection to safely access JEI integration without direct imports
+        try {
+            // Check if JEI classes exist first
+            Class.forName("mezz.jei.api.runtime.IJeiRuntime");
+            
+            // Get the JEI integration using the class name
+            String jeiIntegrationClassName = "com.enoughfolders.integrations.jei.core.JEIIntegration";
+            Optional<ModIntegration> jeiIntegrationOpt = IntegrationRegistry.getIntegrationByClassName(jeiIntegrationClassName);
+            
+            if (jeiIntegrationOpt.isPresent()) {
+                Object jeiIntegration = jeiIntegrationOpt.get();
                 
-                // Try to get ingredient under cursor directly from JEI
-                tryAddIngredientFromJei(jeiRuntime, activeFolder.get(), folderManager);
-            });
-        });
+                // Call getJeiRuntime method via reflection
+                java.lang.reflect.Method getJeiRuntimeMethod = jeiIntegration.getClass().getMethod("getJeiRuntime");
+                Optional<?> jeiRuntimeOpt = (Optional<?>) getJeiRuntimeMethod.invoke(jeiIntegration);
+                
+                if (jeiRuntimeOpt.isPresent()) {
+                    Object jeiRuntime = jeiRuntimeOpt.get();
+                    EnoughFolders.LOGGER.debug("JEI runtime found, checking for ingredients under mouse");
+                    
+                    // Now use reflection to access JEI APIs
+                    processJeiRuntimeWithReflection(jeiRuntime, jeiIntegration, activeFolder.get());
+                } else {
+                    EnoughFolders.LOGGER.debug("JEI runtime not available");
+                }
+            } else {
+                EnoughFolders.LOGGER.debug("JEI integration not available");
+            }
+        } catch (ClassNotFoundException e) {
+            // JEI is not present in the classpath, this is totally ok
+            EnoughFolders.LOGGER.debug("JEI classes not found, skipping JEI integration");
+        } catch (Exception e) {
+            // Something went wrong with reflection or JEI API
+            EnoughFolders.LOGGER.error("Error interacting with JEI runtime", e);
+        }
     }
     
     /**
-     * Attempts to add an ingredient from JEI to the specified folder.
-     * 
-     * @param jeiRuntime The JEI runtime instance to interact with
-     * @param folder The target folder to add the ingredient to
-     * @param folderManager The folder manager instance
+     * Process the JEI runtime using reflection to avoid direct dependencies
      */
-    private static void tryAddIngredientFromJei(IJeiRuntime jeiRuntime, Folder folder, FolderManager folderManager) {
-        // Check if the ingredient overlay is displayed and has an ingredient under the mouse
-        if (jeiRuntime.getIngredientListOverlay().isListDisplayed()) {
-            EnoughFolders.LOGGER.debug("JEI ingredient list is displayed, checking for ingredient under mouse");
+    private static void processJeiRuntimeWithReflection(Object jeiRuntime, Object jeiIntegration, Folder activeFolder) 
+            throws Exception {
+        // Get the ingredient list overlay
+        java.lang.reflect.Method getIngredientListOverlayMethod = jeiRuntime.getClass().getMethod("getIngredientListOverlay");
+        Object ingredientListOverlay = getIngredientListOverlayMethod.invoke(jeiRuntime);
+        
+        // Check if ingredient list is displayed
+        java.lang.reflect.Method isListDisplayedMethod = ingredientListOverlay.getClass().getMethod("isListDisplayed");
+        boolean isListDisplayed = (Boolean) isListDisplayedMethod.invoke(ingredientListOverlay);
+        
+        if (!isListDisplayed) {
+            EnoughFolders.LOGGER.debug("JEI ingredient list overlay is not displayed");
+            return;
+        }
+        
+        // Get ingredient under mouse
+        java.lang.reflect.Method getIngredientUnderMouseMethod = ingredientListOverlay.getClass().getMethod("getIngredientUnderMouse");
+        Optional<?> ingredientOpt = (Optional<?>) getIngredientUnderMouseMethod.invoke(ingredientListOverlay);
+        
+        if (ingredientOpt.isPresent()) {
+            Object typedIngredient = ingredientOpt.get();
+            java.lang.reflect.Method getIngredientMethod = typedIngredient.getClass().getMethod("getIngredient");
+            Object rawIngredient = getIngredientMethod.invoke(typedIngredient);
             
-            boolean found = false;
+            EnoughFolders.LOGGER.info("Found ingredient under mouse: {}", rawIngredient.getClass().getName());
             
-            // Try using the ingredient list overlay
-            Optional<ITypedIngredient<?>> ingredientOpt = jeiRuntime.getIngredientListOverlay().getIngredientUnderMouse();
-            if (ingredientOpt.isPresent()) {
-                EnoughFolders.LOGGER.info("Found ingredient under mouse in JEI list overlay");
-                found = processFoundIngredient(ingredientOpt.get(), folder, folderManager);
-            } else {
-                EnoughFolders.LOGGER.debug("No ingredient found in JEI list overlay, trying bookmarks");
-                
-                // Try using the bookmark overlay
-                Optional<ITypedIngredient<?>> bookmarkOpt = jeiRuntime.getBookmarkOverlay().getIngredientUnderMouse();
-                if (bookmarkOpt.isPresent()) {
-                    EnoughFolders.LOGGER.info("Found ingredient under mouse in JEI bookmark overlay");
-                    found = processFoundIngredient(bookmarkOpt.get(), folder, folderManager);
+            // Store the ingredient
+            java.lang.reflect.Method storeIngredientMethod = jeiIntegration.getClass().getMethod("storeIngredient", Object.class);
+            Optional<?> storedIngredientOpt = (Optional<?>) storeIngredientMethod.invoke(jeiIntegration, rawIngredient);
+            
+            if (storedIngredientOpt.isPresent()) {
+                Object storedIngredient = storedIngredientOpt.get();
+                if (storedIngredient instanceof StoredIngredient) {
+                    EnoughFolders.LOGGER.debug("Successfully converted to StoredIngredient: {}", storedIngredient);
+                    
+                    // Add the ingredient to the active folder
+                    EnoughFolders.getInstance().getFolderManager().addIngredient(activeFolder, (StoredIngredient)storedIngredient);
+                    
+                    // Log the action but don't display a message to the player
+                    DebugLogger.debugValue(DebugLogger.Category.INPUT, 
+                        "Added ingredient to folder '{}'", activeFolder.getName());
                 } else {
-                    EnoughFolders.LOGGER.debug("No ingredient found in JEI bookmark overlay either");
+                    EnoughFolders.LOGGER.error("Stored ingredient is not of expected type: {}", 
+                        storedIngredient != null ? storedIngredient.getClass().getName() : "null");
                 }
-            }
-            
-            if (!found) {
-                EnoughFolders.LOGGER.debug("No JEI ingredient found under mouse cursor in any overlay");
-                // Don't show message to user
+            } else {
+                EnoughFolders.LOGGER.debug("Failed to convert ingredient to StoredIngredient: {}", rawIngredient);
             }
         } else {
-            EnoughFolders.LOGGER.debug("JEI ingredient list is not displayed");
-            // Don't show message to user
+            EnoughFolders.LOGGER.debug("No ingredient found under mouse cursor");
         }
-    }
-    
-    /**
-     * Processes a found JEI ingredient and adds it to the active folder.
-     * 
-     * @param typedIngredient The JEI typed ingredient that was found under the mouse
-     * @param folder The folder to add the ingredient to
-     * @param folderManager The folder manager to use for adding the ingredient
-     * @return true if the ingredient was successfully added, false otherwise
-     */
-    private static boolean processFoundIngredient(ITypedIngredient<?> typedIngredient, Folder folder, FolderManager folderManager) {
-        EnoughFolders.LOGGER.info("Processing found JEI ingredient: {}", typedIngredient.getIngredient().getClass().getName());
-        
-        // Convert the JEI ingredient to a StoredIngredient
-        Object rawIngredient = typedIngredient.getIngredient();
-        
-        // Get the JEI integration to store the ingredient
-        Optional<JEIIntegration> jeiIntOpt = IntegrationRegistry.getIntegration(JEIIntegration.class);
-        if (jeiIntOpt.isEmpty()) {
-            EnoughFolders.LOGGER.error("JEI integration not available when trying to store ingredient");
-            return false;
-        }
-        
-        Optional<StoredIngredient> storedIngredientOpt = jeiIntOpt.get().storeIngredient(rawIngredient);
-        if (storedIngredientOpt.isEmpty()) {
-            EnoughFolders.LOGGER.error("Failed to create StoredIngredient for {}", rawIngredient.getClass().getName());
-            return false;
-        }
-        
-        StoredIngredient storedIngredient = storedIngredientOpt.get();
-        EnoughFolders.LOGGER.debug("Successfully converted to StoredIngredient: {}", storedIngredient);
-        
-        // Add the ingredient to the folder
-        folderManager.addIngredient(folder, storedIngredient);
-        
-        // Log the action but don't display a message to the player
-        DebugLogger.debugValue(DebugLogger.Category.INPUT, 
-            "Added JEI ingredient to folder '{}'", folder.getName());
-        
-        return true;
     }
 }

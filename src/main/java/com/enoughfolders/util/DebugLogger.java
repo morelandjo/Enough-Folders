@@ -40,7 +40,10 @@ public class DebugLogger {
         MOUSE("mouse"),
         
         /** JEI-specific integration related logs */
-        JEI_INTEGRATION("jeiIntegration");
+        JEI_INTEGRATION("jeiIntegration"),
+        
+        /** REI-specific integration related logs */
+        REI_INTEGRATION("reiIntegration");
         
         private final String id;
         

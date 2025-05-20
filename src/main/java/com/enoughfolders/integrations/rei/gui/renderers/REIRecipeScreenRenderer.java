@@ -1,0 +1,204 @@
+package com.enoughfolders.integrations.rei.gui.renderers;
+
+import com.enoughfolders.EnoughFolders;
+import com.enoughfolders.client.gui.FolderScreen;
+import com.enoughfolders.integrations.rei.gui.handlers.REIRecipeGuiHandler;
+import com.enoughfolders.util.DebugLogger;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ScreenEvent;
+
+import java.util.Optional;
+
+/**
+ * Handles rendering the folder UI on REI recipe screens.
+ * Uses reflection to safely handle REI classes to avoid crashes when REI is not installed.
+ */
+@EventBusSubscriber(modid = EnoughFolders.MOD_ID, value = Dist.CLIENT)
+public class REIRecipeScreenRenderer {
+    /**
+     * Flag to check if REI is available
+     */
+    private static boolean reiAvailable = false;
+    
+    /**
+     * Names of REI recipe GUI classes
+     */
+    private static final String[] REI_SCREEN_CLASSES = {
+        "me.shedaniel.rei.impl.client.gui.screen.DefaultDisplayViewingScreen",
+        "me.shedaniel.rei.impl.client.view.ViewsScreen",
+        "me.shedaniel.rei.impl.client.gui.widget.EntryWidget",
+        "me.shedaniel.rei.impl.client.gui.widget.favorites.FavoritesListWidget",
+        "me.shedaniel.rei.impl.client.gui.widget.EntryListWidget"
+    };
+    
+    static {
+        // Check if REI's classes are available
+        try {
+            Class.forName("me.shedaniel.rei.api.client.REIRuntime");
+            reiAvailable = true;
+            EnoughFolders.LOGGER.info("REI classes found, enabling REI recipe screen renderer");
+            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "REIRecipeScreenRenderer registered for REI recipe overlay functionality");
+        } catch (ClassNotFoundException e) {
+            reiAvailable = false;
+            EnoughFolders.LOGGER.info("REI classes not found, disabling REI recipe overlay functionality");
+            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "REI classes not found, disabling REI recipe overlay functionality");
+        }
+    }
+
+    // Track screen dimensions to detect changes
+    private static int lastScreenWidth = 0;
+    private static int lastScreenHeight = 0;
+
+    @SubscribeEvent
+    public static void onScreenRender(ScreenEvent.Render.Post event) {
+        // Skip if REI is not available
+        if (!reiAvailable) {
+            return;
+        }
+        
+        Screen screen = event.getScreen();
+        String screenClassName = screen != null ? screen.getClass().getName() : "null";
+        
+        // Log screen classes periodically to help identify REI screens
+        if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.tickCount % 100 == 0) {
+            EnoughFolders.LOGGER.info("Current screen class: {}", screenClassName);
+        }
+        
+        try {
+            // Check if the screen is a REI recipe screen
+            if (!isREIScreen(screen)) {
+                return; // Not a REI recipes screen
+            }
+            
+            EnoughFolders.LOGGER.info("Processing render event for REI recipe screen: {}", screenClassName);
+            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "Processing render event for REI recipe screen");
+            
+            // Get current screen dimensions
+            int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
+            int screenHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+            
+            // Check for screen resize
+            boolean screenResized = (screenWidth != lastScreenWidth || screenHeight != lastScreenHeight);
+            if (screenResized) {
+                DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
+                    "Screen dimensions changed: " + lastScreenWidth + "x" + lastScreenHeight + 
+                    " -> " + screenWidth + "x" + screenHeight);
+                
+                lastScreenWidth = screenWidth;
+                lastScreenHeight = screenHeight;
+                
+                // Force reinitialization of folder screen due to size change
+                REIRecipeGuiHandler.reinitLastFolderScreen();
+            }
+            
+            // Get the folder screen associated with this REI screen
+            Optional<FolderScreen> folderScreenOpt = REIRecipeGuiHandler.getLastFolderScreen();
+            if (folderScreenOpt.isPresent()) {
+                FolderScreen folderScreen = folderScreenOpt.get();
+                
+                // Debug logging to help track UI state
+                DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
+                    "Rendering folder screen on REI screen. Visible: {}, Position: {}x{}, Size: {}x{}", 
+                    folderScreen.isVisible(0, 0),
+                    folderScreen.getScreenArea().getX(), 
+                    folderScreen.getScreenArea().getY(),
+                    folderScreen.getScreenArea().getWidth(), 
+                    folderScreen.getScreenArea().getHeight());
+                
+                // Render the folder screen
+                GuiGraphics guiGraphics = event.getGuiGraphics();
+                folderScreen.render(guiGraphics, 
+                    (int)Minecraft.getInstance().mouseHandler.xpos(), 
+                    (int)Minecraft.getInstance().mouseHandler.ypos(), 
+                    event.getPartialTick());
+            } else {
+                DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "No folder screen available for REI recipe screen");
+            }
+        } catch (Exception e) {
+            // Log other errors but don't crash
+            EnoughFolders.LOGGER.error("Error in REI recipe screen rendering", e);
+            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
+                "Exception during REI screen rendering: {}", e.getMessage());
+        }
+    }
+    
+    /**
+     * Event handler for mouse click on REI screens
+     */
+    @SubscribeEvent
+    public static void onMouseClicked(ScreenEvent.MouseButtonPressed.Pre event) {
+        // Skip if REI is not available
+        if (!reiAvailable) {
+            return;
+        }
+        
+        Screen screen = event.getScreen();
+        
+        try {
+            // Check if the screen is a REI recipe screen
+            if (!isREIScreen(screen)) {
+                return; // Not a REI recipes screen
+            }
+            
+            // Get the folder screen associated with this REI screen
+            Optional<FolderScreen> folderScreenOpt = REIRecipeGuiHandler.getLastFolderScreen();
+            if (folderScreenOpt.isPresent()) {
+                FolderScreen folderScreen = folderScreenOpt.get();
+                
+                // Check if the mouse click is inside the folder screen
+                if (folderScreen.isVisible(event.getMouseX(), event.getMouseY())) {
+                    // Process the mouse click in the folder screen
+                    if (folderScreen.mouseClicked(event.getMouseX(), event.getMouseY(), event.getButton())) {
+                        // If the folder screen handled the mouse click, cancel the event
+                        EnoughFolders.LOGGER.info("Folder screen handled mouse click at {},{}", 
+                            event.getMouseX(), event.getMouseY());
+                        event.setCanceled(true);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Log other errors but don't crash
+            EnoughFolders.LOGGER.error("Error in REI mouse click handling", e);
+        }
+    }
+    
+    /**
+     * Checks if the given screen is a REI recipe screen.
+     *
+     * @param screen The screen to check
+     * @return true if it's a REI recipe screen, false otherwise
+     */
+    private static boolean isREIScreen(Screen screen) {
+        if (screen == null) {
+            return false;
+        }
+        
+        String className = screen.getClass().getName();
+        
+        // Check against known REI screen class names
+        for (String reiClass : REI_SCREEN_CLASSES) {
+            if (className.equals(reiClass)) {
+                return true;
+            }
+        }
+        
+        // Also check if the class name contains certain REI-specific fragments
+        boolean isREIScreen = className.contains("shedaniel.rei") && 
+               (className.contains("RecipeScreen") || 
+                className.contains("ViewSearchBuilder") || 
+                className.contains("ViewsScreen") ||
+                className.contains("DefaultDisplayViewingScreen"));
+                
+        if (isREIScreen) {
+            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
+                "Detected REI recipe screen: {}", className);
+        }
+        
+        return isREIScreen;
+    }
+}

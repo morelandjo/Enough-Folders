@@ -1,5 +1,6 @@
 package com.enoughfolders.client.gui;
 
+import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.util.DebugLogger;
@@ -191,10 +192,15 @@ public class IngredientGridManager {
         
         int rowsUsed = (int) Math.ceil(totalSlotsOnPage / (double) ingredientColumns);
         
-        int rowsNeeded = Math.max(rowsUsed + 1, 1);
+        // Always ensure at least 3 rows of drop area are available, or more if needed
+        int rowsNeeded = Math.max(rowsUsed + 1, 3);
         
         int gridWidth = ingredientColumns * CONTENT_SLOT_SIZE;
         int gridHeight = rowsNeeded * CONTENT_SLOT_SIZE;
+        
+        // Log the calculated content drop area dimensions
+        EnoughFolders.LOGGER.info("Calculated content drop area: rows={}, totalSlotsOnPage={}, gridWidth={}, gridHeight={}", 
+            rowsNeeded, totalSlotsOnPage, gridWidth, gridHeight);
         
         int verticalOffset = isAddingFolder ? 20 : 0; // INPUT_FIELD_HEIGHT
         

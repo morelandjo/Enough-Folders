@@ -42,6 +42,7 @@ public class DebugConfig {
         DEFAULT_SETTINGS.put(DebugLogger.Category.GUI_STATE, false);
         DEFAULT_SETTINGS.put(DebugLogger.Category.MOUSE, false);
         DEFAULT_SETTINGS.put(DebugLogger.Category.JEI_INTEGRATION, false);
+        DEFAULT_SETTINGS.put(DebugLogger.Category.REI_INTEGRATION, false);
     }
     
     /**

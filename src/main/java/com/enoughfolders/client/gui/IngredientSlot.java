@@ -71,27 +71,19 @@ public class IngredientSlot {
     }
     
     /**
-     * Shows recipes for this ingredient in JEI.
+     * Shows recipes for this ingredient in the available recipe mod (REI or JEI).
+     * Uses the RecipeIntegrationHelper to determine which integration to use.
      */
     private void showRecipes() {
-        IntegrationRegistry.getIntegration(com.enoughfolders.integrations.jei.core.JEIIntegration.class)
-            .ifPresent(jeiIntegration -> {
-                jeiIntegration.getIngredientFromStored(ingredient).ifPresent(jeiIngredient -> {
-                    ((com.enoughfolders.integrations.jei.core.JEIIntegration)jeiIntegration).showRecipes(jeiIngredient);
-                });
-            });
+        com.enoughfolders.integrations.RecipeIntegrationHelper.showRecipes(ingredient);
     }
     
     /**
-     * Shows uses for this ingredient in JEI.
+     * Shows uses for this ingredient in the available recipe mod (REI or JEI).
+     * Uses the RecipeIntegrationHelper to determine which integration to use.
      */
     private void showUses() {
-        IntegrationRegistry.getIntegration(com.enoughfolders.integrations.jei.core.JEIIntegration.class)
-            .ifPresent(jeiIntegration -> {
-                jeiIntegration.getIngredientFromStored(ingredient).ifPresent(jeiIngredient -> {
-                    ((com.enoughfolders.integrations.jei.core.JEIIntegration)jeiIntegration).showUses(jeiIngredient);
-                });
-            });
+        com.enoughfolders.integrations.RecipeIntegrationHelper.showUses(ingredient);
     }
     
     /**
@@ -112,6 +104,56 @@ public class IngredientSlot {
      * @return The stored ingredient
      */
     public StoredIngredient getIngredient() {
+        return ingredient;
+    }
+    
+    // Required getters for REI integration
+
+    /**
+     * Gets the x position of this slot.
+     * @return The x position
+     */
+    public int getX() {
+        return x;
+    }
+    
+    /**
+     * Gets the y position of this slot.
+     * @return The y position
+     */
+    public int getY() {
+        return y;
+    }
+    
+    /**
+     * Gets the width of this slot.
+     * @return The width
+     */
+    public int getWidth() {
+        return SIZE;
+    }
+    
+    /**
+     * Gets the height of this slot.
+     * @return The height
+     */
+    public int getHeight() {
+        return SIZE;
+    }
+    
+    /**
+     * Checks if this slot has an ingredient.
+     * @return true if this slot has an ingredient, false otherwise
+     */
+    public boolean hasIngredient() {
+        return ingredient != null;
+    }
+    
+    /**
+     * Gets the stored ingredient in this slot.
+     * @return The stored ingredient
+     */
+    public StoredIngredient getStoredIngredient() {
         return ingredient;
     }
 }

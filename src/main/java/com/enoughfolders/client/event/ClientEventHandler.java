@@ -63,7 +63,11 @@ public class ClientEventHandler {
             Minecraft minecraft = Minecraft.getInstance();
             int width = minecraft.getWindow().getGuiScaledWidth();
             int height = minecraft.getWindow().getGuiScaledHeight();
-            FOLDER_SCREENS.get(containerScreen).init(width, height);
+            FolderScreen folderScreen = FOLDER_SCREENS.get(containerScreen);
+            folderScreen.init(width, height);
+            
+            // Connect to REI for recipe viewing integration if available
+            connectFolderToREI(folderScreen, containerScreen);
             
             DebugLogger.debugValues(DebugLogger.Category.GUI_STATE, 
                 "Folder screen initialized with width: {}, height: {}", width, height);
@@ -183,6 +187,33 @@ public class ClientEventHandler {
             } catch (ClassNotFoundException e) {
                 // JEI is not installed, ignore silently
             }
+            
+            // Check for REI recipe GUI screen
+            try {
+                // Check if we have a saved folder screen from REI
+                Optional<FolderScreen> folderScreenOpt = 
+                    com.enoughfolders.integrations.rei.gui.handlers.REIRecipeGuiHandler.getLastFolderScreen();
+                
+                if (folderScreenOpt.isPresent()) {
+                    // Check screen class name to see if it's a REI recipe screen
+                    String screenClassName = event.getScreen().getClass().getName();
+                    if (screenClassName.contains("shedaniel.rei") && 
+                        (screenClassName.contains("RecipeScreen") || screenClassName.contains("ViewSearchBuilder"))) {
+                        
+                        // Handle the click in the folder screen if it's visible
+                        FolderScreen folderScreen = folderScreenOpt.get();
+                        if (folderScreen.isVisible(event.getMouseX(), event.getMouseY())) {
+                            if (folderScreen.mouseClicked(event.getMouseX(), event.getMouseY(), event.getButton())) {
+                                event.setCanceled(true);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                // REI is not installed or there was an error, log and continue
+                DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
+                    "Error handling REI recipe screen mouse click: {}", e.getMessage());
+            }
         }
     }
     
@@ -283,5 +314,40 @@ public class ClientEventHandler {
         if (minecraft.level == null && !FOLDER_SCREENS.isEmpty()) {
             FOLDER_SCREENS.clear();
         }
+    }
+     /**
+     * Connect a folder screen to REI for recipe viewing.
+     * 
+     * @param folderScreen The folder screen to connect
+     * @param containerScreen The container screen
+     */
+    private static void connectFolderToREI(FolderScreen folderScreen, AbstractContainerScreen<?> containerScreen) {
+        try {
+            // Get REI integration through the registry
+            com.enoughfolders.integrations.IntegrationRegistry.getIntegration(
+                com.enoughfolders.integrations.rei.core.REIIntegration.class).ifPresent(integration -> {
+                    // Create handler if available
+                    if (integration.isAvailable()) {
+                        com.enoughfolders.integrations.rei.gui.handlers.REIFolderIngredientHandler handler = 
+                            new com.enoughfolders.integrations.rei.gui.handlers.REIFolderIngredientHandler(
+                                (com.enoughfolders.integrations.rei.core.REIIntegration) integration);
+                        
+                        // Connect handler to folder screen
+                        handler.connectToFolderScreen(folderScreen, containerScreen);
+                    }
+                });
+        } catch (Exception e) {
+            // If there's an exception, it might be because REI is not installed
+            EnoughFolders.LOGGER.debug("Could not connect folder to REI: {}", e.getMessage());
+        }
+    }
+    
+    /**
+     * Check if any recipe viewing mod (REI or JEI) is available.
+     * 
+     * @return true if either REI or JEI is available
+     */
+    private static boolean isRecipeViewingAvailable() {
+        return com.enoughfolders.integrations.RecipeIntegrationHelper.isRecipeViewingAvailable();
     }
 }

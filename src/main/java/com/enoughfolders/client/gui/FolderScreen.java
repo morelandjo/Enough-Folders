@@ -17,6 +17,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -334,6 +335,17 @@ public class FolderScreen implements FolderGhostIngredientTarget {
      * @return true if the click was handled, false otherwise
      */
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        // Process clicks on ingredient slots with custom handlers
+        List<IngredientSlot> slots = gridManager.getIngredientSlots();
+        for (IngredientSlot slot : slots) {
+            if (slot.isHovered((int)mouseX, (int)mouseY)) {
+                if (inputHandler.processIngredientClick(this, slot, mouseX, mouseY, button)) {
+                    return true;
+                }
+            }
+        }
+        
+        // Fall back to standard input handling
         return inputHandler.mouseClicked(
             mouseX,
             mouseY,
@@ -478,6 +490,52 @@ public class FolderScreen implements FolderGhostIngredientTarget {
     }
 
     /**
+     * Interface for ingredient click handlers.
+     */
+    @FunctionalInterface
+    public interface IngredientClickHandler {
+        /**
+         * Handle a click on an ingredient slot.
+         * 
+         * @param slot The slot that was clicked
+         * @param button The mouse button used (0 = left, 1 = right)
+         * @param shift Whether shift was held
+         * @param ctrl Whether ctrl was held
+         * @return true if the click was handled, false otherwise
+         */
+        boolean handle(IngredientSlot slot, int button, boolean shift, boolean ctrl);
+    }
+    
+    private List<IngredientClickHandler> ingredientClickHandlers = new ArrayList<>();
+    
+    /**
+     * Register a handler for ingredient clicks.
+     * 
+     * @param handler The handler to register
+     */
+    public void registerIngredientClickHandler(IngredientClickHandler handler) {
+        ingredientClickHandlers.add(handler);
+    }
+    
+    /**
+     * Notify all registered ingredient click handlers.
+     * 
+     * @param slot The slot that was clicked
+     * @param button The mouse button used
+     * @param shift Whether shift was held
+     * @param ctrl Whether ctrl was held
+     * @return true if any handler processed the click, false otherwise
+     */
+    public boolean notifyIngredientClickHandlers(IngredientSlot slot, int button, boolean shift, boolean ctrl) {
+        for (IngredientClickHandler handler : ingredientClickHandlers) {
+            if (handler.handle(slot, button, shift, ctrl)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Checks if FTB Library is loaded and if the sidebar would overlap with our folder GUI.
      * Adjusts the position if necessary.
      */
@@ -501,5 +559,24 @@ public class FolderScreen implements FolderGhostIngredientTarget {
                 topPos = adjustedRect.getY();
             }
         }
+    }
+    
+    /**
+     * Gets all ingredient slots in the folder grid.
+     *
+     * @return List of all ingredient slots
+     */
+    public List<IngredientSlot> getIngredientSlots() {
+        return gridManager.getIngredientSlots();
+    }
+    
+    /**
+     * Gets the entire folder UI area which can be used as a drop target.
+     * This includes the entire colored rectangle where folders and ingredients are displayed.
+     *
+     * @return A rectangle representing the entire folder UI area
+     */
+    public Rect2i getEntireFolderArea() {
+        return new Rect2i(leftPos, topPos, width, height);
     }
 }
