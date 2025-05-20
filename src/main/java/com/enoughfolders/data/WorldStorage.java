@@ -23,7 +23,7 @@ public class WorldStorage {
     /** Directory name for Minecraft config folder */
     private static final String CONFIG_DIR = "config";
     /** Directory name for this mod's config folder */
-    private static final String MOD_DIR = "enough_folders";
+    private static final String MOD_DIR = "enoughfolders";
     /** Directory name for world-specific configurations */
     private static final String WORLDS_DIR = "worlds";
     /** Filename for the folders configuration file */

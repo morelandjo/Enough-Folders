@@ -15,6 +15,7 @@ import java.util.Map;
 
 /**
  * Configuration manager for debug settings.
+ * 
  */
 public class DebugConfig {
     /** 
@@ -86,7 +87,8 @@ public class DebugConfig {
                 String categoryId = category.getId();
                 boolean enabled = DEFAULT_SETTINGS.getOrDefault(category, false);
                 
-                if (json.has(categoryId)) {
+                // Skip the warning property which is not a real setting
+                if (json.has(categoryId) && !categoryId.equals("__WARNING__")) {
                     enabled = json.get(categoryId).getAsBoolean();
                 }
                 
@@ -123,6 +125,10 @@ public class DebugConfig {
         
         // Create JSON object with current settings
         JsonObject json = new JsonObject();
+        
+        // Add warning as a special property
+        json.addProperty("__WARNING__", "Warning: turning on debug may slow the game down significantly, only use this if you are having issues with the mod so you can add the latest.log to the github issue");
+        
         for (DebugLogger.Category category : DebugLogger.Category.values()) {
             json.addProperty(category.getId(), DebugLogger.isEnabled(category));
         }

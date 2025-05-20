@@ -24,7 +24,7 @@ public class StorageManager {
     /**
      * Name of the mod's config directory
      */
-    private static final String CONFIG_DIR = "enough_folders";
+    private static final String CONFIG_DIR = "enoughfolders";
     
     /**
      * Directory name for world-specific folder data

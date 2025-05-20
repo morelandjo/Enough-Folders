@@ -73,9 +73,9 @@ public class DebugLogger {
     private static final Map<String, String> LAST_LOG_VALUES = new HashMap<>();
     
     static {
-        // Initialize all categories to enabled by default
+        // Initialize all categories to disabled by default
         for (Category category : Category.values()) {
-            CATEGORY_ENABLED.put(category, true);
+            CATEGORY_ENABLED.put(category, false);
         }
         
         // Try to initialize the logger, but handle the case when running in tests

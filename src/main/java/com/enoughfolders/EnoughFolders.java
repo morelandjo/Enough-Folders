@@ -57,9 +57,10 @@ public class EnoughFolders {
             // Initialize debug configuration
             DebugConfig.load();
             
-            // Enable important debug categories for integration debugging
-            DebugLogger.setEnabled(DebugLogger.Category.REI_INTEGRATION, true);
-            LOGGER.info("Enabled REI integration debug logging");
+            // REI integration debugging is now off by default
+            // Uncomment below to enable it for development
+            // DebugLogger.setEnabled(DebugLogger.Category.REI_INTEGRATION, true);
+            // LOGGER.info("Enabled REI integration debug logging");
             
             // Initialize the folder manager
             folderManager = new FolderManager();

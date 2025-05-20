@@ -126,7 +126,7 @@ public class StorageManagerTest {
      */
     private class TestStorageManager extends StorageManager {
         private final File baseDir;
-        private static final String CONFIG_DIR = "enough_folders";
+        private static final String CONFIG_DIR = "enoughfolders";
         private static final String WORLDS_DIR = "worlds";
         private static final String FOLDERS_FILE = "folders.json";
         
