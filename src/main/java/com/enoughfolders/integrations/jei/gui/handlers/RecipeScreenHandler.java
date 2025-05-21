@@ -142,13 +142,14 @@ public class RecipeScreenHandler implements IGlobalGuiHandler, IGhostIngredientH
     }
     
     @Override
+    @Deprecated
     public List<FolderButtonTarget> getFolderButtonTargets() {
         Optional<FolderScreen> folderScreenOpt = JEIRecipeGuiHandler.getLastFolderScreen();
         if (folderScreenOpt.isPresent()) {
             FolderScreen folderScreen = folderScreenOpt.get();
             
             // Get the folder button targets from the folder screen
-            List<FolderButtonTarget> targets = folderScreen.getFolderButtonTargets();
+            List<FolderButtonTarget> targets = folderScreen.getJEIFolderTargets();
             DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, 
                 "RecipeScreenHandler returning {} folder button targets", targets.size());
             return targets;

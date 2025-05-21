@@ -1,19 +1,29 @@
 package com.enoughfolders.integrations.rei.core;
 
 import com.enoughfolders.EnoughFolders;
+import com.enoughfolders.client.gui.FolderButton;
+import com.enoughfolders.client.gui.FolderScreen;
+import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.integrations.ModIntegration;
+import com.enoughfolders.integrations.api.IngredientDragProvider;
+import com.enoughfolders.integrations.api.RecipeViewingIntegration;
+import com.enoughfolders.integrations.rei.gui.handlers.REIFolderIngredientHandler;
+import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
 import com.enoughfolders.util.DebugLogger;
 
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
  * Integration for Roughly Enough Items (REI) mod.
  * Provides functionality for ingredient drag and drop, recipe viewing, and more.
  */
-public class REIIntegration implements ModIntegration {
+public class REIIntegration implements ModIntegration, IngredientDragProvider, RecipeViewingIntegration {
     
     private boolean initialized = false;
     private boolean available = false;
@@ -567,5 +577,178 @@ public class REIIntegration implements ModIntegration {
             DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
                 "Exception details: {}", e);
         }
+    }
+
+    /**
+     * Processes a drop of the currently dragged ingredient onto a folder.
+     * Converts the REI ingredient to a StoredIngredient and adds it to the folder.
+     * 
+     * @param folder The folder to add the ingredient to
+     * @return True if the drop was successful, false otherwise
+     */
+    @Override
+    public boolean handleIngredientDrop(Folder folder) {
+        Optional<Object> draggedIngredient = getDraggedIngredient();
+        if (draggedIngredient.isEmpty()) {
+            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "No ingredient is being dragged");
+            return false;
+        }
+        
+        Object ingredient = draggedIngredient.get();
+        DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
+            "Processing REI dragged ingredient drop for folder: {}", folder.getName());
+        
+        // Convert ingredient to StoredIngredient
+        Optional<StoredIngredient> storedIngredient = storeIngredient(ingredient);
+        if (storedIngredient.isEmpty()) {
+            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "Failed to convert ingredient to StoredIngredient");
+            return false;
+        }
+        
+        // Add ingredient to folder
+        EnoughFolders.getInstance().getFolderManager().addIngredient(folder, storedIngredient.get());
+        
+        DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
+            "Successfully added REI ingredient to folder: {}", folder.getName());
+        return true;
+    }
+    
+    /**
+     * Gets the display name of the integration.
+     * 
+     * @return The display name
+     */
+    @Override
+    public String getDisplayName() {
+        return "REI";
+    }
+    
+    /**
+     * Connect a folder screen to REI for recipe viewing.
+     * 
+     * @param folderScreen The folder screen to connect
+     * @param containerScreen The container screen
+     */
+    @Override
+    public void connectToFolderScreen(FolderScreen folderScreen, AbstractContainerScreen<?> containerScreen) {
+        try {
+            // Create handler if available
+            if (isAvailable()) {
+                REIFolderIngredientHandler handler = new REIFolderIngredientHandler(this);
+                
+                // Connect handler to folder screen
+                handler.connectToFolderScreen(folderScreen, containerScreen);
+            }
+        } catch (Exception e) {
+            EnoughFolders.LOGGER.debug("Could not connect folder to REI: {}", e.getMessage());
+        }
+    }
+    
+    /**
+     * Save a folder screen to be used during recipe GUI navigation.
+     * 
+     * @param folderScreen The folder screen to save
+     */
+    @Override
+    public void saveLastFolderScreen(FolderScreen folderScreen) {
+        com.enoughfolders.integrations.rei.gui.handlers.REIRecipeGuiHandler.saveLastFolderScreen(folderScreen);
+    }
+    
+    /**
+     * Clear the saved folder screen when no longer needed.
+     */
+    @Override
+    public void clearLastFolderScreen() {
+        com.enoughfolders.integrations.rei.gui.handlers.REIRecipeGuiHandler.clearLastFolderScreen();
+    }
+    
+    /**
+     * Get the last folder screen saved for recipe GUI navigation.
+     * 
+     * @return Optional containing the folder screen if available
+     */
+    @Override
+    public Optional<FolderScreen> getLastFolderScreen() {
+        return com.enoughfolders.integrations.rei.gui.handlers.REIRecipeGuiHandler.getLastFolderScreen();
+    }
+    
+    /**
+     * Check if the given screen is a recipe screen for this integration.
+     * 
+     * @param screen The screen to check
+     * @return True if it's a recipe screen for this integration, false otherwise
+     */
+    @Override
+    public boolean isRecipeScreen(Screen screen) {
+        if (screen == null || !isAvailable()) {
+            return false;
+        }
+        
+        // Check if the screen's class name contains REI recipe screen identifiers
+        String className = screen.getClass().getName();
+        boolean isREIScreen = className.contains("shedaniel.rei") && 
+               (className.contains("RecipeScreen") || 
+                className.contains("ViewSearchBuilder") || 
+                className.contains("ViewsScreen") ||
+                className.contains("DefaultDisplayViewingScreen"));
+                
+        if (isREIScreen) {
+            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
+                "Detected REI recipe screen: {}", className);
+        }
+        
+        return isREIScreen;
+    }
+    
+    /**
+     * Check if the screen being closed is transitioning to a recipe screen for this integration.
+     * 
+     * @param screen The screen that's being closed
+     * @return True if we're transitioning to a recipe screen, false otherwise
+     */
+    @Override
+    public boolean isTransitioningToRecipeScreen(Screen screen) {
+        if (!isAvailable()) {
+            return false;
+        }
+        
+        try {
+            // Check the stack trace for REI-specific calls that indicate a recipe screen transition
+            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+            for (StackTraceElement element : stackTrace) {
+                // Check for REI recipe navigation classes/methods in the stack trace
+                if (element.getClassName().contains("shedaniel.rei") && 
+                    (element.getMethodName().contains("show") || 
+                     element.getMethodName().contains("view") || 
+                     element.getClassName().contains("RecipeScreen") ||
+                     element.getClassName().contains("DisplayScreen"))) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            EnoughFolders.LOGGER.debug("Error checking for REI recipe transition: {}", e.getMessage());
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Creates folder targets that can be used for ingredient drops from REI.
+     * 
+     * @param folderButtons The list of folder buttons to create targets for
+     * @return A list of folder targets compatible with REI
+     */
+    @Override
+    public List<REIFolderTarget> createFolderTargets(List<FolderButton> folderButtons) {
+        EnoughFolders.LOGGER.debug("Creating REI folder targets - Number of folder buttons available: {}", 
+            folderButtons.size());
+        DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "Getting REI folder targets");
+        
+        List<REIFolderTarget> targets = com.enoughfolders.integrations.rei.gui.targets.REIFolderTargetFactory
+            .getInstance()
+            .createTargets(folderButtons);
+        
+        DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, "Created {} REI folder targets", targets.size());
+        return targets;
     }
 }

@@ -221,4 +221,21 @@ public class IntegrationRegistry {
         }
         return simpleName.toLowerCase();
     }
+    
+    /**
+     * Gets all registered integrations that implement the IngredientDragProvider interface.
+     *
+     * @return List of all drag provider integrations
+     */
+    public static List<com.enoughfolders.integrations.api.IngredientDragProvider> getAllDragProviders() {
+        List<com.enoughfolders.integrations.api.IngredientDragProvider> providers = new ArrayList<>();
+        
+        for (ModIntegration integration : integrations) {
+            if (integration instanceof com.enoughfolders.integrations.api.IngredientDragProvider) {
+                providers.add((com.enoughfolders.integrations.api.IngredientDragProvider) integration);
+            }
+        }
+        
+        return providers;
+    }
 }

@@ -4,6 +4,7 @@ import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.integrations.rei.gui.handlers.REIRecipeGuiHandler;
 import com.enoughfolders.util.DebugLogger;
+import com.enoughfolders.util.DebugLogger.Category;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -41,12 +42,14 @@ public class REIRecipeScreenRenderer {
         try {
             Class.forName("me.shedaniel.rei.api.client.REIRuntime");
             reiAvailable = true;
+            // Important enough to keep in main log
             EnoughFolders.LOGGER.info("REI classes found, enabling REI recipe screen renderer");
-            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "REIRecipeScreenRenderer registered for REI recipe overlay functionality");
+            DebugLogger.debug(Category.REI_INTEGRATION, "REIRecipeScreenRenderer registered for REI recipe overlay functionality");
         } catch (ClassNotFoundException e) {
             reiAvailable = false;
+            // Important enough to keep in main log
             EnoughFolders.LOGGER.info("REI classes not found, disabling REI recipe overlay functionality");
-            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "REI classes not found, disabling REI recipe overlay functionality");
+            DebugLogger.debug(Category.REI_INTEGRATION, "REI classes not found, disabling REI recipe overlay functionality");
         }
     }
 
@@ -66,7 +69,7 @@ public class REIRecipeScreenRenderer {
         
         // Log screen classes periodically to help identify REI screens
         if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.tickCount % 100 == 0) {
-            EnoughFolders.LOGGER.info("Current screen class: {}", screenClassName);
+            DebugLogger.debugValue(Category.REI_INTEGRATION, "Current screen class: {}", screenClassName);
         }
         
         try {
@@ -75,8 +78,7 @@ public class REIRecipeScreenRenderer {
                 return; // Not a REI recipes screen
             }
             
-            EnoughFolders.LOGGER.info("Processing render event for REI recipe screen: {}", screenClassName);
-            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "Processing render event for REI recipe screen");
+            DebugLogger.debugValue(Category.REI_INTEGRATION, "Processing render event for REI recipe screen: {}", screenClassName);
             
             // Get current screen dimensions
             int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
@@ -85,7 +87,7 @@ public class REIRecipeScreenRenderer {
             // Check for screen resize
             boolean screenResized = (screenWidth != lastScreenWidth || screenHeight != lastScreenHeight);
             if (screenResized) {
-                DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
+                DebugLogger.debug(Category.REI_INTEGRATION, 
                     "Screen dimensions changed: " + lastScreenWidth + "x" + lastScreenHeight + 
                     " -> " + screenWidth + "x" + screenHeight);
                 
@@ -102,7 +104,7 @@ public class REIRecipeScreenRenderer {
                 FolderScreen folderScreen = folderScreenOpt.get();
                 
                 // Debug logging to help track UI state
-                DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
+                DebugLogger.debugValues(Category.REI_INTEGRATION,
                     "Rendering folder screen on REI screen. Visible: {}, Position: {}x{}, Size: {}x{}", 
                     folderScreen.isVisible(0, 0),
                     folderScreen.getScreenArea().getX(), 
@@ -117,12 +119,13 @@ public class REIRecipeScreenRenderer {
                     (int)Minecraft.getInstance().mouseHandler.ypos(), 
                     event.getPartialTick());
             } else {
-                DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "No folder screen available for REI recipe screen");
+                DebugLogger.debug(Category.REI_INTEGRATION, "No folder screen available for REI recipe screen");
             }
         } catch (Exception e) {
             // Log other errors but don't crash
             EnoughFolders.LOGGER.error("Error in REI recipe screen rendering", e);
-            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
+            DebugLogger.debugValue(Category.REI_INTEGRATION, "Error in REI recipe screen rendering: {}", e.getMessage());
+            DebugLogger.debugValue(Category.REI_INTEGRATION, 
                 "Exception during REI screen rendering: {}", e.getMessage());
         }
     }
@@ -155,7 +158,7 @@ public class REIRecipeScreenRenderer {
                     // Process the mouse click in the folder screen
                     if (folderScreen.mouseClicked(event.getMouseX(), event.getMouseY(), event.getButton())) {
                         // If the folder screen handled the mouse click, cancel the event
-                        EnoughFolders.LOGGER.info("Folder screen handled mouse click at {},{}", 
+                        DebugLogger.debugValues(Category.REI_INTEGRATION, "Folder screen handled mouse click at {},{}", 
                             event.getMouseX(), event.getMouseY());
                         event.setCanceled(true);
                     }
@@ -164,6 +167,7 @@ public class REIRecipeScreenRenderer {
         } catch (Exception e) {
             // Log other errors but don't crash
             EnoughFolders.LOGGER.error("Error in REI mouse click handling", e);
+            DebugLogger.debugValue(Category.REI_INTEGRATION, "Error in REI mouse click handling: {}", e.getMessage());
         }
     }
     
@@ -195,7 +199,7 @@ public class REIRecipeScreenRenderer {
                 className.contains("DefaultDisplayViewingScreen"));
                 
         if (isREIScreen) {
-            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
+            DebugLogger.debugValue(Category.REI_INTEGRATION, 
                 "Detected REI recipe screen: {}", className);
         }
         

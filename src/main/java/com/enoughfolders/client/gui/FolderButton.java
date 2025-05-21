@@ -2,9 +2,7 @@ package com.enoughfolders.client.gui;
 
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.Folder;
-import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.integrations.IntegrationRegistry;
-import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -13,7 +11,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nonnull;
-import java.util.Optional;
 
 /**
  * Button that represents a folder in the GUI.
@@ -56,7 +53,6 @@ public class FolderButton extends Button {
     public void renderWidget(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         RenderSystem.setShaderTexture(0, TEXTURE);
         
-        // Updated sprite coordinates to match the original implementation
         int textureU, textureV;
         
         if (folder.isActive()) {
@@ -75,7 +71,7 @@ public class FolderButton extends Button {
                 Minecraft.getInstance().font, 
                 shortName,
                 getX() + (width - Minecraft.getInstance().font.width(shortName)) / 2,
-                getY() + height, // Moved up by 5 pixels (from +2 to -3)
+                getY() + height,
                 0xFFFFFF
         );
         
@@ -95,16 +91,18 @@ public class FolderButton extends Button {
             return;
         }
         
-        IntegrationRegistry.getIntegration(JEIIntegration.class).ifPresent(jei -> {
-            JEIIntegration jeiInt = (JEIIntegration) jei;
-            jeiInt.getDraggedIngredient().ifPresent(ingredient -> {
-                EnoughFolders.LOGGER.debug("Folder button '{}' highlighting for drag at {},{}", 
-                    folder.getName(), mouseX, mouseY);
+        // Check all drag providers for any dragged ingredients
+        for (var provider : IntegrationRegistry.getAllDragProviders()) {
+            if (provider.isAvailable() && provider.isIngredientBeingDragged()) {
+                EnoughFolders.LOGGER.debug("Folder button '{}' highlighting for {} drag at {},{}", 
+                    folder.getName(), provider.getDisplayName(), mouseX, mouseY);
                 
                 int highlightColor = 0x80FFFFFF;
                 graphics.fill(getX() - 1, getY() - 1, getX() + width + 1, getY() + height + 1, highlightColor);
-            });
-        });
+                
+                break;
+            }
+        }
     }
     
     /**
@@ -146,7 +144,7 @@ public class FolderButton extends Button {
     }
     
     /**
-     * Tries to handle a JEI ingredient drop on this folder button.
+     * Tries to handle an ingredient drop on this folder button.
      *
      * @param mouseX The mouse X coordinate
      * @param mouseY The mouse Y coordinate
@@ -159,30 +157,21 @@ public class FolderButton extends Button {
         
         EnoughFolders.LOGGER.debug("Attempting drop on folder button: {}", folder.getName());
         
-        Optional<JEIIntegration> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegration.class);
-        if (jeiIntegration.isEmpty()) {
-            return false;
+        // Check for any available integration with drag and drop capability
+        for (var integration : IntegrationRegistry.getAllDragProviders()) {
+            if (integration.isAvailable() && integration.isIngredientBeingDragged()) {
+                EnoughFolders.LOGGER.info("Handling drop from {} on folder button: {}", 
+                    integration.getDisplayName(), folder.getName());
+                
+                boolean success = integration.handleIngredientDrop(folder);
+                if (success) {
+                    EnoughFolders.LOGGER.info("Successfully added ingredient from {} to folder: {}", 
+                        integration.getDisplayName(), folder.getName());
+                    return true;
+                }
+            }
         }
         
-        JEIIntegration jei = jeiIntegration.get();
-        Optional<Object> draggedIngredient = jei.getDraggedIngredient();
-        
-        if (draggedIngredient.isEmpty()) {
-            return false;
-        }
-        
-        EnoughFolders.LOGGER.info("Drop detected on folder button: {}", folder.getName());
-        
-        // Convert JEI ingredient to stored format
-        Optional<StoredIngredient> storedIngredient = jei.storeIngredient(draggedIngredient.get());
-        
-        if (storedIngredient.isEmpty()) {
-            return false;
-        }
-        
-        // Add ingredient to folder
-        EnoughFolders.getInstance().getFolderManager().addIngredient(folder, storedIngredient.get());
-        EnoughFolders.LOGGER.info("Added ingredient to folder: {}", folder.getName());
-        return true;
+        return false;
     }
 }

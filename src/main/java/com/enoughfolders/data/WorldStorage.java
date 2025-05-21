@@ -1,6 +1,7 @@
 package com.enoughfolders.data;
 
 import com.enoughfolders.EnoughFolders;
+import com.enoughfolders.util.DebugLogger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -75,7 +76,10 @@ public class WorldStorage {
             }
             return "unknown";
         } catch (Exception e) {
+            // Keep critical error in main log
             EnoughFolders.LOGGER.error("Failed to get world name", e);
+            // Add debug logging
+            DebugLogger.debugValue(DebugLogger.Category.FOLDER_MANAGER, "Failed to get world name: {}", e.getMessage());
             return "unknown";
         }
     }
@@ -96,7 +100,11 @@ public class WorldStorage {
             Type folderListType = new TypeToken<ArrayList<Folder>>(){}.getType();
             return gson.fromJson(reader, folderListType);
         } catch (IOException e) {
+            // Keep critical error in main log
             EnoughFolders.LOGGER.error("Failed to load folders for world: " + worldName, e);
+            // Add debug logging
+            DebugLogger.debugValues(DebugLogger.Category.FOLDER_MANAGER, 
+                "Failed to load folders for world {}: {}", worldName, e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -112,7 +120,11 @@ public class WorldStorage {
         try (FileWriter writer = new FileWriter(foldersFile)) {
             gson.toJson(folders, writer);
         } catch (IOException e) {
+            // Keep critical error in main log
             EnoughFolders.LOGGER.error("Failed to save folders for world: " + worldName, e);
+            // Add debug logging
+            DebugLogger.debugValues(DebugLogger.Category.FOLDER_MANAGER, 
+                "Failed to save folders for world {}: {}", worldName, e.getMessage());
         }
     }
     
@@ -137,7 +149,11 @@ public class WorldStorage {
         File modWorldsDir = getModWorldsDirectory();
         File worldDir = new File(modWorldsDir, worldName);
         if (!worldDir.exists() && !worldDir.mkdirs()) {
+            // Keep critical error in main log
             EnoughFolders.LOGGER.error("Failed to create world directory: " + worldDir.getPath());
+            // Add debug logging
+            DebugLogger.debugValue(DebugLogger.Category.FOLDER_MANAGER, 
+                "Failed to create world directory: {}", worldDir.getPath());
         }
         return worldDir;
     }
@@ -151,7 +167,11 @@ public class WorldStorage {
         File modDir = getModDirectory();
         File worldsDir = new File(modDir, WORLDS_DIR);
         if (!worldsDir.exists() && !worldsDir.mkdirs()) {
+            // Keep critical error in main log
             EnoughFolders.LOGGER.error("Failed to create worlds directory: " + worldsDir.getPath());
+            // Add debug logging
+            DebugLogger.debugValue(DebugLogger.Category.FOLDER_MANAGER, 
+                "Failed to create worlds directory: {}", worldsDir.getPath());
         }
         return worldsDir;
     }
@@ -165,7 +185,11 @@ public class WorldStorage {
         File configDir = getConfigDirectory();
         File modDir = new File(configDir, MOD_DIR);
         if (!modDir.exists() && !modDir.mkdirs()) {
+            // Keep critical error in main log
             EnoughFolders.LOGGER.error("Failed to create mod directory: " + modDir.getPath());
+            // Add debug logging
+            DebugLogger.debugValue(DebugLogger.Category.FOLDER_MANAGER, 
+                "Failed to create mod directory: {}", modDir.getPath());
         }
         return modDir;
     }
@@ -179,7 +203,11 @@ public class WorldStorage {
         File gameDir = Minecraft.getInstance().gameDirectory;
         File configDir = new File(gameDir, CONFIG_DIR);
         if (!configDir.exists() && !configDir.mkdirs()) {
+            // Keep critical error in main log
             EnoughFolders.LOGGER.error("Failed to create config directory: " + configDir.getPath());
+            // Add debug logging
+            DebugLogger.debugValue(DebugLogger.Category.FOLDER_MANAGER, 
+                "Failed to create config directory: {}", configDir.getPath());
         }
         return configDir;
     }

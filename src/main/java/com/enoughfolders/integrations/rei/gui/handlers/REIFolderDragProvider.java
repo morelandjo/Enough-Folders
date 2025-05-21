@@ -7,6 +7,7 @@ import com.enoughfolders.client.gui.IngredientSlot;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.integrations.IntegrationRegistry;
 import com.enoughfolders.integrations.rei.core.REIIntegration;
+import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
 import com.enoughfolders.util.DebugLogger;
 
 import me.shedaniel.math.Point;
@@ -47,13 +48,13 @@ public class REIFolderDragProvider implements REIClientPlugin {
     public void registerScreens(ScreenRegistry registry) {
         try {
             // Enable REI integration debug logging in console
-            EnoughFolders.LOGGER.info("Registering REI folder drag-and-drop handlers");
+            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "Registering REI folder drag-and-drop handlers");
             
             // Register our handlers for both drag providers and visitors
             registry.registerDraggableStackProvider(dragProvider);
             registry.registerDraggableStackVisitor(dragVisitor);
             
-            EnoughFolders.LOGGER.info("Successfully registered REI folder drag-and-drop handler");
+            // Log success using debug logger
             DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
                 "Successfully registered REI folder drag-and-drop handler");
         } catch (Exception e) {
@@ -239,11 +240,14 @@ public class REIFolderDragProvider implements REIClientPlugin {
             }
             
             // Log both the content area bounds and the mouse position for debugging
-            EnoughFolders.LOGGER.info("Content area bounds: x={}, y={}, width={}, height={}", 
+            DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
+                "Content area bounds: x={}, y={}, width={}, height={}", 
                 contentArea.getX(), contentArea.getY(), contentArea.getWidth(), contentArea.getHeight());
-            EnoughFolders.LOGGER.info("Entire folder area bounds: x={}, y={}, width={}, height={}", 
+            DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
+                "Entire folder area bounds: x={}, y={}, width={}, height={}", 
                 entireFolderArea.getX(), entireFolderArea.getY(), entireFolderArea.getWidth(), entireFolderArea.getHeight());
-            EnoughFolders.LOGGER.info("Stack center position: x={}, y={}", stackCenterX, stackCenterY);
+            DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
+                "Stack center position: x={}, y={}", stackCenterX, stackCenterY);
             
             DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
                 "Stack center position: {},{}", 
@@ -252,44 +256,41 @@ public class REIFolderDragProvider implements REIClientPlugin {
             boolean inContentArea = contentRectangle.contains(stackCenterX, stackCenterY);
             boolean inEntireFolderArea = entireFolderRectangle.contains(stackCenterX, stackCenterY);
             
-            EnoughFolders.LOGGER.info("Is in content area: {}, Is in entire folder area: {}", inContentArea, inEntireFolderArea);
+            DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
+                "Is in content area: {}, Is in entire folder area: {}", inContentArea, inEntireFolderArea);
             
-            // First check if dragging over specific folder buttons 
-            for (FolderButton button : folderScreen.getFolderButtons()) {
-                Rectangle buttonRectangle = new Rectangle(button.getX(), button.getY(), 
-                                                       button.getWidth(), button.getHeight());
+            // First check if dragging over specific folder targets
+            for (REIFolderTarget target : folderScreen.getREIFolderTargets()) {
+                boolean inTargetArea = target.isPointInTarget(stackCenterX, stackCenterY);
                 
-                boolean inButtonArea = buttonRectangle.contains(stackCenterX, stackCenterY);
-                
-                if (inButtonArea) {
-                    EnoughFolders.LOGGER.info("Draggable stack over folder button: {}", button.getFolder().getName());
+                if (inTargetArea) {
                     DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                            "Draggable stack over folder button: {}", button.getFolder().getName());
+                            "Draggable stack over folder target: {}", target.getFolder().getName());
                     
                     if (stack.getStack().isEmpty()) {
-                        EnoughFolders.LOGGER.info("Stack is empty, passing");
+                        DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "Stack is empty, passing");
                         return DraggedAcceptorResult.PASS;
                     }
                     
-                    // Handle drop on folder button
-                    processDroppedStack(stack.getStack(), button.getFolder(), folderScreen);
+                    // Handle drop on folder target
+                    processDroppedStack(stack.getStack(), target.getFolder(), folderScreen);
                     return DraggedAcceptorResult.CONSUMED;
                 }
             }
             
             // Then check if over content area
             if (inContentArea) {
-                EnoughFolders.LOGGER.info("Draggable stack over content area");
                 DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "Draggable stack over content area");
                 
                 if (stack.getStack().isEmpty()) {
-                    EnoughFolders.LOGGER.info("Stack is empty, passing");
+                    DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "Stack is empty, passing");
                     return DraggedAcceptorResult.PASS;
                 }
                 
                 // Handle drop on content area
                 EnoughFolders.getInstance().getFolderManager().getActiveFolder().ifPresent(folder -> {
-                    EnoughFolders.LOGGER.info("Processing dropped stack for active folder: {}", folder.getName());
+                    DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
+                        "Processing dropped stack for active folder: {}", folder.getName());
                     // Convert REI ingredient to stored format
                     processDroppedStack(stack.getStack(), folder, folderScreen);
                 });
@@ -301,16 +302,18 @@ public class REIFolderDragProvider implements REIClientPlugin {
             if (inEntireFolderArea) {
                 Optional<Folder> activeFolder = EnoughFolders.getInstance().getFolderManager().getActiveFolder();
                 if (activeFolder.isPresent()) {
-                    EnoughFolders.LOGGER.info("Draggable stack over entire folder area with active folder: {}", 
+                    DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION,
+                        "Draggable stack over entire folder area with active folder: {}", 
                         activeFolder.get().getName());
                     
                     if (stack.getStack().isEmpty()) {
-                        EnoughFolders.LOGGER.info("Stack is empty, passing");
+                        DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "Stack is empty, passing");
                         return DraggedAcceptorResult.PASS;
                     }
                     
                     // Handle drop on entire folder area
-                    EnoughFolders.LOGGER.info("Processing dropped stack for active folder: {}", activeFolder.get().getName());
+                    DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
+                        "Processing dropped stack for active folder: {}", activeFolder.get().getName());
                     processDroppedStack(stack.getStack(), activeFolder.get(), folderScreen);
                     return DraggedAcceptorResult.CONSUMED;
                 }
@@ -379,15 +382,15 @@ public class REIFolderDragProvider implements REIClientPlugin {
                     contentRect.width, contentRect.height, contentRect.x, contentRect.y);
             }
             
-            // Add all folder button bounds
-            for (FolderButton button : folderScreen.getFolderButtons()) {
-                Rectangle rect = new Rectangle(button.getX(), button.getY(), 
-                                            button.getWidth(), button.getHeight());
+            // Add all folder target bounds
+            for (REIFolderTarget target : folderScreen.getREIFolderTargets()) {
+                Rectangle rect = new Rectangle(target.getX(), target.getY(), 
+                                            target.getWidth(), target.getHeight());
                 bounds.add(rect);
                 
                 DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
-                    "Added folder button bounds for {}: {}x{} at {},{}", 
-                    button.getFolder().getName(), rect.width, rect.height, rect.x, rect.y);
+                    "Added folder target bounds for {}: {}x{} at {},{}", 
+                    target.getFolder().getName(), rect.width, rect.height, rect.x, rect.y);
             }
             
             if (bounds.isEmpty()) {
@@ -407,7 +410,6 @@ public class REIFolderDragProvider implements REIClientPlugin {
      */
     private static void processDroppedStack(EntryStack<?> entryStack, Folder folder, FolderScreen folderScreen) {
         // Get REI integration
-        EnoughFolders.LOGGER.info("Processing dropped REI stack for folder: {}", folder.getName());
         DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
             "Processing dropped REI stack of type '{}' for folder: '{}'", 
             entryStack.getType(), folder.getName());
@@ -418,7 +420,6 @@ public class REIFolderDragProvider implements REIClientPlugin {
                 EnoughFolders.getInstance().getFolderManager().addIngredient(folder, ingredient);
                 folderScreen.onIngredientAdded();
                 
-                EnoughFolders.LOGGER.info("Successfully added ingredient to folder: {}", folder.getName());
                 DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
                     "Added ingredient to folder: {}, type: {}", 
                     folder.getName(), entryStack.getType());

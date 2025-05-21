@@ -72,7 +72,7 @@ public class JEIDragDropManager {
         // Check in recipe gui
         JEIRecipeGuiHandler.getLastFolderScreen().ifPresent(folderScreen -> {
             if (folderScreen.isVisible(mouseX, mouseY)) {
-                for (FolderButtonTarget target : folderScreen.getFolderButtonTargets()) {
+                for (FolderButtonTarget target : folderScreen.getJEIFolderTargets()) {
                     if (isPointInRect(mouseX, mouseY, 
                             target.getArea().getX(), 
                             target.getArea().getY(),
@@ -91,7 +91,7 @@ public class JEIDragDropManager {
             ClientEventHandler.getFolderScreen(containerScreen)
                 .ifPresent(folderScreen -> {
                     if (folderScreen.isVisible(mouseX, mouseY)) {
-                        for (FolderButtonTarget target : folderScreen.getFolderButtonTargets()) {
+                        for (FolderButtonTarget target : folderScreen.getJEIFolderTargets()) {
                             if (isPointInRect(mouseX, mouseY, 
                                     target.getArea().getX(), 
                                     target.getArea().getY(),

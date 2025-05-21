@@ -52,6 +52,7 @@ public class EnoughFolders {
         
         // We only need to register client-side components
         if (FMLEnvironment.dist == Dist.CLIENT) {
+            // Keep this as a main log entry since it's important initialization info
             LOGGER.info("Initializing Enough Folders client components");
             
             // Initialize debug configuration
@@ -85,6 +86,7 @@ public class EnoughFolders {
             NeoForge.EVENT_BUS.register(this);
         }
         
+        // Keep this as a main log entry since it's important initialization info
         LOGGER.info("Enough Folders initialized");
         DebugLogger.debug(DebugLogger.Category.INITIALIZATION, "Mod initialization complete");
     }

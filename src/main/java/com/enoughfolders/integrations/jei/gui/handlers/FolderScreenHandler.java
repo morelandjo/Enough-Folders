@@ -140,6 +140,7 @@ public class FolderScreenHandler implements
     }
     
     @Override
+    @Deprecated
     public List<FolderButtonTarget> getFolderButtonTargets() {
         if (currentScreen == null) {
             return new ArrayList<>();
@@ -147,7 +148,7 @@ public class FolderScreenHandler implements
         
         Optional<FolderScreen> folderScreenOpt = ClientEventHandler.getFolderScreen(currentScreen);
         if (folderScreenOpt.isPresent()) {
-            List<FolderButtonTarget> targets = folderScreenOpt.get().getFolderButtonTargets();
+            List<FolderButtonTarget> targets = folderScreenOpt.get().getJEIFolderTargets();
             DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION,
                 "FolderScreenHandler returning {} folder button targets", targets.size());
             return targets;

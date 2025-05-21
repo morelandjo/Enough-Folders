@@ -3,11 +3,16 @@ package com.enoughfolders.client.gui;
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.FolderManager;
+import com.enoughfolders.integrations.IntegrationRegistry;
+import com.enoughfolders.integrations.api.FolderTarget;
+import com.enoughfolders.integrations.api.RecipeViewingIntegration;
 import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
+import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
 import com.enoughfolders.util.DebugLogger;
 import net.minecraft.client.gui.components.Button;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -173,43 +178,59 @@ public class FolderButtonManager {
     }
     
     /**
-     * Gets drop targets for all folder buttons.
+     * Gets folder targets for all folder buttons from a specific integration.
      *
-     * @return List of folder button targets for drag-and-drop
+     * @param <T> The type of folder targets to return
+     * @param integrationClassName The fully qualified class name of the integration to use
+     * @param targetClass The class of the target type to cast to
+     * @return List of folder targets for drag-and-drop, or an empty list if the integration is not available
      */
-    public List<FolderButtonTarget> getFolderButtonTargets() {
-        List<FolderButtonTarget> targets = new ArrayList<>();
-        
-        EnoughFolders.LOGGER.info("Building folder button targets - Number of folder buttons available: {}", folderButtons.size());
-        DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "Getting folder button targets");
-        
-        for (FolderButton button : folderButtons) {
-            Folder folder = button.getFolder();
-            
-            int targetX = button.getX() - 1;
-            int targetY = button.getY() - 1;
-            int targetWidth = button.getWidth() + 2; 
-            int targetHeight = button.getHeight() + 2;
-            
-            DebugLogger.debugValues(DebugLogger.Category.JEI_INTEGRATION, 
-                "Creating button target for folder '{}' at position {}x{} with size {}x{}", 
-                folder.getName(), targetX, targetY, targetWidth, targetHeight);
-            
-            EnoughFolders.LOGGER.info("Creating drop target for folder '{}' at position {}x{} with size {}x{}", 
-                folder.getName(), targetX, targetY, targetWidth, targetHeight);
-            
-            FolderButtonTarget target = new FolderButtonTarget(
-                targetX,
-                targetY,
-                targetWidth,
-                targetHeight,
-                folder
-            );
-            targets.add(target);
-        }
-        
-        EnoughFolders.LOGGER.info("Finished creating folder button targets. Total: {}", targets.size());
-        DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, "Created {} folder button targets", targets.size());
-        return targets;
+    @SuppressWarnings("unchecked")
+    private <T extends FolderTarget> List<T> getFolderTargets(String integrationClassName, Class<T> targetClass) {
+        return IntegrationRegistry.getIntegrationByClassName(integrationClassName)
+            .filter(integration -> integration instanceof RecipeViewingIntegration)
+            .map(integration -> (RecipeViewingIntegration) integration)
+            .filter(RecipeViewingIntegration::isAvailable)
+            .map(integration -> {
+                List<?> targets = integration.createFolderTargets(folderButtons);
+                // Cast the targets to the requested type
+                return (List<T>) targets;
+            })
+            .orElse(new ArrayList<>());
+    }
+    
+    /**
+     * Gets JEI-specific folder targets for all folder buttons.
+     *
+     * @return List of JEI folder button targets for drag-and-drop
+     */
+    public List<FolderButtonTarget> getJEIFolderTargets() {
+        EnoughFolders.LOGGER.debug("Building JEI folder targets - Number of folder buttons available: {}", folderButtons.size());
+        return getFolderTargets("com.enoughfolders.integrations.jei.core.JEIIntegration", FolderButtonTarget.class);
+    }
+    
+    /**
+     * Gets REI-specific folder targets for all folder buttons.
+     *
+     * @return List of REI folder button targets for drag-and-drop
+     */
+    public List<REIFolderTarget> getREIFolderTargets() {
+        EnoughFolders.LOGGER.debug("Building REI folder targets - Number of folder buttons available: {}", folderButtons.size());
+        return getFolderTargets("com.enoughfolders.integrations.rei.core.REIIntegration", REIFolderTarget.class);
+    }
+    
+    /**
+     * Gets folder targets for all folder buttons
+     *
+     * @param integrationClassName The class name of the integration to use
+     * @return List of folder targets for drag-and-drop
+     */
+    public List<? extends FolderTarget> getFolderTargetsForIntegration(String integrationClassName) {
+        return IntegrationRegistry.getIntegrationByClassName(integrationClassName)
+            .filter(integration -> integration instanceof RecipeViewingIntegration)
+            .map(integration -> (RecipeViewingIntegration) integration)
+            .filter(RecipeViewingIntegration::isAvailable)
+            .map(integration -> integration.createFolderTargets(folderButtons))
+            .orElse(new ArrayList<>());
     }
 }

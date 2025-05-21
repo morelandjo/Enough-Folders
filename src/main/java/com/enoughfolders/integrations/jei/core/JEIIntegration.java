@@ -1,9 +1,15 @@
 package com.enoughfolders.integrations.jei.core;
 
 import com.enoughfolders.EnoughFolders;
+import com.enoughfolders.client.gui.FolderButton;
+import com.enoughfolders.client.gui.FolderScreen;
+import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.integrations.ModIntegration;
+import com.enoughfolders.integrations.api.IngredientDragProvider;
+import com.enoughfolders.integrations.api.RecipeViewingIntegration;
 import com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler;
+import com.enoughfolders.util.DebugLogger;
 
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.ingredients.IIngredientHelper;
@@ -16,22 +22,23 @@ import mezz.jei.api.runtime.IRecipesGui;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.IFocus;
 import mezz.jei.api.recipe.IFocusFactory;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.ModList;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Optional;
 
 /**
  * Integration with JEI mod.
  */
-public class JEIIntegration implements ModIntegration {
+public class JEIIntegration implements ModIntegration, IngredientDragProvider, RecipeViewingIntegration {
     /**
      * JEI mod identifier
      */
@@ -559,5 +566,224 @@ public class JEIIntegration implements ModIntegration {
         }
         
         return Optional.empty();
+    }
+    
+    /**
+     * Processes a drop of the currently dragged ingredient onto a folder.
+     * Converts the JEI ingredient to a StoredIngredient and adds it to the folder.
+     * 
+     * @param folder The folder to add the ingredient to
+     * @return True if the drop was successful, false otherwise
+     */
+    @Override
+    public boolean handleIngredientDrop(Folder folder) {
+        Optional<Object> draggedIngredient = getDraggedIngredient();
+        if (draggedIngredient.isEmpty()) {
+            DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "No ingredient is being dragged");
+            return false;
+        }
+        
+        Object ingredient = draggedIngredient.get();
+        DebugLogger.debugValues(DebugLogger.Category.JEI_INTEGRATION,
+            "Processing JEI dragged ingredient drop for folder: {}", folder.getName());
+        
+        // Convert ingredient to StoredIngredient
+        Optional<StoredIngredient> storedIngredient = storeIngredient(ingredient);
+        if (storedIngredient.isEmpty()) {
+            DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "Failed to convert ingredient to StoredIngredient");
+            return false;
+        }
+        
+        // Add ingredient to folder
+        EnoughFolders.getInstance().getFolderManager().addIngredient(folder, storedIngredient.get());
+        
+        // Clear the dragged ingredient so it doesn't get processed again
+        clearCurrentDraggedObject();
+        
+        DebugLogger.debugValues(DebugLogger.Category.JEI_INTEGRATION,
+            "Successfully added JEI ingredient to folder: {}", folder.getName());
+        return true;
+    }
+    
+    /**
+     * Gets the display name of the integration.
+     * 
+     * @return The display name
+     */
+    @Override
+    public String getDisplayName() {
+        return "JEI";
+    }
+    
+    /**
+     * Connect a folder screen to JEI for recipe viewing.
+     * 
+     * @param folderScreen The folder screen to connect
+     * @param containerScreen The container screen
+     */
+    @Override
+    public void connectToFolderScreen(FolderScreen folderScreen, AbstractContainerScreen<?> containerScreen) {
+        try {
+            // Create handler if available
+            if (isAvailable()) {
+                // Connect the folder screen to JEI functionality
+                folderScreen.registerIngredientClickHandler((slot, button, shift, ctrl) -> 
+                    handleIngredientClick(slot, button, shift, ctrl));
+                
+                EnoughFolders.LOGGER.debug("Connected folder screen to JEI");
+            }
+        } catch (Exception e) {
+            EnoughFolders.LOGGER.debug("Could not connect folder to JEI: {}", e.getMessage());
+        }
+    }
+    
+    /**
+     * Save a folder screen to be used during recipe GUI navigation.
+     * 
+     * @param folderScreen The folder screen to save
+     */
+    @Override
+    public void saveLastFolderScreen(FolderScreen folderScreen) {
+        JEIRecipeGuiHandler.saveLastFolderScreen(folderScreen);
+    }
+    
+    /**
+     * Clear the saved folder screen when no longer needed.
+     */
+    @Override
+    public void clearLastFolderScreen() {
+        JEIRecipeGuiHandler.clearLastFolderScreen();
+    }
+    
+    /**
+     * Get the last folder screen saved for recipe GUI navigation.
+     * 
+     * @return Optional containing the folder screen if available
+     */
+    @Override
+    public Optional<FolderScreen> getLastFolderScreen() {
+        return JEIRecipeGuiHandler.getLastFolderScreen();
+    }
+    
+    /**
+     * Check if the given screen is a recipe screen for this integration.
+     * 
+     * @param screen The screen to check
+     * @return True if it's a recipe screen for this integration, false otherwise
+     */
+    @Override
+    public boolean isRecipeScreen(Screen screen) {
+        if (screen == null || !isAvailable()) {
+            return false;
+        }
+        
+        try {
+            // Check if the screen is a JEI IRecipesGui
+            Class<?> recipesGuiClass = Class.forName("mezz.jei.api.runtime.IRecipesGui");
+            return recipesGuiClass.isInstance(screen);
+        } catch (ClassNotFoundException e) {
+            // JEI is not installed or class not found
+            return false;
+        }
+    }
+    
+    /**
+     * Check if the screen being closed is transitioning to a recipe screen for this integration.
+     * 
+     * @param screen The screen that's being closed
+     * @return True if we're transitioning to a recipe screen, false otherwise
+     */
+    @Override
+    public boolean isTransitioningToRecipeScreen(Screen screen) {
+        if (!isAvailable()) {
+            return false;
+        }
+        
+        try {
+            // We need to check if this closure is due to JEI opening a recipe view
+            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+            for (StackTraceElement element : stackTrace) {
+                // Check if JEI recipe classes are in the stack trace
+                if (element.getClassName().contains("mezz.jei") && 
+                    (element.getMethodName().contains("show") || 
+                     element.getClassName().contains("RecipesGui"))) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            EnoughFolders.LOGGER.debug("Error checking for JEI recipe transition: {}", e.getMessage());
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Handle a click on an ingredient slot in a folder.
+     * Shows recipe or uses depending on the mouse button and modifiers.
+     *
+     * @param slot The ingredient slot that was clicked
+     * @param button The mouse button used (0 = left, 1 = right)
+     * @param shift Whether shift was held
+     * @param ctrl Whether ctrl was held
+     * @return true if the click was handled, false otherwise
+     */
+    public boolean handleIngredientClick(com.enoughfolders.client.gui.IngredientSlot slot, int button, 
+                                          boolean shift, boolean ctrl) {
+        try {
+            if (!isAvailable() || jeiRuntime == null) {
+                return false;
+            }
+            
+            // Get the stored ingredient from the slot
+            StoredIngredient storedIngredient = slot.getIngredient();
+            if (storedIngredient == null) {
+                return false;
+            }
+            
+            // Convert stored ingredient to JEI ingredient
+            Optional<?> ingredientOpt = getIngredientFromStored(storedIngredient);
+            if (ingredientOpt.isEmpty()) {
+                return false;
+            }
+            
+            Object ingredient = ingredientOpt.get();
+            
+            // Determine action based on mouse button and modifiers
+            if (button == 0) {
+                // Left click - show recipes
+                showRecipes(ingredient);
+                return true;
+            } else if (button == 1) {
+                // Right click - show uses
+                showUses(ingredient);
+                return true;
+            }
+        } catch (Exception e) {
+            EnoughFolders.LOGGER.error("Error handling ingredient click: {}", e.getMessage());
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Creates folder targets that can be used for ingredient drops from JEI.
+     * 
+     * @param folderButtons The list of folder buttons to create targets for
+     * @return A list of folder targets compatible with JEI
+     */
+    @Override
+    public List<com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget> createFolderTargets(
+            List<FolderButton> folderButtons) {
+        EnoughFolders.LOGGER.debug("Creating JEI folder targets - Number of folder buttons available: {}", 
+            folderButtons.size());
+        DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "Getting JEI folder targets");
+        
+        List<com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget> targets = 
+            com.enoughfolders.integrations.jei.gui.targets.JEIFolderTargetFactory
+                .getInstance()
+                .createTargets(folderButtons);
+        
+        DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, "Created {} JEI folder targets", targets.size());
+        return targets;
     }
 }

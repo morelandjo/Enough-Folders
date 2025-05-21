@@ -1,6 +1,7 @@
 package com.enoughfolders.integrations.jei.gui.handlers;
 
 import com.enoughfolders.EnoughFolders;
+import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.integrations.IntegrationRegistry;
 import com.enoughfolders.integrations.jei.core.JEIIntegration;
@@ -81,7 +82,14 @@ public class DragDropHandler implements IGhostIngredientHandler<Screen> {
         }
         
         // Get targets for all visible folder buttons
-        List<FolderButtonTarget> folderTargets = targetGui.getFolderButtonTargets();
+        List<FolderButtonTarget> folderTargets;
+        if (targetGui instanceof FolderScreen) {
+            folderTargets = ((FolderScreen) targetGui).getJEIFolderTargets();
+        } else {
+            @SuppressWarnings("deprecation")
+            List<FolderButtonTarget> deprecatedTargets = targetGui.getFolderButtonTargets();
+            folderTargets = deprecatedTargets; // Use deprecated method as fallback
+        }
         DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, "Found folder button targets: {}", folderTargets.size());
         
         // Create targets for each folder button

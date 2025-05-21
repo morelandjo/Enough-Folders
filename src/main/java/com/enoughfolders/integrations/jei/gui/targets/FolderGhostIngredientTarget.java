@@ -23,7 +23,9 @@ public interface FolderGhostIngredientTarget {
      * JEI ingredient drops directly. 
      * 
      * @return List of folder button targets, may be empty
+     * @deprecated Use the RecipeViewingIntegration.createFolderTargets() method instead
      */
+    @Deprecated
     default List<FolderButtonTarget> getFolderButtonTargets() {
         return Collections.emptyList();
     }

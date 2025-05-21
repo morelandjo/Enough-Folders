@@ -1,39 +1,54 @@
-package com.enoughfolders.integrations.jei.gui.targets;
+package com.enoughfolders.integrations.rei.gui.targets;
 
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.integrations.api.FolderTarget;
-import net.minecraft.client.renderer.Rect2i;
+import me.shedaniel.math.Rectangle;
 
 /**
- * Represents a folder button that can be a target for JEI ingredient drops.
+ * Represents a folder button that can be a target for REI ingredient drops.
  */
-public class FolderButtonTarget implements FolderTarget {
-    private final Rect2i area;
+public class REIFolderTarget implements FolderTarget {
+    private final Rectangle area;
     private final Folder folder;
     
     /**
-     * Create a new folder button target
+     * Creates a new REI folder target.
+     * 
      * @param x X position of the button
      * @param y Y position of the button
      * @param width Width of the button
      * @param height Height of the button
      * @param folder The folder this button represents
      */
-    public FolderButtonTarget(int x, int y, int width, int height, Folder folder) {
-        this.area = new Rect2i(x, y, width, height);
+    public REIFolderTarget(int x, int y, int width, int height, Folder folder) {
+        this.area = new Rectangle(x, y, width, height);
         this.folder = folder;
     }
     
     /**
-     * Get the area of the folder button
-     * @return The area rectangle
+     * Gets the area rectangle for REI operations.
+     * 
+     * @return The area as a REI Rectangle
      */
-    public Rect2i getArea() {
+    public Rectangle getAreaRectangle() {
         return area;
     }
     
     /**
-     * Get the folder this button represents
+     * Checks if the given point is within this target.
+     * 
+     * @param x X coordinate to check
+     * @param y Y coordinate to check
+     * @return True if the point is within this target
+     */
+    @Override
+    public boolean isPointInTarget(double x, double y) {
+        return area.contains(x, y);
+    }
+    
+    /**
+     * Gets the folder associated with this target.
+     * 
      * @return The folder
      */
     @Override
@@ -42,20 +57,8 @@ public class FolderButtonTarget implements FolderTarget {
     }
     
     /**
-     * Checks if a point is within this target's bounds.
-     *
-     * @param x The X coordinate to check
-     * @param y The Y coordinate to check
-     * @return True if the point is within the target bounds
-     */
-    @Override
-    public boolean isPointInTarget(double x, double y) {
-        return area.contains((int)x, (int)y);
-    }
-    
-    /**
      * Gets the X position of the target.
-     *
+     * 
      * @return The X position
      */
     @Override
@@ -65,7 +68,7 @@ public class FolderButtonTarget implements FolderTarget {
     
     /**
      * Gets the Y position of the target.
-     *
+     * 
      * @return The Y position
      */
     @Override
@@ -75,7 +78,7 @@ public class FolderButtonTarget implements FolderTarget {
     
     /**
      * Gets the width of the target.
-     *
+     * 
      * @return The width
      */
     @Override
@@ -85,7 +88,7 @@ public class FolderButtonTarget implements FolderTarget {
     
     /**
      * Gets the height of the target.
-     *
+     * 
      * @return The height
      */
     @Override

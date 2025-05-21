@@ -156,7 +156,7 @@ public class FolderTargetFactory {
         }
 
         // Get targets for all visible folder buttons
-        List<FolderButtonTarget> folderTargets = folderScreen.getFolderButtonTargets();
+        List<FolderButtonTarget> folderTargets = folderScreen.getJEIFolderTargets();
         DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, 
             "Found {} folder button targets", folderTargets.size());
         

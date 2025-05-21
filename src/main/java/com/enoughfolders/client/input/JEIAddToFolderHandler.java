@@ -21,7 +21,7 @@ public class JEIAddToFolderHandler {
      * Safe to call even if JEI is not present.
      */
     public static void handleAddToFolderKeyPress() {
-        EnoughFolders.LOGGER.info("JEI Add to Folder handler activated");
+        DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "JEI Add to Folder handler activated");
         
         // Make sure we have an active folder
         FolderManager folderManager = EnoughFolders.getInstance().getFolderManager();
@@ -32,7 +32,7 @@ public class JEIAddToFolderHandler {
             return;
         }
         
-        EnoughFolders.LOGGER.debug("Active folder found: {}", activeFolder.get().getName());
+        DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, "Active folder found: {}", activeFolder.get().getName());
         
         // Use reflection to safely access JEI integration without direct imports
         try {
@@ -52,22 +52,23 @@ public class JEIAddToFolderHandler {
                 
                 if (jeiRuntimeOpt.isPresent()) {
                     Object jeiRuntime = jeiRuntimeOpt.get();
-                    EnoughFolders.LOGGER.debug("JEI runtime found, checking for ingredients under mouse");
+                    DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "JEI runtime found, checking for ingredients under mouse");
                     
                     // Now use reflection to access JEI APIs
                     processJeiRuntimeWithReflection(jeiRuntime, jeiIntegration, activeFolder.get());
                 } else {
-                    EnoughFolders.LOGGER.debug("JEI runtime not available");
+                    DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "JEI runtime not available");
                 }
             } else {
-                EnoughFolders.LOGGER.debug("JEI integration not available");
+                DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "JEI integration not available");
             }
         } catch (ClassNotFoundException e) {
             // JEI is not present in the classpath, this is totally ok
-            EnoughFolders.LOGGER.debug("JEI classes not found, skipping JEI integration");
+            DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "JEI classes not found, skipping JEI integration");
         } catch (Exception e) {
             // Something went wrong with reflection or JEI API
             EnoughFolders.LOGGER.error("Error interacting with JEI runtime", e);
+            DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, "Error interacting with JEI runtime: {}", e.getMessage());
         }
     }
     
@@ -85,7 +86,7 @@ public class JEIAddToFolderHandler {
         boolean isListDisplayed = (Boolean) isListDisplayedMethod.invoke(ingredientListOverlay);
         
         if (!isListDisplayed) {
-            EnoughFolders.LOGGER.debug("JEI ingredient list overlay is not displayed");
+            DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "JEI ingredient list overlay is not displayed");
             return;
         }
         
@@ -98,7 +99,7 @@ public class JEIAddToFolderHandler {
             java.lang.reflect.Method getIngredientMethod = typedIngredient.getClass().getMethod("getIngredient");
             Object rawIngredient = getIngredientMethod.invoke(typedIngredient);
             
-            EnoughFolders.LOGGER.info("Found ingredient under mouse: {}", rawIngredient.getClass().getName());
+            DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, "Found ingredient under mouse: {}", rawIngredient.getClass().getName());
             
             // Store the ingredient
             java.lang.reflect.Method storeIngredientMethod = jeiIntegration.getClass().getMethod("storeIngredient", Object.class);
@@ -107,7 +108,8 @@ public class JEIAddToFolderHandler {
             if (storedIngredientOpt.isPresent()) {
                 Object storedIngredient = storedIngredientOpt.get();
                 if (storedIngredient instanceof StoredIngredient) {
-                    EnoughFolders.LOGGER.debug("Successfully converted to StoredIngredient: {}", storedIngredient);
+                    DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, 
+                        "Successfully converted to StoredIngredient: {}", storedIngredient);
                     
                     // Add the ingredient to the active folder
                     EnoughFolders.getInstance().getFolderManager().addIngredient(activeFolder, (StoredIngredient)storedIngredient);
@@ -118,12 +120,16 @@ public class JEIAddToFolderHandler {
                 } else {
                     EnoughFolders.LOGGER.error("Stored ingredient is not of expected type: {}", 
                         storedIngredient != null ? storedIngredient.getClass().getName() : "null");
+                    DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, 
+                        "Stored ingredient is not of expected type: {}", 
+                        storedIngredient != null ? storedIngredient.getClass().getName() : "null");
                 }
             } else {
-                EnoughFolders.LOGGER.debug("Failed to convert ingredient to StoredIngredient: {}", rawIngredient);
+                DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, 
+                    "Failed to convert ingredient to StoredIngredient: {}", rawIngredient);
             }
         } else {
-            EnoughFolders.LOGGER.debug("No ingredient found under mouse cursor");
+            DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "No ingredient found under mouse cursor");
         }
     }
 }

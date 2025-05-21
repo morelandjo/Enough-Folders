@@ -7,6 +7,7 @@ import com.enoughfolders.integrations.IntegrationRegistry;
 import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
 import com.enoughfolders.integrations.jei.gui.targets.FolderGhostIngredientTarget;
+import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
 import com.enoughfolders.util.DebugLogger;
 
 import net.minecraft.client.Minecraft;
@@ -480,13 +481,21 @@ public class FolderScreen implements FolderGhostIngredientTarget {
     }
     
     /**
-     * Gets drop targets for all folder buttons.
+     * Gets JEI-specific folder targets for all folder buttons.
      *
-     * @return List of folder button targets for drag-and-drop
+     * @return List of JEI folder button targets for drag-and-drop
      */
-    @Override
-    public List<FolderButtonTarget> getFolderButtonTargets() {
-        return buttonManager.getFolderButtonTargets();
+    public List<FolderButtonTarget> getJEIFolderTargets() {
+        return buttonManager.getJEIFolderTargets();
+    }
+
+    /**
+     * Gets REI-specific folder targets for all folder buttons.
+     *
+     * @return List of REI folder targets for drag-and-drop
+     */
+    public List<REIFolderTarget> getREIFolderTargets() {
+        return buttonManager.getREIFolderTargets();
     }
 
     /**

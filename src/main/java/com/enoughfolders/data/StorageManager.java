@@ -1,6 +1,8 @@
 package com.enoughfolders.data;
 
 import com.enoughfolders.EnoughFolders;
+import com.enoughfolders.util.DebugLogger;
+import com.enoughfolders.util.DebugLogger.Category;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -99,7 +101,11 @@ public class StorageManager {
         try {
             Files.createDirectories(worldFolderPath);
         } catch (IOException e) {
+            // Keep critical error in main log
             EnoughFolders.LOGGER.error("Failed to create directory for world data", e);
+            // Add debug logging
+            DebugLogger.debugValue(Category.FOLDER_MANAGER, 
+                "Failed to create directory for world data: {}", e.getMessage());
         }
         
         return worldFolderPath.resolve(FOLDERS_FILE).toFile();

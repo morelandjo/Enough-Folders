@@ -3,10 +3,12 @@ package com.enoughfolders.client.event;
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.integrations.IntegrationRegistry;
+import com.enoughfolders.integrations.api.RecipeViewingIntegration;
 import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.util.DebugLogger;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
 import net.neoforged.api.distmarker.Dist;
@@ -17,7 +19,9 @@ import net.neoforged.fml.common.EventBusSubscriber.Bus;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -66,8 +70,8 @@ public class ClientEventHandler {
             FolderScreen folderScreen = FOLDER_SCREENS.get(containerScreen);
             folderScreen.init(width, height);
             
-            // Connect to REI for recipe viewing integration if available
-            connectFolderToREI(folderScreen, containerScreen);
+            // Connect to recipe viewing mods if available
+            connectFolderToRecipeViewers(folderScreen, containerScreen);
             
             DebugLogger.debugValues(DebugLogger.Category.GUI_STATE, 
                 "Folder screen initialized with width: {}, height: {}", width, height);
@@ -81,46 +85,60 @@ public class ClientEventHandler {
      */
     @SubscribeEvent
     public static void onScreenClosed(ScreenEvent.Closing event) {
-        // Check if we're transitioning to a JEI recipe screen
+        // Check if we're transitioning to a recipe screen
         boolean goingToRecipeScreen = false;
+        Screen currentScreen = event.getScreen();
         
-        // Save current folder screen if transitioning to JEI recipe view
-        if (event.getScreen() instanceof AbstractContainerScreen<?> containerScreen) {
-            
-            // Check if JEI is loaded before trying to detect JEI recipe transitions
-            try {
-                // Only check for JEI transitions if JEI is available
-                if (IntegrationRegistry.getIntegration(JEIIntegration.class).isPresent()) {
-                    // We need to check if this closure is due to JEI opening a recipe view
-                    StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-                    for (StackTraceElement element : stackTrace) {
-                        // Check if JEI recipe classes are in the stack trace
-                        if (element.getClassName().contains("mezz.jei") && 
-                            (element.getMethodName().contains("show") || 
-                             element.getClassName().contains("RecipesGui"))) {
-                            goingToRecipeScreen = true;
-                            break;
-                        }
-                    }
+        // Save current folder screen if transitioning to a recipe view
+        if (currentScreen instanceof AbstractContainerScreen<?> containerScreen) {
+            // Check all recipe viewing integrations for transitions
+            for (RecipeViewingIntegration integration : getRecipeViewingIntegrations()) {
+                if (integration.isAvailable() && integration.isTransitioningToRecipeScreen(currentScreen)) {
+                    goingToRecipeScreen = true;
+                    EnoughFolders.LOGGER.debug("Detected transition to {} recipe screen", integration.getDisplayName());
+                    break;
                 }
-            } catch (Exception e) {
-                DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, 
-                    "Error checking for JEI recipe transition: {}", e.getMessage());
             }
             
             // Remove the folder screen from container map
             FOLDER_SCREENS.remove(containerScreen);
         }
         
-        // Only clear the saved folder screen when NOT going to a JEI recipe screen
+        // Only clear the saved folder screens when NOT going to a recipe screen
         if (!goingToRecipeScreen) {
-            DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, 
-                "Screen closing but not going to JEI - clearing folder screen");
-            // Only try to access JEIRecipeGuiHandler if JEI is available
-            if (IntegrationRegistry.getIntegration(JEIIntegration.class).isPresent()) {
-                com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler.clearLastFolderScreen();
+            DebugLogger.debug(DebugLogger.Category.GUI_STATE, 
+                "Screen closing but not going to recipe view - clearing folder screens");
+            
+            // Clear all saved folder screens
+            for (RecipeViewingIntegration integration : getRecipeViewingIntegrations()) {
+                if (integration.isAvailable()) {
+                    integration.clearLastFolderScreen();
+                }
             }
         }
+    }
+    
+    /**
+     * Get all available recipe viewing integrations.
+     * 
+     * @return List of recipe viewing integrations
+     */
+    private static List<RecipeViewingIntegration> getRecipeViewingIntegrations() {
+        List<RecipeViewingIntegration> integrations = new ArrayList<>();
+        
+        // Add JEI integration if available
+        IntegrationRegistry.getIntegration(JEIIntegration.class)
+            .ifPresent(integrations::add);
+        
+        // Add REI integration if available
+        IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.rei.core.REIIntegration")
+            .ifPresent(integration -> {
+                if (integration instanceof RecipeViewingIntegration) {
+                    integrations.add((RecipeViewingIntegration) integration);
+                }
+            });
+        
+        return integrations;
     }
     
     /**
@@ -151,12 +169,15 @@ public class ClientEventHandler {
         if (event.getScreen() instanceof AbstractContainerScreen<?> containerScreen) {
             FolderScreen folderScreen = FOLDER_SCREENS.get(containerScreen);
             if (folderScreen != null) {
-                // Always save the folder screen before any click processing to ensure it's available
-                IntegrationRegistry.getIntegration(JEIIntegration.class).ifPresent(jeiIntegration -> {
-                    com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler.saveLastFolderScreen(folderScreen);
-                    DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, 
-                        "Saved folder screen in mouse click handler to preserve it during JEI navigation");
-                });
+                // Save the folder screen
+                for (RecipeViewingIntegration integration : getRecipeViewingIntegrations()) {
+                    if (integration.isAvailable()) {
+                        integration.saveLastFolderScreen(folderScreen);
+                        DebugLogger.debugValue(DebugLogger.Category.GUI_STATE, 
+                            "Saved folder screen in mouse click handler to preserve it during {} navigation", 
+                            integration.getDisplayName());
+                    }
+                }
                 
                 // Process the click if it's in the folder UI area
                 if (folderScreen.isVisible(event.getMouseX(), event.getMouseY())) {
@@ -167,18 +188,47 @@ public class ClientEventHandler {
             }
         }
         else {
-            // Check for JEI recipe GUI screen without directly referencing the class
-            // to avoid ClassNotFoundException if JEI is not installed
+            Screen currentScreen = event.getScreen();
+            
+            // Check for recipe screens
+            for (RecipeViewingIntegration integration : getRecipeViewingIntegrations()) {
+                if (!integration.isAvailable()) {
+                    continue;
+                }
+                
+                try {
+                    // Check if this is a recipe screen and we have a saved folder screen
+                    if (integration.isRecipeScreen(currentScreen)) {
+                        Optional<FolderScreen> folderScreenOpt = integration.getLastFolderScreen();
+                        
+                        if (folderScreenOpt.isPresent()) {
+                            // Handle the click in the folder screen if it's visible
+                            FolderScreen folderScreen = folderScreenOpt.get();
+                            if (folderScreen.isVisible(event.getMouseX(), event.getMouseY())) {
+                                if (folderScreen.mouseClicked(event.getMouseX(), event.getMouseY(), event.getButton())) {
+                                    event.setCanceled(true);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    // Error handling recipe screen click, log and continue
+                    DebugLogger.debugValue(DebugLogger.Category.GUI_STATE, 
+                        "Error handling recipe screen mouse click: {}", 
+                        e.getMessage());
+                }
+            }
+            
+            // Special case for JEI recipe screen click handling with additional functionality
             try {
-                // Only try to access JEI classes if JEI integration is available
                 Optional<JEIIntegration> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegration.class);
-                if (jeiIntegration.isPresent() && 
-                    com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler.getLastFolderScreen().isPresent()) {
-                    // Use reflection to avoid direct class reference
+                if (jeiIntegration.isPresent() && jeiIntegration.get().isRecipeScreen(currentScreen) && 
+                    jeiIntegration.get().getLastFolderScreen().isPresent()) {
                     Class<?> recipesGuiClass = Class.forName("mezz.jei.api.runtime.IRecipesGui");
-                    if (recipesGuiClass.isInstance(event.getScreen())) {
+                    if (recipesGuiClass.isInstance(currentScreen)) {
                         boolean handled = com.enoughfolders.integrations.jei.drag.managers.RecipeGuiManager.handleMouseClick(
-                            event.getScreen(), event.getMouseX(), event.getMouseY(), event.getButton());
+                            currentScreen, event.getMouseX(), event.getMouseY(), event.getButton());
                         if (handled) {
                             event.setCanceled(true);
                         }
@@ -186,33 +236,9 @@ public class ClientEventHandler {
                 }
             } catch (ClassNotFoundException e) {
                 // JEI is not installed, ignore silently
-            }
-            
-            // Check for REI recipe GUI screen
-            try {
-                // Check if we have a saved folder screen from REI
-                Optional<FolderScreen> folderScreenOpt = 
-                    com.enoughfolders.integrations.rei.gui.handlers.REIRecipeGuiHandler.getLastFolderScreen();
-                
-                if (folderScreenOpt.isPresent()) {
-                    // Check screen class name to see if it's a REI recipe screen
-                    String screenClassName = event.getScreen().getClass().getName();
-                    if (screenClassName.contains("shedaniel.rei") && 
-                        (screenClassName.contains("RecipeScreen") || screenClassName.contains("ViewSearchBuilder"))) {
-                        
-                        // Handle the click in the folder screen if it's visible
-                        FolderScreen folderScreen = folderScreenOpt.get();
-                        if (folderScreen.isVisible(event.getMouseX(), event.getMouseY())) {
-                            if (folderScreen.mouseClicked(event.getMouseX(), event.getMouseY(), event.getButton())) {
-                                event.setCanceled(true);
-                            }
-                        }
-                    }
-                }
             } catch (Exception e) {
-                // REI is not installed or there was an error, log and continue
-                DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                    "Error handling REI recipe screen mouse click: {}", e.getMessage());
+                DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, 
+                    "Error handling JEI recipe manager click: {}", e.getMessage());
             }
         }
     }
@@ -316,38 +342,56 @@ public class ClientEventHandler {
         }
     }
      /**
-     * Connect a folder screen to REI for recipe viewing.
+     * Connect a folder screen to available recipe viewing mods
      * 
      * @param folderScreen The folder screen to connect
      * @param containerScreen The container screen
      */
-    private static void connectFolderToREI(FolderScreen folderScreen, AbstractContainerScreen<?> containerScreen) {
+    private static void connectFolderToRecipeViewers(FolderScreen folderScreen, AbstractContainerScreen<?> containerScreen) {
+        // Connect to REI if available
+        connectToRecipeViewer("rei", folderScreen, containerScreen);
+        
+        // Connect to JEI if available
+        connectToRecipeViewer("jei", folderScreen, containerScreen);
+    }
+    
+    /**
+     * Connect a folder screen to a specific recipe viewer.
+     * 
+     * @param integrationId The ID of the integration to use
+     * @param folderScreen The folder screen to connect
+     * @param containerScreen The container screen
+     */
+    private static void connectToRecipeViewer(String integrationId, FolderScreen folderScreen, AbstractContainerScreen<?> containerScreen) {
         try {
-            // Get REI integration through the registry
-            com.enoughfolders.integrations.IntegrationRegistry.getIntegration(
-                com.enoughfolders.integrations.rei.core.REIIntegration.class).ifPresent(integration -> {
-                    // Create handler if available
-                    if (integration.isAvailable()) {
-                        com.enoughfolders.integrations.rei.gui.handlers.REIFolderIngredientHandler handler = 
-                            new com.enoughfolders.integrations.rei.gui.handlers.REIFolderIngredientHandler(
-                                (com.enoughfolders.integrations.rei.core.REIIntegration) integration);
-                        
-                        // Connect handler to folder screen
-                        handler.connectToFolderScreen(folderScreen, containerScreen);
-                    }
-                });
+            if (IntegrationRegistry.isIntegrationAvailable(integrationId)) {
+                IntegrationRegistry.getIntegrationByClassName(getRecipeViewerClassName(integrationId))
+                    .ifPresent(integration -> {
+                        if (integration instanceof RecipeViewingIntegration) {
+                            ((RecipeViewingIntegration) integration).connectToFolderScreen(folderScreen, containerScreen);
+                            EnoughFolders.LOGGER.debug("Connected folder screen to {} recipe viewer", integrationId);
+                        }
+                    });
+            }
         } catch (Exception e) {
-            // If there's an exception, it might be because REI is not installed
-            EnoughFolders.LOGGER.debug("Could not connect folder to REI: {}", e.getMessage());
+            EnoughFolders.LOGGER.debug("Could not connect folder to {} recipe viewer: {}", integrationId, e.getMessage());
         }
     }
     
     /**
-     * Check if any recipe viewing mod (REI or JEI) is available.
+     * Get the class name for a recipe viewer integration.
      * 
-     * @return true if either REI or JEI is available
+     * @param integrationId The ID of the integration
+     * @return The fully qualified class name
      */
-    private static boolean isRecipeViewingAvailable() {
-        return com.enoughfolders.integrations.RecipeIntegrationHelper.isRecipeViewingAvailable();
+    private static String getRecipeViewerClassName(String integrationId) {
+        if ("rei".equals(integrationId)) {
+            return "com.enoughfolders.integrations.rei.core.REIIntegration";
+        } else if ("jei".equals(integrationId)) {
+            return "com.enoughfolders.integrations.jei.core.JEIIntegration";
+        }
+        return "";
     }
+    
+
 }
