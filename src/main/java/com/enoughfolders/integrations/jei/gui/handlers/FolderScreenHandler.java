@@ -3,7 +3,7 @@ package com.enoughfolders.integrations.jei.gui.handlers;
 import com.enoughfolders.client.event.ClientEventHandler;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.integrations.IntegrationRegistry;
-import com.enoughfolders.integrations.jei.core.JEIIntegration;
+import com.enoughfolders.integrations.jei.core.JEIIntegrationCore;
 import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
 import com.enoughfolders.integrations.jei.gui.targets.FolderGhostIngredientTarget;
 import com.enoughfolders.integrations.jei.gui.targets.FolderTargetFactory;
@@ -76,8 +76,8 @@ public class FolderScreenHandler implements
             ingredient.getIngredient().getClass().getSimpleName(), 
             doStart);
         
-        // Get JEI integration
-        Optional<JEIIntegration> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegration.class);
+        // Check for JEI integration
+        Optional<JEIIntegrationCore> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegrationCore.class);
         if (jeiIntegration.isEmpty()) {
             DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "JEI integration not available");
             return new ArrayList<>();
@@ -109,8 +109,8 @@ public class FolderScreenHandler implements
         DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "FolderScreenHandler.onComplete called");
         
         // Clear the current dragged ingredient reference
-        IntegrationRegistry.getIntegration(JEIIntegration.class)
-            .ifPresent(JEIIntegration::clearCurrentDraggedObject);
+        IntegrationRegistry.getIntegration(JEIIntegrationCore.class)
+            .ifPresent(JEIIntegrationCore::clearCurrentDraggedObject);
     }
 
     /**
@@ -158,6 +158,10 @@ public class FolderScreenHandler implements
         
     @Override
     public void onIngredientAdded() {
+        // Clear the dragged ingredient from the JEI integration
+        IntegrationRegistry.getIntegration(JEIIntegrationCore.class)
+            .ifPresent(JEIIntegrationCore::clearCurrentDraggedObject);
+        
         if (currentScreen == null) {
             return;
         }

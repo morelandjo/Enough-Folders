@@ -4,7 +4,7 @@ import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.integrations.IntegrationRegistry;
-import com.enoughfolders.integrations.jei.core.JEIIntegration;
+import com.enoughfolders.integrations.jei.core.JEIIntegrationCore;
 import com.enoughfolders.util.DebugLogger;
 import mezz.jei.api.gui.handlers.IGhostIngredientHandler.Target;
 import net.minecraft.client.renderer.Rect2i;
@@ -45,7 +45,7 @@ public class FolderTargetFactory {
                     folder.getName(), ingredientObj.getClass().getSimpleName());
                 
                 // Get JEI integration
-                IntegrationRegistry.getIntegration(JEIIntegration.class).ifPresent(jeiIntegration -> {
+                IntegrationRegistry.getIntegration(JEIIntegrationCore.class).ifPresent(jeiIntegration -> {
                     // Convert the ingredient to StoredIngredient format
                     jeiIntegration.storeIngredient(ingredientObj)
                         .ifPresent(storedIngredient -> {
@@ -101,7 +101,7 @@ public class FolderTargetFactory {
                     folder.getName(), ingredientObj.getClass().getSimpleName());
                 
                 // Get JEI integration
-                IntegrationRegistry.getIntegration(JEIIntegration.class).ifPresent(jeiIntegration -> {
+                IntegrationRegistry.getIntegration(JEIIntegrationCore.class).ifPresent(jeiIntegration -> {
                     // Convert the ingredient to StoredIngredient format
                     jeiIntegration.storeIngredient(ingredientObj)
                         .ifPresent(storedIngredient -> {

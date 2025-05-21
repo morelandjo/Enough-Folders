@@ -6,7 +6,7 @@ import com.enoughfolders.data.FolderManager;
 import com.enoughfolders.integrations.IntegrationRegistry;
 import com.enoughfolders.integrations.api.FolderTarget;
 import com.enoughfolders.integrations.api.RecipeViewingIntegration;
-import com.enoughfolders.integrations.jei.core.JEIIntegration;
+import com.enoughfolders.integrations.jei.core.JEIIntegrationCore;
 import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
 import com.enoughfolders.integrations.jei.gui.targets.FolderGhostIngredientTarget;
 import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
@@ -112,7 +112,7 @@ public class FolderScreen implements FolderGhostIngredientTarget {
         }
         
         boolean isJeiRecipeGuiOpen = false;
-        Optional<JEIIntegration> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegration.class);
+        Optional<JEIIntegrationCore> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegrationCore.class);
         if (jeiIntegration.isPresent()) {
             isJeiRecipeGuiOpen = jeiIntegration.get().isRecipeGuiOpen();
             if (isJeiRecipeGuiOpen) {
@@ -520,7 +520,7 @@ public class FolderScreen implements FolderGhostIngredientTarget {
         }
         
         // Use JEI targets
-        if (IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.jei.core.JEIIntegration")
+        if (IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.jei.core.JEIIntegrationCore")
                 .filter(integration -> integration instanceof RecipeViewingIntegration)
                 .map(integration -> (RecipeViewingIntegration) integration)
                 .filter(RecipeViewingIntegration::isAvailable)
@@ -553,7 +553,7 @@ public class FolderScreen implements FolderGhostIngredientTarget {
         }
         
         // Try JEI second
-        if (IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.jei.core.JEIIntegration")
+        if (IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.jei.core.JEIIntegrationCore")
                 .filter(integration -> integration instanceof RecipeViewingIntegration)
                 .map(integration -> (RecipeViewingIntegration) integration)
                 .filter(RecipeViewingIntegration::isAvailable)

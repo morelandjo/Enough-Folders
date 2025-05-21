@@ -2,7 +2,7 @@ package com.enoughfolders.integrations;
 
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.StoredIngredient;
-import com.enoughfolders.integrations.jei.core.JEIIntegration;
+import com.enoughfolders.integrations.jei.core.JEIIntegrationCore;
 import com.enoughfolders.integrations.rei.core.REIIntegration;
 import com.enoughfolders.util.DebugLogger;
 
@@ -86,7 +86,7 @@ public class RecipeIntegrationHelper {
                         return false;
                     }).orElse(false);
             } else if ("jei".equals(integrationId)) {
-                return IntegrationRegistry.getIntegration(JEIIntegration.class)
+                return IntegrationRegistry.getIntegration(JEIIntegrationCore.class)
                     .map(jei -> {
                         Optional<?> jeiIngredient = jei.getIngredientFromStored(ingredient);
                         if (jeiIngredient.isPresent()) {
@@ -125,7 +125,7 @@ public class RecipeIntegrationHelper {
                         return false;
                     }).orElse(false);
             } else if ("jei".equals(integrationId)) {
-                return IntegrationRegistry.getIntegration(JEIIntegration.class)
+                return IntegrationRegistry.getIntegration(JEIIntegrationCore.class)
                     .map(jei -> {
                         Optional<?> jeiIngredient = jei.getIngredientFromStored(ingredient);
                         if (jeiIngredient.isPresent()) {

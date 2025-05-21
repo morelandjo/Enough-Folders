@@ -6,7 +6,7 @@ import com.enoughfolders.client.gui.FolderButton;
 import com.enoughfolders.client.gui.FolderScreen;
 import java.util.List;
 import com.enoughfolders.integrations.IntegrationRegistry;
-import com.enoughfolders.integrations.jei.core.JEIIntegration;
+import com.enoughfolders.integrations.jei.core.JEIIntegrationCore;
 import com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler;
 import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
 import com.enoughfolders.util.DebugLogger;
@@ -43,7 +43,7 @@ public class JEIDragDropManager {
             "Mouse pressed at {},{} - checking for JEI draggable ingredient", mouseX, mouseY);
         
         // Store the current dragged ingredient from JEI
-        Optional<JEIIntegration> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegration.class);
+        Optional<JEIIntegrationCore> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegrationCore.class);
         jeiIntegration.ifPresent(integration -> {
             Optional<Object> draggedIngredient = integration.getDraggedIngredient();
             if (draggedIngredient.isPresent()) {
@@ -227,7 +227,7 @@ public class JEIDragDropManager {
             // Get the active folder
             EnoughFolders.getInstance().getFolderManager().getActiveFolder().ifPresent(folder -> {
                 // Get JEI integration
-                IntegrationRegistry.getIntegration(JEIIntegration.class).ifPresent(integration -> {
+                IntegrationRegistry.getIntegration(JEIIntegrationCore.class).ifPresent(integration -> {
                     // Convert JEI ingredient to stored format
                     integration.storeIngredient(currentDraggedIngredient).ifPresent(ingredient -> {
                         EnoughFolders.getInstance().getFolderManager().addIngredient(folder, ingredient);

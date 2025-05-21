@@ -37,7 +37,7 @@ public class JEIAddToFolderHandler {
             Class.forName("mezz.jei.api.runtime.IJeiRuntime");
             
             // Get the JEI integration using the class name
-            String jeiIntegrationClassName = "com.enoughfolders.integrations.jei.core.JEIIntegration";
+            String jeiIntegrationClassName = "com.enoughfolders.integrations.jei.core.JEIIntegrationCore";
             Optional<ModIntegration> jeiIntegrationOpt = IntegrationRegistry.getIntegrationByClassName(jeiIntegrationClassName);
             
             if (jeiIntegrationOpt.isPresent()) {

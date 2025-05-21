@@ -3,7 +3,7 @@ package com.enoughfolders.integrations;
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.integrations.ftb.core.FTBLibraryIntegration;
-import com.enoughfolders.integrations.jei.core.JEIIntegration;
+import com.enoughfolders.integrations.jei.core.JEIIntegrationCore;
 import com.enoughfolders.integrations.rei.core.REIIntegration;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -48,7 +48,7 @@ public class IntegrationRegistry {
             try {
                 // Check if JEI classes are available before adding the integration
                 Class.forName("mezz.jei.api.runtime.IJeiRuntime");
-                integrations.add(new JEIIntegration());
+                integrations.add(new JEIIntegrationCore());
                 EnoughFolders.LOGGER.info("JEI integration enabled");
             } catch (ClassNotFoundException e) {
                 EnoughFolders.LOGGER.info("JEI not found, integration disabled");

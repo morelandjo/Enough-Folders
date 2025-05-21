@@ -205,7 +205,7 @@ public class FolderButtonManager {
      */
     public List<FolderButtonTarget> getJEIFolderTargets() {
         EnoughFolders.LOGGER.debug("Building JEI folder targets - Number of folder buttons available: {}", folderButtons.size());
-        return getFolderTargets("com.enoughfolders.integrations.jei.core.JEIIntegration", FolderButtonTarget.class);
+        return getFolderTargets("com.enoughfolders.integrations.jei.core.JEIIntegrationCore", FolderButtonTarget.class);
     }
     
     /**
