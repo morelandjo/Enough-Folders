@@ -198,7 +198,6 @@ public class IngredientGridManager {
         int gridWidth = ingredientColumns * CONTENT_SLOT_SIZE;
         int gridHeight = rowsNeeded * CONTENT_SLOT_SIZE;
         
-        // Log the calculated content drop area dimensions
         DebugLogger.debugValues(Category.RENDERING, 
             "Calculated content drop area: rows={}, totalSlotsOnPage={}, gridWidth={}, gridHeight={}", 
             rowsNeeded, totalSlotsOnPage, gridWidth, gridHeight);

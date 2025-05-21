@@ -24,7 +24,6 @@ public class REIFolderIngredientHandler {
 
     /**
      * Handle a click on an ingredient slot in a folder.
-     * Shows recipe or uses depending on the mouse button and modifiers.
      *
      * @param slot The ingredient slot that was clicked
      * @param button The mouse button used (0 = left, 1 = right)

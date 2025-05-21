@@ -9,8 +9,6 @@ import java.util.List;
 /**
  * Utility class for FTB integration
  * 
- * This is a facade class that delegates to SidebarProvider implementations
- * for better separation of concerns and testability.
  */
 public class FTBIntegration {
     

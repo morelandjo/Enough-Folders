@@ -1,4 +1,4 @@
-package com.enoughfolders.client.input;
+package com.enoughfolders.integrations.jei.handlers;
 
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.Folder;
@@ -12,13 +12,11 @@ import java.util.Optional;
 
 /**
  * Dedicated handler for adding JEI ingredients to folders via keyboard shortcuts.
- * This class uses reflection to avoid direct JEI class references in imports.
  */
 public class JEIAddToFolderHandler {
 
     /**
      * Handles the key press to add a JEI ingredient to the active folder.
-     * Safe to call even if JEI is not present.
      */
     public static void handleAddToFolderKeyPress() {
         DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "JEI Add to Folder handler activated");
@@ -34,7 +32,6 @@ public class JEIAddToFolderHandler {
         
         DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, "Active folder found: {}", activeFolder.get().getName());
         
-        // Use reflection to safely access JEI integration without direct imports
         try {
             // Check if JEI classes exist first
             Class.forName("mezz.jei.api.runtime.IJeiRuntime");
@@ -46,7 +43,7 @@ public class JEIAddToFolderHandler {
             if (jeiIntegrationOpt.isPresent()) {
                 Object jeiIntegration = jeiIntegrationOpt.get();
                 
-                // Call getJeiRuntime method via reflection
+                // Call getJeiRuntime method
                 java.lang.reflect.Method getJeiRuntimeMethod = jeiIntegration.getClass().getMethod("getJeiRuntime");
                 Optional<?> jeiRuntimeOpt = (Optional<?>) getJeiRuntimeMethod.invoke(jeiIntegration);
                 
@@ -54,7 +51,6 @@ public class JEIAddToFolderHandler {
                     Object jeiRuntime = jeiRuntimeOpt.get();
                     DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "JEI runtime found, checking for ingredients under mouse");
                     
-                    // Now use reflection to access JEI APIs
                     processJeiRuntimeWithReflection(jeiRuntime, jeiIntegration, activeFolder.get());
                 } else {
                     DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "JEI runtime not available");
@@ -63,17 +59,15 @@ public class JEIAddToFolderHandler {
                 DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "JEI integration not available");
             }
         } catch (ClassNotFoundException e) {
-            // JEI is not present in the classpath, this is totally ok
             DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "JEI classes not found, skipping JEI integration");
         } catch (Exception e) {
-            // Something went wrong with reflection or JEI API
             EnoughFolders.LOGGER.error("Error interacting with JEI runtime", e);
             DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, "Error interacting with JEI runtime: {}", e.getMessage());
         }
     }
     
     /**
-     * Process the JEI runtime using reflection to avoid direct dependencies
+     * Process the JEI runtime
      */
     private static void processJeiRuntimeWithReflection(Object jeiRuntime, Object jeiIntegration, Folder activeFolder) 
             throws Exception {

@@ -10,7 +10,6 @@ import java.util.Optional;
 
 /**
  * Interface for recipe viewing operations between mod integrations (JEI, REI) and EnoughFolders.
- * This provides a common API for handling recipe viewing operations regardless of the source mod.
  */
 public interface RecipeViewingIntegration {
     

@@ -153,7 +153,7 @@ public class Folder {
     }
     
     /**
-     * Gets a truncated version of the folder name for medium-sized UI elements.
+     * Gets a truncated version of the folder name.
      *
      * @return The truncated name for this folder
      */

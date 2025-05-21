@@ -10,15 +10,14 @@ import java.util.Optional;
 
 /**
  * Utility class for handling integration priorities and operations
- * when multiple recipe viewing mods are present.
  */
 public class RecipeIntegrationHelper {
     /**
      * Integration priority order, highest priority first.
      */
     private static final String[] PRIORITY_ORDER = {
-        "rei",   // REI has higher priority
-        "jei"    // JEI as fallback
+        "jei",   
+        "rei"  
     };
     
     /**

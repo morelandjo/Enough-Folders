@@ -58,11 +58,6 @@ public class EnoughFolders {
             // Initialize debug configuration
             DebugConfig.load();
             
-            // REI integration debugging is now off by default
-            // Uncomment below to enable it for development
-            // DebugLogger.setEnabled(DebugLogger.Category.REI_INTEGRATION, true);
-            // LOGGER.info("Enabled REI integration debug logging");
-            
             // Initialize the folder manager
             folderManager = new FolderManager();
             DebugLogger.debug(DebugLogger.Category.INITIALIZATION, "Folder manager created");
@@ -74,7 +69,7 @@ public class EnoughFolders {
             // Register key mapping registration handler to the mod event bus
             modEventBus.register(KeyBindings.class);
             
-            // Initialize key bindings - this will register the KeyInputHandler to the forge event bus
+            // Initialize key bindings
             KeyBindings.init();
             DebugLogger.debug(DebugLogger.Category.INITIALIZATION, "Key bindings initialized");
             
@@ -86,7 +81,7 @@ public class EnoughFolders {
             NeoForge.EVENT_BUS.register(this);
         }
         
-        // Keep this as a main log entry since it's important initialization info
+        // Keep this as a main log entry
         LOGGER.info("Enough Folders initialized");
         DebugLogger.debug(DebugLogger.Category.INITIALIZATION, "Mod initialization complete");
     }

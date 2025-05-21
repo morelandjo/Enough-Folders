@@ -17,7 +17,6 @@ import java.util.Optional;
 
 /**
  * Handles rendering the folder UI on REI recipe screens.
- * Uses reflection to safely handle REI classes to avoid crashes when REI is not installed.
  */
 @EventBusSubscriber(modid = EnoughFolders.MOD_ID, value = Dist.CLIENT)
 public class REIRecipeScreenRenderer {
@@ -42,13 +41,9 @@ public class REIRecipeScreenRenderer {
         try {
             Class.forName("me.shedaniel.rei.api.client.REIRuntime");
             reiAvailable = true;
-            // Important enough to keep in main log
-            EnoughFolders.LOGGER.info("REI classes found, enabling REI recipe screen renderer");
             DebugLogger.debug(Category.REI_INTEGRATION, "REIRecipeScreenRenderer registered for REI recipe overlay functionality");
         } catch (ClassNotFoundException e) {
             reiAvailable = false;
-            // Important enough to keep in main log
-            EnoughFolders.LOGGER.info("REI classes not found, disabling REI recipe overlay functionality");
             DebugLogger.debug(Category.REI_INTEGRATION, "REI classes not found, disabling REI recipe overlay functionality");
         }
     }
@@ -125,8 +120,6 @@ public class REIRecipeScreenRenderer {
             // Log other errors but don't crash
             EnoughFolders.LOGGER.error("Error in REI recipe screen rendering", e);
             DebugLogger.debugValue(Category.REI_INTEGRATION, "Error in REI recipe screen rendering: {}", e.getMessage());
-            DebugLogger.debugValue(Category.REI_INTEGRATION, 
-                "Exception during REI screen rendering: {}", e.getMessage());
         }
     }
     

@@ -7,7 +7,6 @@ import com.enoughfolders.data.Folder;
 
 /**
  * Factory interface for creating folder targets for different mod integrations.
- * This provides a common way to create targets for JEI, REI, or other mods.
  * 
  * @param <T> The specific type of folder target this factory creates
  */

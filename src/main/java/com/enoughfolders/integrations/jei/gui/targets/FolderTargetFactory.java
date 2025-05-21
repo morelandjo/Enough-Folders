@@ -15,7 +15,6 @@ import java.util.Optional;
 
 /**
  * Factory for creating JEI targets for folder UI elements.
- * This factory creates various ghost ingredient targets for folder interactions.
  */
 public class FolderTargetFactory {
     

@@ -16,7 +16,6 @@ import java.util.Optional;
 
 /**
  * Handles rendering the folder UI on JEI recipe screens.
- * Uses reflection to safely handle JEI classes to avoid crashes when JEI is not installed.
  */
 @EventBusSubscriber(modid = EnoughFolders.MOD_ID, value = Dist.CLIENT)
 public class JEIRecipeScreenRenderer {

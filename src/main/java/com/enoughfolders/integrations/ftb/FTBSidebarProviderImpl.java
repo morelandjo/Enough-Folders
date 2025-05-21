@@ -54,12 +54,10 @@ public class FTBSidebarProviderImpl implements SidebarProvider {
         }
         
         try {
-            // Use reflection to access the lastDrawnArea field
             Class<?> buttonClass = Class.forName(FTB_SIDEBAR_BUTTON_CLASS);
             java.lang.reflect.Field lastDrawnAreaField = buttonClass.getDeclaredField("lastDrawnArea");
             lastDrawnAreaField.setAccessible(true);
             
-            // This field should be static
             Object lastDrawnArea = lastDrawnAreaField.get(null);
             
             if (lastDrawnArea instanceof Rect2i rect) {

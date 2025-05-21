@@ -4,8 +4,6 @@ import com.enoughfolders.data.Folder;
 
 /**
  * A common interface for representing folder targets across different integrations.
- * This interface abstracts the concept of a folder button that can be a drop target
- * for ingredients from different ingredient mods (e.g., JEI, REI).
  */
 public interface FolderTarget {
     /**

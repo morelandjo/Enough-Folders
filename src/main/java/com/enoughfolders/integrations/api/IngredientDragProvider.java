@@ -7,13 +7,11 @@ import java.util.Optional;
 
 /**
  * Interface for drag-and-drop operations between mod integrations (JEI, REI, etc.) and EnoughFolders.
- * This provides a common API for handling ingredient drag operations regardless of the source mod.
  */
 public interface IngredientDragProvider {
     
     /**
      * Gets the currently dragged ingredient, if any.
-     * This is used to check if an ingredient is currently being dragged from the integration.
      *
      * @return Optional containing the dragged ingredient, or empty if none is being dragged
      */
@@ -30,7 +28,6 @@ public interface IngredientDragProvider {
     
     /**
      * Processes a drop of the currently dragged ingredient onto a folder.
-     * This should handle converting the ingredient to a StoredIngredient and adding it to the folder.
      * 
      * @param folder The folder to add the ingredient to
      * @return True if the drop was successful, false otherwise

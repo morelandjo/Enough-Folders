@@ -13,10 +13,6 @@ import java.util.List;
 
 /**
  * REI plugin for EnoughFolders mod.
- * This class will be detected by REI's plugin system when installed.
- * 
- * Based on the logs, REI is already detecting our mod as a plugin,
- * but we need to make our code compatible with their registration system.
  */
 @OnlyIn(Dist.CLIENT)
 @REIPluginClient
@@ -49,7 +45,6 @@ public class REIPlugin implements REIClientPlugin {
     
     /**
      * Called when the client is starting up and REI is being initialized.
-     * This follows the REIPlugin interface specification.
      */
     @Override
     public void preStage(me.shedaniel.rei.api.common.plugins.PluginManager<REIClientPlugin> manager, me.shedaniel.rei.api.common.registry.ReloadStage stage) {
@@ -59,15 +54,11 @@ public class REIPlugin implements REIClientPlugin {
     
     /**
      * Called after REI has been initialized.
-     * This follows the REIPlugin interface specification.
      */
     @Override
     public void postStage(me.shedaniel.rei.api.common.plugins.PluginManager<REIClientPlugin> manager, me.shedaniel.rei.api.common.registry.ReloadStage stage) {
         DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
             "REI plugin post-stage initialization for stage: {}", stage);
-        
-        // All drag and drop functionality is now implemented via REI's API
-        // through proper handlers registered in REIFolderDragProvider.
     }
     
     /**
@@ -104,11 +95,6 @@ public class REIPlugin implements REIClientPlugin {
             }
         );
         
-        // Note: Drag and drop functionality is now registered through REIFolderDragProvider:
-        // - REIFolderDragProvider implements both DraggableStackVisitor and DraggableStackProvider
-        // - This provides a complete implementation of REI's drag and drop system in both directions
-        
-        // Only log once during registration rather than on every render frame
         if (!exclusionZonesRegistered) {
             DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
                 "Registered exclusion zones for folder UI");
@@ -118,7 +104,6 @@ public class REIPlugin implements REIClientPlugin {
     
     /**
      * Register transfer handlers for REI.
-     * This allows dragging ingredients from REI to our folders.
      * 
      * @param registry The transfer handler registry
      */

@@ -4,6 +4,7 @@ import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.event.ClientEventHandler;
 import com.enoughfolders.client.gui.FolderButton;
 import com.enoughfolders.client.gui.FolderScreen;
+import java.util.List;
 import com.enoughfolders.integrations.IntegrationRegistry;
 import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler;
@@ -72,7 +73,8 @@ public class JEIDragDropManager {
         // Check in recipe gui
         JEIRecipeGuiHandler.getLastFolderScreen().ifPresent(folderScreen -> {
             if (folderScreen.isVisible(mouseX, mouseY)) {
-                for (FolderButtonTarget target : folderScreen.getJEIFolderTargets()) {
+                List<FolderButtonTarget> jeiTargets = folderScreen.getJEIFolderTargets();
+                for (FolderButtonTarget target : jeiTargets) {
                     if (isPointInRect(mouseX, mouseY, 
                             target.getArea().getX(), 
                             target.getArea().getY(),
@@ -91,7 +93,8 @@ public class JEIDragDropManager {
             ClientEventHandler.getFolderScreen(containerScreen)
                 .ifPresent(folderScreen -> {
                     if (folderScreen.isVisible(mouseX, mouseY)) {
-                        for (FolderButtonTarget target : folderScreen.getJEIFolderTargets()) {
+                        List<FolderButtonTarget> jeiTargets = folderScreen.getJEIFolderTargets();
+                        for (FolderButtonTarget target : jeiTargets) {
                             if (isPointInRect(mouseX, mouseY, 
                                     target.getArea().getX(), 
                                     target.getArea().getY(),

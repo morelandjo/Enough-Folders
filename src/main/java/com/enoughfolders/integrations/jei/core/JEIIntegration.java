@@ -570,7 +570,6 @@ public class JEIIntegration implements ModIntegration, IngredientDragProvider, R
     
     /**
      * Processes a drop of the currently dragged ingredient onto a folder.
-     * Converts the JEI ingredient to a StoredIngredient and adds it to the folder.
      * 
      * @param folder The folder to add the ingredient to
      * @return True if the drop was successful, false otherwise
@@ -719,7 +718,6 @@ public class JEIIntegration implements ModIntegration, IngredientDragProvider, R
     
     /**
      * Handle a click on an ingredient slot in a folder.
-     * Shows recipe or uses depending on the mouse button and modifiers.
      *
      * @param slot The ingredient slot that was clicked
      * @param button The mouse button used (0 = left, 1 = right)

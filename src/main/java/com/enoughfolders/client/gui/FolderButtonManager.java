@@ -12,7 +12,6 @@ import com.enoughfolders.util.DebugLogger;
 import net.minecraft.client.gui.components.Button;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -49,7 +48,7 @@ public class FolderButtonManager {
     }
     
     /**
-     * Sets the position and dimensions for layout calculations.
+     * Sets the position and dimensions for layout.
      *
      * @param leftPos Left position
      * @param width Width of the container

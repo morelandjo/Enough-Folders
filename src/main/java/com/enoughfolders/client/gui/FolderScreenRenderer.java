@@ -62,7 +62,7 @@ public class FolderScreenRenderer {
     }
     
     /**
-     * Updates the height dimension.
+     * Updates the height.
      *
      * @param height New height
      */

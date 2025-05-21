@@ -8,6 +8,8 @@ import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
 import com.enoughfolders.integrations.jei.gui.targets.FolderGhostIngredientTarget;
 import com.enoughfolders.integrations.jei.gui.targets.FolderTargetFactory;
 import com.enoughfolders.util.DebugLogger;
+
+import java.util.Collections;
 import mezz.jei.api.gui.handlers.IGhostIngredientHandler;
 import mezz.jei.api.gui.handlers.IGuiContainerHandler;
 import mezz.jei.api.ingredients.ITypedIngredient;
@@ -21,7 +23,6 @@ import java.util.Optional;
 
 /**
  * Handles JEI integration for any container screen containing FolderScreen overlay.
- * This class implements multiple JEI interfaces to handle different aspects of integration.
  */
 public class FolderScreenHandler implements 
     IGuiContainerHandler<AbstractContainerScreen<?>>,
@@ -140,22 +141,21 @@ public class FolderScreenHandler implements
     }
     
     @Override
-    @Deprecated
-    public List<FolderButtonTarget> getFolderButtonTargets() {
+    public List<FolderButtonTarget> getFolderTargets() {
         if (currentScreen == null) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
         
         Optional<FolderScreen> folderScreenOpt = ClientEventHandler.getFolderScreen(currentScreen);
         if (folderScreenOpt.isPresent()) {
-            List<FolderButtonTarget> targets = folderScreenOpt.get().getJEIFolderTargets();
+            List<FolderButtonTarget> targets = folderScreenOpt.get().getFolderTargets();
             DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION,
-                "FolderScreenHandler returning {} folder button targets", targets.size());
+                "FolderScreenHandler returning {} folder targets", targets.size());
             return targets;
         }
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
-    
+        
     @Override
     public void onIngredientAdded() {
         if (currentScreen == null) {

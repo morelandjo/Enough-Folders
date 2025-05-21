@@ -133,9 +133,6 @@ public class FolderInputHandler {
             }
         }
         
-        // Note: Ingredient slots are now handled in FolderScreen.mouseClicked
-        // before this method is called, so we don't need to check them again here
-        
         if (isAddingFolder && newFolderNameInput.isMouseOver(mouseX, mouseY)) {
             newFolderNameInput.setFocused(true);
             return newFolderNameInput.mouseClicked(mouseX, mouseY, button);
@@ -249,7 +246,7 @@ public class FolderInputHandler {
     }
     
     /**
-     * Process a click on an ingredient slot, notifying externally registered handlers.
+     * Process a click on an ingredient slot.
      * 
      * @param folderScreen The folder screen that contains the slots
      * @param slot The slot that was clicked

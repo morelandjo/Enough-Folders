@@ -1,7 +1,6 @@
 package com.enoughfolders.integrations.rei.gui.handlers;
 
 import com.enoughfolders.EnoughFolders;
-import com.enoughfolders.client.gui.FolderButton;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.client.gui.IngredientSlot;
 import com.enoughfolders.data.Folder;
@@ -15,7 +14,6 @@ import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.gui.drag.DraggableStack;
 import me.shedaniel.rei.api.client.gui.drag.DraggableStackProvider;
 import me.shedaniel.rei.api.client.gui.drag.DraggableStackVisitor;
-import me.shedaniel.rei.api.client.gui.drag.DraggableStackVisitor.BoundsProvider;
 import me.shedaniel.rei.api.client.gui.drag.DraggedAcceptorResult;
 import me.shedaniel.rei.api.client.gui.drag.DraggingContext;
 import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
@@ -35,7 +33,6 @@ import java.util.stream.Stream;
 
 /**
  * Implements both drag-from-folder and drag-to-folder functionality for REI integration.
- * This unified provider handles all REI drag-and-drop operations for EnoughFolders.
  */
 @OnlyIn(Dist.CLIENT)
 @REIPluginClient
@@ -46,10 +43,7 @@ public class REIFolderDragProvider implements REIClientPlugin {
     
     @Override
     public void registerScreens(ScreenRegistry registry) {
-        try {
-            // Enable REI integration debug logging in console
-            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "Registering REI folder drag-and-drop handlers");
-            
+        try {            
             // Register our handlers for both drag providers and visitors
             registry.registerDraggableStackProvider(dragProvider);
             registry.registerDraggableStackVisitor(dragVisitor);
@@ -142,7 +136,6 @@ public class REIFolderDragProvider implements REIClientPlugin {
                                 }
                                 
                                 public void drag() {
-                                    // Handle the start of dragging if needed
                                     DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION,
                                         "Started dragging item from folder");
                                 }
@@ -171,7 +164,6 @@ public class REIFolderDragProvider implements REIClientPlugin {
             Optional<FolderScreen> folderScreenOpt = com.enoughfolders.client.event.ClientEventHandler.getFolderScreen(containerScreen);
             boolean result = folderScreenOpt.isPresent();
             
-            // Log more detailed info for debugging
             if (result) {
                 DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION,
                     "DragVisitorImpl handling screen: {}", screen.getClass().getSimpleName());
@@ -239,7 +231,6 @@ public class REIFolderDragProvider implements REIClientPlugin {
                 stackCenterY = Minecraft.getInstance().mouseHandler.ypos();
             }
             
-            // Log both the content area bounds and the mouse position for debugging
             DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
                 "Content area bounds: x={}, y={}, width={}, height={}", 
                 contentArea.getX(), contentArea.getY(), contentArea.getWidth(), contentArea.getHeight());
@@ -249,10 +240,6 @@ public class REIFolderDragProvider implements REIClientPlugin {
             DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
                 "Stack center position: x={}, y={}", stackCenterX, stackCenterY);
             
-            DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
-                "Stack center position: {},{}", 
-                stackCenterX, stackCenterY);
-            
             boolean inContentArea = contentRectangle.contains(stackCenterX, stackCenterY);
             boolean inEntireFolderArea = entireFolderRectangle.contains(stackCenterX, stackCenterY);
             
@@ -260,7 +247,8 @@ public class REIFolderDragProvider implements REIClientPlugin {
                 "Is in content area: {}, Is in entire folder area: {}", inContentArea, inEntireFolderArea);
             
             // First check if dragging over specific folder targets
-            for (REIFolderTarget target : folderScreen.getREIFolderTargets()) {
+            List<REIFolderTarget> reiTargets = folderScreen.getTypedFolderTargets();
+            for (REIFolderTarget target : reiTargets) {
                 boolean inTargetArea = target.isPointInTarget(stackCenterX, stackCenterY);
                 
                 if (inTargetArea) {
@@ -383,7 +371,8 @@ public class REIFolderDragProvider implements REIClientPlugin {
             }
             
             // Add all folder target bounds
-            for (REIFolderTarget target : folderScreen.getREIFolderTargets()) {
+            List<REIFolderTarget> reiTargets = folderScreen.getREIFolderTargets();
+            for (REIFolderTarget target : reiTargets) {
                 Rectangle rect = new Rectangle(target.getX(), target.getY(), 
                                             target.getWidth(), target.getHeight());
                 bounds.add(rect);

@@ -13,15 +13,11 @@ import java.util.Optional;
 
 /**
  * Dedicated handler for adding REI ingredients to folders via keyboard shortcuts.
- * This is similar to JEIAddToFolderHandler but works with REI's API instead.
- * Uses reflection to avoid direct REI class dependencies.
  */
 public class REIAddToFolderHandler {
 
     /**
      * Adds the currently hovered REI ingredient to the active folder.
-     * Called when the user presses the "Add to Folder" keybinding (Shift+A by default).
-     * Safe to call even if REI is not present.
      */
     public static void handleAddToFolderKeyPress() {
         EnoughFolders.LOGGER.info("REI Add to Folder handler activated");

@@ -15,7 +15,7 @@ import org.lwjgl.glfw.GLFW;
  */
 public class KeyBindings {
     /**
-     * The translation key category for all EnoughFolders keybindings in the controls menu.
+     * The translation key category for all keybindings.
      */
     private static final String CATEGORY = "key.categories." + EnoughFolders.MOD_ID;
     
@@ -72,16 +72,7 @@ public class KeyBindings {
             if (ADD_TO_FOLDER.matches(keyCode, scanCode)) {
                 EnoughFolders.LOGGER.info("Add to folder keybind pressed (raw input): key={}, scanCode={}", keyCode, scanCode);
                 
-                // First try JEI integration
-                JEIAddToFolderHandler.handleAddToFolderKeyPress();
-                
-                // Also try REI integration - we want both to have a chance to process
-                try {
-                    com.enoughfolders.integrations.rei.handlers.REIAddToFolderHandler.handleAddToFolderKeyPress();
-                    EnoughFolders.LOGGER.info("REI add to folder handler called successfully");
-                } catch (Exception e) {
-                    EnoughFolders.LOGGER.error("Error calling REI add to folder handler", e);
-                }
+                RecipeIntegrationHandler.handleAddToFolderKeyPress();
             }
         }
     }

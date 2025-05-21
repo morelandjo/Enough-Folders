@@ -4,6 +4,8 @@ import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.FolderManager;
 import com.enoughfolders.integrations.IntegrationRegistry;
+import com.enoughfolders.integrations.api.FolderTarget;
+import com.enoughfolders.integrations.api.RecipeViewingIntegration;
 import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
 import com.enoughfolders.integrations.jei.gui.targets.FolderGhostIngredientTarget;
@@ -168,7 +170,7 @@ public class FolderScreen implements FolderGhostIngredientTarget {
         
         // Calculate initial height
         if (hasActiveFolder) {
-            height = folderRowsHeight + 20 + 72 + 5; // 72 is CONTENT_AREA_HEIGHT
+            height = folderRowsHeight + 97;
         } else {
             height = folderRowsHeight + 10;
         }
@@ -497,6 +499,73 @@ public class FolderScreen implements FolderGhostIngredientTarget {
     public List<REIFolderTarget> getREIFolderTargets() {
         return buttonManager.getREIFolderTargets();
     }
+    
+    /**
+     * Gets folder targets for all folder buttons using the available recipe viewing integration.
+     * This implementation overrides the interface method from FolderGhostIngredientTarget.
+     *
+     * @return List of folder targets for the available recipe viewing integration
+     */
+    @Override
+    public List<FolderButtonTarget> getFolderTargets() {
+        // Try REI first
+        if (IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.rei.core.REIIntegration")
+                .filter(integration -> integration instanceof RecipeViewingIntegration)
+                .map(integration -> (RecipeViewingIntegration) integration)
+                .filter(RecipeViewingIntegration::isAvailable)
+                .isPresent()) {
+            DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using REI folder targets");
+            // When REI is present, still return JEI targets since the interface requires FolderButtonTarget
+            return getJEIFolderTargets();
+        }
+        
+        // Use JEI targets
+        if (IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.jei.core.JEIIntegration")
+                .filter(integration -> integration instanceof RecipeViewingIntegration)
+                .map(integration -> (RecipeViewingIntegration) integration)
+                .filter(RecipeViewingIntegration::isAvailable)
+                .isPresent()) {
+            DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using JEI folder targets");
+            return getJEIFolderTargets();
+        }
+        
+        // No recipe viewing integration available
+        DebugLogger.debug(DebugLogger.Category.INTEGRATION, "No recipe viewing integration available");
+        return new ArrayList<>();
+    }
+    
+    /**
+     * Gets folder targets for all folder buttons with the specified target type.
+     *
+     * @param <T> The type of folder targets to return
+     * @return List of folder targets for the available recipe viewing integration
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends FolderTarget> List<T> getTypedFolderTargets() {
+        // Try REI first
+        if (IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.rei.core.REIIntegration")
+                .filter(integration -> integration instanceof RecipeViewingIntegration)
+                .map(integration -> (RecipeViewingIntegration) integration)
+                .filter(RecipeViewingIntegration::isAvailable)
+                .isPresent()) {
+            DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using REI folder targets");
+            return (List<T>) getREIFolderTargets();
+        }
+        
+        // Try JEI second
+        if (IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.jei.core.JEIIntegration")
+                .filter(integration -> integration instanceof RecipeViewingIntegration)
+                .map(integration -> (RecipeViewingIntegration) integration)
+                .filter(RecipeViewingIntegration::isAvailable)
+                .isPresent()) {
+            DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using JEI folder targets");
+            return (List<T>) getJEIFolderTargets();
+        }
+        
+        // No recipe viewing integration available
+        DebugLogger.debug(DebugLogger.Category.INTEGRATION, "No recipe viewing integration available");
+        return new ArrayList<>();
+    }
 
     /**
      * Interface for ingredient click handlers.
@@ -545,7 +614,7 @@ public class FolderScreen implements FolderGhostIngredientTarget {
     }
 
     /**
-     * Checks if FTB Library is loaded and if the sidebar would overlap with our folder GUI.
+     * Checks if FTB Library is loaded and if the sidebar would overlap with folder GUI.
      * Adjusts the position if necessary.
      */
     private void adjustPositionForFTBSidebar() {
@@ -554,7 +623,7 @@ public class FolderScreen implements FolderGhostIngredientTarget {
             DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Checking for FTB sidebar overlap");
             
             // Create a rectangle representing our current folder GUI position
-            Rect2i folderRect = new Rect2i(leftPos, topPos, width, 100); // Use approximate height
+            Rect2i folderRect = new Rect2i(leftPos, topPos, width, 100);
             
             // Ask FTB integration to adjust the position if needed
             Rect2i adjustedRect = com.enoughfolders.integrations.ftb.FTBIntegration.avoidExclusionAreas(folderRect);
@@ -581,7 +650,6 @@ public class FolderScreen implements FolderGhostIngredientTarget {
     
     /**
      * Gets the entire folder UI area which can be used as a drop target.
-     * This includes the entire colored rectangle where folders and ingredients are displayed.
      *
      * @return A rectangle representing the entire folder UI area
      */

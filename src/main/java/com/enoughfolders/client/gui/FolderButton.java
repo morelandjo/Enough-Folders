@@ -127,7 +127,7 @@ public class FolderButton extends Button {
     }
     
     /**
-     * Checks if the button is currently being hovered over by the mouse.
+     * Checks if the button is currently being hovered over.
      * 
      * @return True if the mouse is hovering over this button
      */

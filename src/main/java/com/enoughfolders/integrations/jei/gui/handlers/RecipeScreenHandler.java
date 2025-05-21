@@ -18,6 +18,7 @@ import net.minecraft.client.renderer.Rect2i;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -142,19 +143,16 @@ public class RecipeScreenHandler implements IGlobalGuiHandler, IGhostIngredientH
     }
     
     @Override
-    @Deprecated
-    public List<FolderButtonTarget> getFolderButtonTargets() {
+    public List<FolderButtonTarget> getFolderTargets() {
         Optional<FolderScreen> folderScreenOpt = JEIRecipeGuiHandler.getLastFolderScreen();
         if (folderScreenOpt.isPresent()) {
             FolderScreen folderScreen = folderScreenOpt.get();
-            
-            // Get the folder button targets from the folder screen
-            List<FolderButtonTarget> targets = folderScreen.getJEIFolderTargets();
+            List<FolderButtonTarget> targets = folderScreen.getFolderTargets();
             DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, 
-                "RecipeScreenHandler returning {} folder button targets", targets.size());
+                "RecipeScreenHandler returning {} folder targets", targets.size());
             return targets;
         }
-        return new ArrayList<>(); // Empty list if no folder screen
+        return Collections.emptyList();
     }
     
     @Override

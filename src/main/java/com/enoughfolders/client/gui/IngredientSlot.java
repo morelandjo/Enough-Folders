@@ -71,16 +71,14 @@ public class IngredientSlot {
     }
     
     /**
-     * Shows recipes for this ingredient in the available recipe mod (REI or JEI).
-     * Uses the RecipeIntegrationHelper to determine which integration to use.
+     * Shows recipes for this ingredient in the available recipe mod.
      */
     private void showRecipes() {
         com.enoughfolders.integrations.RecipeIntegrationHelper.showRecipes(ingredient);
     }
     
     /**
-     * Shows uses for this ingredient in the available recipe mod (REI or JEI).
-     * Uses the RecipeIntegrationHelper to determine which integration to use.
+     * Shows uses for this ingredient in the available recipe mod.
      */
     private void showUses() {
         com.enoughfolders.integrations.RecipeIntegrationHelper.showUses(ingredient);

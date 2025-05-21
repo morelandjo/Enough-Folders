@@ -21,7 +21,6 @@ import java.util.Optional;
 
 /**
  * Integration for Roughly Enough Items (REI) mod.
- * Provides functionality for ingredient drag and drop, recipe viewing, and more.
  */
 public class REIIntegration implements ModIntegration, IngredientDragProvider, RecipeViewingIntegration {
     
@@ -29,8 +28,7 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
     private boolean available = false;
     
     /**
-     * Initialize the REI integration. This will check if REI is available
-     * and set up the necessary hooks if it is.
+     * Initialize the REI integration.
      */
     @Override
     public void initialize() {
@@ -45,8 +43,6 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
             DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
                 "REI classes found, enabling REI integration");
             
-            // Don't try to access REI runtime during initialization
-            // Just mark as available since classes are present
             available = true;
             
             // REI plugin system will handle registration automatically through annotations
@@ -183,14 +179,6 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
                             
                         return Optional.of(new StoredIngredient(typeClass, itemId));
                     }
-                } else if (entryStack.getType() == me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes.FLUID) {
-                    // Handle fluid entry - if your mod supports fluids
-                    Object value = entryStack.getValue();
-                    
-                    DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                        "REI fluid entries not implemented yet: {}", 
-                        value != null ? value.getClass().getName() : "null");
-                    // TODO: Implement fluid handling if needed
                 }
                 
                 // Log unknown entry type
@@ -286,7 +274,6 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
     
     /**
      * Gets the ingredient currently under the mouse in the REI UI.
-     * This is used for drag and drop operations.
      * 
      * @return Optional containing the ingredient, or empty if none is found
      */
@@ -499,7 +486,6 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
                 }
             }
             
-            // Log that we don't know how to convert this type
             EnoughFolders.LOGGER.error("Don't know how to convert ingredient of type: {}", 
                 ingredient != null ? ingredient.getClass().getName() : "null");
             

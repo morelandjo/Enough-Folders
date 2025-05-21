@@ -4,8 +4,6 @@ import java.util.List;
 
 /**
  * Interface for integrations that can provide folder targets.
- * This is used to abstract over different mod integrations that support
- * drag-and-drop functionality for folders.
  */
 public interface FolderTargetProvider {
     

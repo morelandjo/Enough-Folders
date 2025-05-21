@@ -121,8 +121,7 @@ public class IntegrationRegistry {
     }
     
     /**
-     * Get an integration by class name, using reflection.
-     * This is useful when you want to avoid direct class dependencies.
+     * Get an integration by class name.
      * 
      * @param className The fully qualified class name of the integration to retrieve
      * @return Optional containing the integration if found, empty otherwise

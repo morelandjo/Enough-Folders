@@ -101,11 +101,7 @@ public class StorageManager {
         try {
             Files.createDirectories(worldFolderPath);
         } catch (IOException e) {
-            // Keep critical error in main log
             EnoughFolders.LOGGER.error("Failed to create directory for world data", e);
-            // Add debug logging
-            DebugLogger.debugValue(Category.FOLDER_MANAGER, 
-                "Failed to create directory for world data: {}", e.getMessage());
         }
         
         return worldFolderPath.resolve(FOLDERS_FILE).toFile();
