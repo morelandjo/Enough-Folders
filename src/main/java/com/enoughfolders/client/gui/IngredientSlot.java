@@ -1,3 +1,4 @@
+// Import UIConstants class
 package com.enoughfolders.client.gui;
 
 import com.enoughfolders.data.StoredIngredient;
@@ -14,7 +15,6 @@ public class IngredientSlot {
     private final int x;
     private final int y;
     private final StoredIngredient ingredient;
-    private static final int SIZE = 18;
     
     /**
      * Creates a new ingredient slot.
@@ -40,10 +40,10 @@ public class IngredientSlot {
         boolean isHovered = isHovered(mouseX, mouseY);
         
         if (isHovered) {
-            graphics.fill(x, y, x + SIZE, y + SIZE, 0x80FFFFFF);
+            graphics.fill(x, y, x + UIConstants.INGREDIENT_SLOT_SIZE, y + UIConstants.INGREDIENT_SLOT_SIZE, 0x80FFFFFF);
         }
         
-        IntegrationRegistry.renderIngredient(graphics, ingredient, x + 1, y + 1, SIZE - 2, SIZE - 2);
+        IntegrationRegistry.renderIngredient(graphics, ingredient, x + 1, y + 1, UIConstants.INGREDIENT_SLOT_SIZE - 2, UIConstants.INGREDIENT_SLOT_SIZE - 2);
     }
     
     /**
@@ -92,8 +92,8 @@ public class IngredientSlot {
      * @return true if the mouse is hovering over this slot, false otherwise
      */
     public boolean isHovered(int mouseX, int mouseY) {
-        return mouseX >= x && mouseX < x + SIZE &&
-               mouseY >= y && mouseY < y + SIZE;
+        return mouseX >= x && mouseX < x + UIConstants.INGREDIENT_SLOT_SIZE &&
+               mouseY >= y && mouseY < y + UIConstants.INGREDIENT_SLOT_SIZE;
     }
     
     /**
@@ -128,7 +128,7 @@ public class IngredientSlot {
      * @return The width
      */
     public int getWidth() {
-        return SIZE;
+        return UIConstants.INGREDIENT_SLOT_SIZE;
     }
     
     /**
@@ -136,7 +136,7 @@ public class IngredientSlot {
      * @return The height
      */
     public int getHeight() {
-        return SIZE;
+        return UIConstants.INGREDIENT_SLOT_SIZE;
     }
     
     /**

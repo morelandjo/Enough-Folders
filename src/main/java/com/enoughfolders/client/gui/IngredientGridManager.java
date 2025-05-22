@@ -1,3 +1,4 @@
+// Import UIConstants class
 package com.enoughfolders.client.gui;
 
 import com.enoughfolders.data.Folder;
@@ -15,11 +16,7 @@ import java.util.function.Supplier;
 /**
  * Manages the ingredient grid in the folder screen.
  */
-public class IngredientGridManager {
-    private static final int CONTENT_SLOT_SIZE = 18;
-    private static final int INGREDIENT_SPACING = 0;
-    private static final int INGREDIENT_ROWS = 4;
-    private static final int FOLDER_AREA_HEIGHT = 22;
+public class IngredientGridManager implements LayoutManager.LayoutChangeListener {
     
     // List of all ingredient slots in the active folder view
     private final List<IngredientSlot> ingredientSlots = new ArrayList<>();
@@ -31,38 +28,50 @@ public class IngredientGridManager {
     private int totalPages = 1;
     
     // Screen properties
-    private int leftPos;
-    private int topPos;
-    private int width;
-    private int height;
     private int ingredientColumns = 5;
     
     // Dependencies
     private final Supplier<Optional<Folder>> activeFolder;
+    private final LayoutManager layoutManager;
     
     /**
      * Creates a new ingredient grid manager.
      *
      * @param activeFolderSupplier Supplier for the active folder
+     * @param layoutManager Layout manager for positioning
      */
-    public IngredientGridManager(Supplier<Optional<Folder>> activeFolderSupplier) {
+    public IngredientGridManager(Supplier<Optional<Folder>> activeFolderSupplier, LayoutManager layoutManager) {
         this.activeFolder = activeFolderSupplier;
+        this.layoutManager = layoutManager;
+        this.layoutManager.addLayoutChangeListener(this);
+        calculateIngredientColumns();
     }
     
     /**
-     * Sets the position and dimensions for layout calculations.
-     *
-     * @param leftPos Left position
-     * @param topPos Top position
-     * @param width Width of the grid
+     * Called when the layout changes.
      */
-    public void setPositionAndDimensions(int leftPos, int topPos, int width) {
-        this.leftPos = leftPos;
-        this.topPos = topPos;
-        this.width = width;
+    @Override
+    public void onLayoutChanged() {
         calculateIngredientColumns();
+        
+        if (prevPageButton != null && nextPageButton != null) {
+            updatePaginationButtonPositions();
+        }
     }
-
+    
+    /**
+     * Calculates the number of ingredient columns based on available width.
+     */
+    private void calculateIngredientColumns() {
+        int availableWidth = layoutManager.getWidth() - 10;
+        int ingredientWidth = UIConstants.INGREDIENT_SLOT_SIZE + UIConstants.INGREDIENT_SPACING;
+        int maxColumns = Math.max(1, (availableWidth - 1) / ingredientWidth);
+        this.ingredientColumns = maxColumns;
+        DebugLogger.debugValues(DebugLogger.Category.GUI_STATE, 
+                              "Dynamically calculated ingredient columns: {} (from available width: {}px)", 
+                              ingredientColumns, availableWidth);
+    }
+    
     /**
      * Creates pagination buttons.
      *
@@ -70,17 +79,19 @@ public class IngredientGridManager {
      * @param nextPageCallback Callback when next page button is clicked
      */
     public void createPaginationButtons(Button.OnPress prevPageCallback, Button.OnPress nextPageCallback) {
+        int[] paginationPositions = layoutManager.getPaginationButtonPositions(false);
+        
         this.prevPageButton = new Button.Builder(
                 net.minecraft.network.chat.Component.literal("<"), 
                 prevPageCallback)
-                .pos(leftPos + 5, topPos + FOLDER_AREA_HEIGHT + 32)
+                .pos(paginationPositions[0], paginationPositions[1])
                 .size(20, 20)
                 .build();
         
         this.nextPageButton = new Button.Builder(
                 net.minecraft.network.chat.Component.literal(">"), 
                 nextPageCallback)
-                .pos(leftPos + width - 25, topPos + FOLDER_AREA_HEIGHT + 32)
+                .pos(paginationPositions[2], paginationPositions[3])
                 .size(20, 20)
                 .build();
                 
@@ -88,16 +99,14 @@ public class IngredientGridManager {
     }
     
     /**
-     * Calculates the number of ingredient columns based on available width.
+     * Updates the pagination button positions.
      */
-    private void calculateIngredientColumns() {
-        int availableWidth = width - 10;
-        int ingredientWidth = CONTENT_SLOT_SIZE + INGREDIENT_SPACING;
-        int maxColumns = Math.max(1, (availableWidth - 1) / ingredientWidth);
-        this.ingredientColumns = maxColumns;
-        DebugLogger.debugValues(DebugLogger.Category.GUI_STATE, 
-                              "Dynamically calculated ingredient columns: {} (from available width: {}px)", 
-                              ingredientColumns, availableWidth);
+    private void updatePaginationButtonPositions() {
+        boolean isAddingFolder = false; // This will be passed from FolderScreen
+        int[] paginationPositions = layoutManager.getPaginationButtonPositions(isAddingFolder);
+        
+        prevPageButton.setPosition(paginationPositions[0], paginationPositions[1]);
+        nextPageButton.setPosition(paginationPositions[2], paginationPositions[3]);
     }
     
     /**
@@ -109,11 +118,13 @@ public class IngredientGridManager {
      */
     public int refreshIngredientSlots(boolean isAddingFolder, int folderRowsCount) {
         ingredientSlots.clear();
+        layoutManager.setIsAddingFolder(isAddingFolder);
+        layoutManager.setFolderRowsCount(folderRowsCount);
         
         return activeFolder.get().map(folder -> {
             List<StoredIngredient> ingredients = folder.getIngredients();
             
-            int itemsPerPage = ingredientColumns * INGREDIENT_ROWS;
+            int itemsPerPage = ingredientColumns * UIConstants.INGREDIENT_ROWS;
             totalPages = Math.max(1, (int) Math.ceil(ingredients.size() / (double) itemsPerPage));
             
             if (currentPage >= totalPages) {
@@ -123,52 +134,43 @@ public class IngredientGridManager {
             int startIndex = currentPage * itemsPerPage;
             int endIndex = Math.min(startIndex + itemsPerPage, ingredients.size());
             
-            int verticalOffset = isAddingFolder ? 20 : 0; // INPUT_FIELD_HEIGHT
+            int[] paginationPositions = layoutManager.getPaginationButtonPositions(isAddingFolder);
+            prevPageButton.setPosition(paginationPositions[0], paginationPositions[1]);
+            nextPageButton.setPosition(paginationPositions[2], paginationPositions[3]);
             
-            if (folderRowsCount > 1) {
-                verticalOffset += (folderRowsCount - 1) * 27; // FOLDER_ROW_HEIGHT
-            }
+            int[] contentArea = layoutManager.calculateContentArea(
+                    isAddingFolder, ingredientColumns, ingredients, currentPage);
+            int contentStartX = contentArea[0];
+            int contentStartY = contentArea[1];
+            int rowsNeeded = contentArea[2];
             
-            int paginationY = topPos + FOLDER_AREA_HEIGHT + 32 + verticalOffset;
-            prevPageButton.setPosition(leftPos + 5, paginationY);
-            nextPageButton.setPosition(leftPos + width - 25, paginationY);
+            int contentHeight = rowsNeeded * UIConstants.INGREDIENT_SLOT_SIZE;
+            int newTotalHeight = UIConstants.FOLDER_AREA_HEIGHT + 55 + contentHeight + 20 + contentArea[3];
             
-            int contentStartX = leftPos + 5;
-            int contentStartY = topPos + FOLDER_AREA_HEIGHT + 55 + verticalOffset;
-            
-            int totalSlotsOnPage = endIndex - startIndex;
-            int rowsUsed = (int) Math.ceil(totalSlotsOnPage / (double) ingredientColumns);
-            
-            int rowsNeeded = Math.max(rowsUsed + 1, 1);
-            
-            int contentHeight = rowsNeeded * CONTENT_SLOT_SIZE;
-            
-            int newTotalHeight = FOLDER_AREA_HEIGHT + 55 + contentHeight + 20 + verticalOffset;
-            
-            height = newTotalHeight;
+            layoutManager.updateHeight(newTotalHeight);
             
             DebugLogger.debugValues(DebugLogger.Category.GUI_STATE, 
                               "Ingredients grid layout: {} columns x {} rows (including 1 extra row), totalItems: {}",
-                              ingredientColumns, rowsNeeded, totalSlotsOnPage);
+                              ingredientColumns, rowsNeeded, endIndex - startIndex);
             
             DebugLogger.debugValues(DebugLogger.Category.GUI_STATE, 
                 "Resizing folder screen to fit {} rows (including 1 extra row), new height: {}, vertical offset: {}", 
-                rowsNeeded, height, verticalOffset);
+                rowsNeeded, layoutManager.getHeight(), contentArea[3]);
             
             for (int i = startIndex; i < endIndex; i++) {
                 int slotIndex = i - startIndex;
                 int row = slotIndex / ingredientColumns;
                 int col = slotIndex % ingredientColumns;
                 
-                int x = contentStartX + col * CONTENT_SLOT_SIZE;
-                int y = contentStartY + row * CONTENT_SLOT_SIZE;
+                int x = contentStartX + col * UIConstants.INGREDIENT_SLOT_SIZE;
+                int y = contentStartY + row * UIConstants.INGREDIENT_SLOT_SIZE;
                 
                 ingredientSlots.add(new IngredientSlot(x, y, ingredients.get(i)));
             }
             
             updatePagination();
-            return height;
-        }).orElse(FOLDER_AREA_HEIGHT + 10); // Default height when no active folder
+            return layoutManager.getHeight();
+        }).orElse(UIConstants.FOLDER_AREA_HEIGHT + 10); // Default height when no active folder
     }
     
     /**
@@ -179,41 +181,9 @@ public class IngredientGridManager {
      * @return A rectangle representing the drop area
      */
     public Rect2i getContentDropArea(boolean isAddingFolder, int folderRowsCount) {
-        if (!activeFolder.get().isPresent()) {
-            return new Rect2i(leftPos + 5, topPos + FOLDER_AREA_HEIGHT + 55, 0, 0);
-        }
-        
-        int itemsPerPage = ingredientColumns * INGREDIENT_ROWS;
-        int startIndex = currentPage * itemsPerPage;
-        
-        List<StoredIngredient> ingredients = activeFolder.get().get().getIngredients();
-        int endIndex = Math.min(startIndex + itemsPerPage, ingredients.size());
-        int totalSlotsOnPage = endIndex - startIndex;
-        
-        int rowsUsed = (int) Math.ceil(totalSlotsOnPage / (double) ingredientColumns);
-        
-        // Always ensure at least 3 rows of drop area are available, or more if needed
-        int rowsNeeded = Math.max(rowsUsed + 1, 3);
-        
-        int gridWidth = ingredientColumns * CONTENT_SLOT_SIZE;
-        int gridHeight = rowsNeeded * CONTENT_SLOT_SIZE;
-        
-        DebugLogger.debugValues(Category.RENDERING, 
-            "Calculated content drop area: rows={}, totalSlotsOnPage={}, gridWidth={}, gridHeight={}", 
-            rowsNeeded, totalSlotsOnPage, gridWidth, gridHeight);
-        
-        int verticalOffset = isAddingFolder ? 20 : 0; // INPUT_FIELD_HEIGHT
-        
-        if (folderRowsCount > 1) {
-            verticalOffset += (folderRowsCount - 1) * 27; // FOLDER_ROW_HEIGHT
-        }
-        
-        return new Rect2i(
-                leftPos + 5,
-                topPos + FOLDER_AREA_HEIGHT + 55 + verticalOffset,
-                gridWidth,
-                gridHeight
-        );
+        layoutManager.setIsAddingFolder(isAddingFolder);
+        layoutManager.setFolderRowsCount(folderRowsCount);
+        return layoutManager.getContentDropArea(isAddingFolder, ingredientColumns);
     }
     
     /**

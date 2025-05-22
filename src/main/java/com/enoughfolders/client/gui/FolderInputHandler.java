@@ -1,7 +1,9 @@
+// Import UIConstants class
 package com.enoughfolders.client.gui;
 
-import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.util.DebugLogger;
+import com.enoughfolders.client.data.FolderContentState;
+import com.enoughfolders.client.data.NavigationControls;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 
@@ -71,20 +73,17 @@ public class FolderInputHandler {
                mouseY >= topPos && mouseY < topPos + height;
     }
     
+    // Deprecated mouseClicked method removed - use mouseClicked(double, double, int, FolderContentState, NavigationControls, boolean) instead
+    
     /**
-     * Handles mouse click events on the folder screen.
+     * Handles mouse click events on the folder screen using data objects.
+     * This is the preferred method to use for new code.
      *
      * @param mouseX The mouse x position
      * @param mouseY The mouse y position
      * @param button The mouse button that was clicked
-     * @param folderButtons The folder buttons
-     * @param ingredientSlots The ingredient slots
-     * @param addFolderButton The add folder button
-     * @param deleteButton The delete button
-     * @param prevPageButton The previous page button
-     * @param nextPageButton The next page button
-     * @param newFolderNameInput The new folder name input field
-     * @param isAddingFolder Whether we're currently adding a folder
+     * @param contentState The folder content state
+     * @param controls The navigation controls
      * @param hasActiveFolder Whether there's an active folder
      * @return true if the click was handled, false otherwise
      */
@@ -92,14 +91,8 @@ public class FolderInputHandler {
             double mouseX, 
             double mouseY, 
             int button,
-            List<FolderButton> folderButtons,
-            List<IngredientSlot> ingredientSlots,
-            Button addFolderButton,
-            Button deleteButton,
-            Button prevPageButton,
-            Button nextPageButton,
-            EditBox newFolderNameInput,
-            boolean isAddingFolder,
+            FolderContentState contentState,
+            NavigationControls controls,
             boolean hasActiveFolder) {
             
         DebugLogger.debugValues(DebugLogger.Category.MOUSE, 
@@ -111,6 +104,7 @@ public class FolderInputHandler {
             return false;
         }
         
+        Button addFolderButton = controls.getAddFolderButton();
         boolean overAddButton = addFolderButton.isMouseOver(mouseX, mouseY);
         DebugLogger.debugValues(DebugLogger.Category.MOUSE, 
             "Mouse over add folder button: {} at position {},{} with size {}x{}", 
@@ -126,6 +120,7 @@ public class FolderInputHandler {
             return true;
         }
         
+        List<FolderButton> folderButtons = contentState.getFolderButtons();
         for (FolderButton folderButton : folderButtons) {
             if (folderButton.isPointInButton((int) mouseX, (int) mouseY)) {
                 folderButton.onClick();
@@ -133,17 +128,22 @@ public class FolderInputHandler {
             }
         }
         
-        if (isAddingFolder && newFolderNameInput.isMouseOver(mouseX, mouseY)) {
+        EditBox newFolderNameInput = controls.getNewFolderNameInput();
+        if (contentState.isAddingFolder() && newFolderNameInput.isMouseOver(mouseX, mouseY)) {
             newFolderNameInput.setFocused(true);
             return newFolderNameInput.mouseClicked(mouseX, mouseY, button);
         }
         
+        Button deleteButton = controls.getDeleteButton();
         if (hasActiveFolder && deleteButton.isMouseOver(mouseX, mouseY)) {
             deleteButton.onClick(mouseX, mouseY);
             return true;
         }
         
         if (hasActiveFolder) {
+            Button prevPageButton = controls.getPrevPageButton();
+            Button nextPageButton = controls.getNextPageButton();
+            
             if (prevPageButton.isMouseOver(mouseX, mouseY)) {
                 prevPageButton.onClick(mouseX, mouseY);
                 return true;
@@ -158,32 +158,41 @@ public class FolderInputHandler {
         return false;
     }
     
+    // Deprecated mouseReleased method removed - use mouseReleased(double, double, int, FolderContentState, Runnable, FolderScreen) instead
+    
     /**
-     * Handles mouse release events on the folder screen.
+     * Handles mouse release events on the folder screen using data objects.
+     * This is the preferred method to use for new code.
      *
      * @param mouseX The mouse x position
      * @param mouseY The mouse y position
      * @param button The mouse button that was released
-     * @param folderButtons The folder buttons
+     * @param contentState The folder content state 
      * @param onIngredientAdded Callback for when an ingredient is added
+     * @param folderScreen The folder screen to use for integration handling
      * @return true if the release was handled, false otherwise
      */
     public boolean mouseReleased(
             double mouseX, 
             double mouseY, 
             int button,
-            List<FolderButton> folderButtons,
-            Runnable onIngredientAdded) {
+            FolderContentState contentState,
+            Runnable onIngredientAdded,
+            FolderScreen folderScreen) {
             
-        EnoughFolders.LOGGER.info("FolderInputHandler.mouseReleased at {},{}, button: {}", mouseX, mouseY, button);
+        DebugLogger.debugValues(DebugLogger.Category.MOUSE, 
+            "FolderInputHandler.mouseReleased at x:{}, y:{}, button:{}", 
+            mouseX, mouseY, button);
         
         if (!isVisible(mouseX, mouseY)) {
+            DebugLogger.debug(DebugLogger.Category.MOUSE, "Release outside folder screen area, ignoring");
             return false;
         }
         
-        for (FolderButton folderButton : folderButtons) {
-            if (folderButton.tryHandleDrop((int)mouseX, (int)mouseY)) {
-                EnoughFolders.LOGGER.info("Mouse release handled as drop on folder button");
+        // Handle ingredient drag and drop via integrations
+        if (folderScreen != null) {
+            if (folderScreen.getIntegrationHandler().handleIngredientDrop(
+                    mouseX, mouseY, contentState.getFolderButtons())) {
                 onIngredientAdded.run();
                 return true;
             }
@@ -192,25 +201,30 @@ public class FolderInputHandler {
         return false;
     }
     
+    // Deprecated keyPressed method removed - use keyPressed(int, int, int, FolderContentState, NavigationControls) instead
+    
     /**
-     * Handles keyboard key press events.
+     * Handles keyboard key press events using data objects.
+     * This is the preferred method to use for new code.
      *
      * @param keyCode The key code
      * @param scanCode The scan code
      * @param modifiers The modifier keys
-     * @param isAddingFolder Whether we're currently adding a folder
-     * @param newFolderNameInput The new folder name input field
+     * @param contentState The folder content state
+     * @param controls The navigation controls
      * @return true if the key press was handled, false otherwise
      */
     public boolean keyPressed(
             int keyCode, 
             int scanCode, 
             int modifiers,
-            boolean isAddingFolder,
-            EditBox newFolderNameInput) {
+            FolderContentState contentState,
+            NavigationControls controls) {
             
-        if (isAddingFolder && newFolderNameInput.isFocused()) {
-            if (keyCode == 257 || keyCode == 335) {
+        EditBox newFolderNameInput = controls.getNewFolderNameInput();
+        
+        if (contentState.isAddingFolder() && newFolderNameInput.isFocused()) {
+            if (keyCode == 257 || keyCode == 335) { // Enter or numpad enter
                 createFolderCallback.accept(newFolderNameInput.getValue());
                 newFolderNameInput.setValue("");
                 toggleAddFolderModeCallback.run();
@@ -223,22 +237,27 @@ public class FolderInputHandler {
         return false;
     }
     
+    // Deprecated charTyped method removed - use charTyped(char, int, FolderContentState, NavigationControls) instead
+    
     /**
-     * Handles character input events.
+     * Handles character input events using data objects.
+     * This is the preferred method to use for new code.
      *
      * @param codePoint The character code point
      * @param modifiers The modifier keys
-     * @param isAddingFolder Whether we're currently adding a folder
-     * @param newFolderNameInput The new folder name input field
+     * @param contentState The folder content state
+     * @param controls The navigation controls
      * @return true if the character input was handled, false otherwise
      */
     public boolean charTyped(
             char codePoint, 
             int modifiers,
-            boolean isAddingFolder,
-            EditBox newFolderNameInput) {
+            FolderContentState contentState,
+            NavigationControls controls) {
             
-        if (isAddingFolder && newFolderNameInput.isFocused()) {
+        EditBox newFolderNameInput = controls.getNewFolderNameInput();
+        
+        if (contentState.isAddingFolder() && newFolderNameInput.isFocused()) {
             return newFolderNameInput.charTyped(codePoint, modifiers);
         }
         
@@ -261,7 +280,12 @@ public class FolderInputHandler {
             boolean shiftHeld = net.minecraft.client.gui.screens.Screen.hasShiftDown();
             boolean ctrlHeld = net.minecraft.client.gui.screens.Screen.hasControlDown();
             
-            // Notify registered handlers first
+            // Try the integration handler first
+            if (folderScreen.getIntegrationHandler().handleIngredientClick(slot, button, shiftHeld, ctrlHeld)) {
+                return true;
+            }
+            
+            // Try registered handlers next
             if (folderScreen.notifyIngredientClickHandlers(slot, button, shiftHeld, ctrlHeld)) {
                 return true;
             }

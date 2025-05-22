@@ -1,49 +1,35 @@
+// Import UIConstants class
 package com.enoughfolders.client.gui;
 
-import com.enoughfolders.EnoughFolders;
-import com.enoughfolders.data.Folder;
+import com.enoughfolders.client.data.FolderContentState;
+import com.enoughfolders.client.data.NavigationControls;
+import com.enoughfolders.client.data.RenderContext;
+import com.enoughfolders.client.data.RenderState;
 import com.enoughfolders.util.DebugLogger;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Supplier;
 
 /**
  * Handles rendering of the folder screen components.
+ * Uses a RenderContext for direct access to all necessary components.
  */
 public class FolderScreenRenderer {
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(EnoughFolders.MOD_ID, "textures/gui/folders.png");
-    private static final int FOLDER_AREA_HEIGHT = 22;
+    private static final ResourceLocation TEXTURE = UIConstants.FOLDER_TEXTURE;
     
-    // The screen that this renderer is rendering for
-    private final AbstractContainerScreen<?> parentScreen;
-    
-    // Screen position and dimensions
-    private int leftPos;
-    private int topPos;
-    private int width;
-    private int height;
-    
-    // Dependencies
-    private final Supplier<Optional<Folder>> activeFolder;
+    // Complete render context containing all necessary components
+    private final RenderContext context;
     
     /**
-     * Creates a new folder screen renderer.
+     * Creates a new folder screen renderer with the given render context.
      *
-     * @param parentScreen The parent container screen
-     * @param activeFolderSupplier Supplier for the active folder
+     * @param renderContext The render context containing all necessary components
      */
-    public FolderScreenRenderer(
-            AbstractContainerScreen<?> parentScreen,
-            Supplier<Optional<Folder>> activeFolderSupplier) {
-        this.parentScreen = parentScreen;
-        this.activeFolder = activeFolderSupplier;
+    public FolderScreenRenderer(RenderContext renderContext) {
+        this.context = renderContext;
     }
     
     /**
@@ -55,10 +41,7 @@ public class FolderScreenRenderer {
      * @param height Height of the container
      */
     public void setPositionAndDimensions(int leftPos, int topPos, int width, int height) {
-        this.leftPos = leftPos;
-        this.topPos = topPos;
-        this.width = width;
-        this.height = height;
+        context.setPositionAndDimensions(leftPos, topPos, width, height);
     }
     
     /**
@@ -67,92 +50,81 @@ public class FolderScreenRenderer {
      * @param height New height
      */
     public void updateHeight(int height) {
-        this.height = height;
+        context.updateHeight(height);
     }
     
+    // Deprecated render method removed - use render(RenderState, FolderContentState, NavigationControls) instead
+    
     /**
-     * Renders the folder screen.
+     * Renders the folder screen using data objects for parameter organization.
+     * This is the preferred method to use for new code.
      *
-     * @param graphics The graphics context to render with
-     * @param mouseX The mouse x position
-     * @param mouseY The mouse y position
-     * @param partialTick The partial tick time
-     * @param folderButtons The folder buttons to render
-     * @param ingredientSlots The ingredient slots to render
-     * @param addFolderButton The add folder button
-     * @param deleteButton The delete button
-     * @param prevPageButton The previous page button
-     * @param nextPageButton The next page button
-     * @param newFolderNameInput The new folder name input field
-     * @param isAddingFolder Whether we're currently adding a folder
-     * @param currentPage Current page number (0-based)
-     * @param totalPages Total number of pages
-     * @param folderRowsCount Number of folder button rows
+     * @param renderState The current rendering state
+     * @param contentState The current folder content state
+     * @param controls The navigation controls
      */
     public void render(
-            GuiGraphics graphics, 
-            int mouseX, 
-            int mouseY, 
-            float partialTick,
-            List<FolderButton> folderButtons,
-            List<IngredientSlot> ingredientSlots,
-            Button addFolderButton,
-            Button deleteButton,
-            Button prevPageButton,
-            Button nextPageButton,
-            EditBox newFolderNameInput,
-            boolean isAddingFolder,
-            int currentPage,
-            int totalPages,
-            int folderRowsCount) {
+            RenderState renderState,
+            FolderContentState contentState,
+            NavigationControls controls) {
+        
+        GuiGraphics graphics = renderState.getGraphics();
+        int mouseX = renderState.getMouseX();
+        int mouseY = renderState.getMouseY();
+        float partialTick = renderState.getPartialTick();
         
         renderBackground(graphics);
         
         // Render folder buttons
-        for (FolderButton button : folderButtons) {
+        for (FolderButton button : contentState.getFolderButtons()) {
             button.renderWidget(graphics, mouseX, mouseY, partialTick);
         }
         
-        DebugLogger.debugValue(DebugLogger.Category.RENDERING, "Rendered {} folder buttons", folderButtons.size());
+        DebugLogger.debugValue(DebugLogger.Category.RENDERING, "Rendered {} folder buttons", 
+            contentState.getFolderButtons().size());
         
         // Render add folder button
-        renderAddFolderButton(graphics, mouseX, mouseY, partialTick, addFolderButton);
+        renderAddFolderButton(graphics, mouseX, mouseY, partialTick, controls.getAddFolderButton());
         
         // Render active folder content if there is one
-        activeFolder.get().ifPresent(folder -> {
+        context.getFolderManager().getActiveFolder().ifPresent(folder -> {
             DebugLogger.debugValue(DebugLogger.Category.RENDERING, "Rendering active folder: {}", folder.getName());
             
-            int verticalOffset = isAddingFolder ? 20 : 0; // INPUT_FIELD_HEIGHT
+            int verticalOffset = contentState.isAddingFolder() ? 20 : 0; // INPUT_FIELD_HEIGHT
             
-            if (folderRowsCount > 1) {
-                verticalOffset += (folderRowsCount - 1) * 27; // FOLDER_ROW_HEIGHT
+            if (contentState.getFolderRowsCount() > 1) {
+                verticalOffset += (contentState.getFolderRowsCount() - 1) * 27; // FOLDER_ROW_HEIGHT
             }
             
             String name = folder.getTruncatedName();
             graphics.drawString(
-                    parentScreen.getMinecraft().font, 
+                    context.getParentScreen().getMinecraft().font, 
                     name, 
-                    leftPos + 5, 
-                    topPos + FOLDER_AREA_HEIGHT + 17 + verticalOffset, 
+                    context.getLeftPos() + 5, 
+                    context.getTopPos() + UIConstants.FOLDER_AREA_HEIGHT + 17 + verticalOffset, 
                     0xFFFFFF
             );
             
-            deleteButton.setPosition(leftPos + width - 25, topPos + FOLDER_AREA_HEIGHT + 12 + verticalOffset);
+            Button deleteButton = controls.getDeleteButton();
+            deleteButton.setPosition(context.getLeftPos() + context.getWidth() - 25, context.getTopPos() + UIConstants.FOLDER_AREA_HEIGHT + 12 + verticalOffset);
             
             renderDeleteButton(graphics, mouseX, mouseY, partialTick, deleteButton);
+            
+            Button prevPageButton = controls.getPrevPageButton();
+            Button nextPageButton = controls.getNextPageButton();
             
             prevPageButton.render(graphics, mouseX, mouseY, partialTick);
             nextPageButton.render(graphics, mouseX, mouseY, partialTick);
             
             // Render page count
-            String pageText = (currentPage + 1) + "/" + totalPages;
-            int pageTextWidth = parentScreen.getMinecraft().font.width(pageText);
+            String pageText = (contentState.getCurrentPage() + 1) + "/" + contentState.getTotalPages();
+            int pageTextWidth = context.getParentScreen().getMinecraft().font.width(pageText);
             
-            int centerX = leftPos + (width - pageTextWidth) / 2;
+            int centerX = context.getLeftPos() + (context.getWidth() - pageTextWidth) / 2;
             int centerY = prevPageButton.getY() + prevPageButton.getHeight() / 2 - 4;
             
             graphics.drawString(
-                    parentScreen.getMinecraft().font,
+                    context.getParentScreen().getMinecraft().font,
                     pageText,
                     centerX,
                     centerY,
@@ -160,20 +132,21 @@ public class FolderScreenRenderer {
             );
             
             // Render ingredient slots
-            for (IngredientSlot slot : ingredientSlots) {
+            for (IngredientSlot slot : contentState.getIngredientSlots()) {
                 slot.render(graphics, mouseX, mouseY);
             }
             
-            DebugLogger.debugValue(DebugLogger.Category.RENDERING, "Rendered {} ingredient slots", ingredientSlots.size());
+            DebugLogger.debugValue(DebugLogger.Category.RENDERING, "Rendered {} ingredient slots", 
+                contentState.getIngredientSlots().size());
         });
         
         // Render folder name input if adding a folder
-        if (isAddingFolder) {
-            newFolderNameInput.render(graphics, mouseX, mouseY, partialTick);
+        if (contentState.isAddingFolder()) {
+            controls.getNewFolderNameInput().render(graphics, mouseX, mouseY, partialTick);
         }
         
         // Render tooltips
-        renderTooltips(graphics, mouseX, mouseY, folderButtons);
+        renderTooltips(graphics, mouseX, mouseY, contentState.getFolderButtons());
     }
     
     /**
@@ -182,6 +155,11 @@ public class FolderScreenRenderer {
      * @param graphics The graphics context to render with
      */
     private void renderBackground(GuiGraphics graphics) {
+        int leftPos = context.getLeftPos();
+        int topPos = context.getTopPos();
+        int width = context.getWidth();
+        int height = context.getHeight();
+        
         DebugLogger.debugValues(DebugLogger.Category.RENDERING, 
             "FolderScreen.renderBackground at position: {},{} with dimensions: {}x{}", 
             leftPos, topPos, width, height);
@@ -201,7 +179,7 @@ public class FolderScreenRenderer {
         for (FolderButton button : folderButtons) {
             if (button.isPointInButton(mouseX, mouseY)) {
                 graphics.renderTooltip(
-                        parentScreen.getMinecraft().font, 
+                        context.getParentScreen().getMinecraft().font, 
                         Component.literal(button.getFolder().getName()),
                         mouseX, 
                         mouseY
@@ -260,12 +238,49 @@ public class FolderScreenRenderer {
                            mouseY >= y && mouseY < y + deleteButton.getHeight();
         
         int textureU = 16;
-        int textureV = 0;
+        int textureV = isHovered ? 16 : 0;
         
         graphics.blit(TEXTURE, x, y, textureU, textureV, width, height, 64, 64);
         
         DebugLogger.debugValues(DebugLogger.Category.RENDERING,
             "Delete button drawn at {},{} using texture at {},{}", 
             x, y, textureU, textureV);
+    }
+
+    /**
+     * Renders the folder screen using only the RenderContext.
+     * This method creates the necessary state objects internally and delegates to the
+     * render method that accepts individual state objects.
+     *
+     * @param graphics The graphics context to render with
+     * @param mouseX The mouse x position
+     * @param mouseY The mouse y position
+     * @param partialTick The partial tick time
+     * @param isAddingFolder Whether a new folder is being added
+     * @param controls The navigation controls
+     */
+    public void renderWithContext(
+            GuiGraphics graphics, 
+            int mouseX, 
+            int mouseY, 
+            float partialTick,
+            boolean isAddingFolder,
+            NavigationControls controls) {
+        
+        // Create render state
+        RenderState renderState = new RenderState(graphics, mouseX, mouseY, partialTick);
+        
+        // Create content state from context components
+        FolderContentState contentState = new FolderContentState(
+            isAddingFolder,
+            context.getGridManager().getCurrentPage(),
+            context.getGridManager().getTotalPages(),
+            context.getButtonManager().getFolderRowsCount(),
+            context.getButtonManager().getFolderButtons(),
+            context.getGridManager().getIngredientSlots()
+        );
+        
+        // Delegate to the regular render method
+        render(renderState, contentState, controls);
     }
 }

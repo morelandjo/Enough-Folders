@@ -1,12 +1,13 @@
+// Import UIConstants class
 package com.enoughfolders.client.gui;
 
 import com.enoughfolders.EnoughFolders;
+import com.enoughfolders.client.data.FolderContentState;
+import com.enoughfolders.client.data.NavigationControls;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.FolderManager;
-import com.enoughfolders.integrations.IntegrationRegistry;
+import com.enoughfolders.client.integration.IntegrationHandler;
 import com.enoughfolders.integrations.api.FolderTarget;
-import com.enoughfolders.integrations.api.RecipeViewingIntegration;
-import com.enoughfolders.integrations.jei.core.JEIIntegrationCore;
 import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
 import com.enoughfolders.integrations.jei.gui.targets.FolderGhostIngredientTarget;
 import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
@@ -22,19 +23,16 @@ import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * The main folder screen overlay that displays folders and their contents.
  * 
  */
 public class FolderScreen implements FolderGhostIngredientTarget {
-    private static final int INPUT_FIELD_HEIGHT = 20;
-    private static final int JEI_WIDTH_REDUCTION = 20;
-    private static final int FOLDER_AREA_HEIGHT = 22;
     
     /**
      * The container screen that this folder screen is overlaying
+     * Used by the IntegrationHandler
      */
     private final AbstractContainerScreen<?> parentScreen;
     
@@ -50,6 +48,12 @@ public class FolderScreen implements FolderGhostIngredientTarget {
     private final IngredientGridManager gridManager;
     private final FolderScreenRenderer renderer;
     private final FolderInputHandler inputHandler;
+    private final LayoutManager layoutManager;
+    
+    /**
+     * Integration handler for recipe viewing mods
+     */
+    private final IntegrationHandler integrationHandler;
     
     /**
      * UI controls for folder management
@@ -64,6 +68,7 @@ public class FolderScreen implements FolderGhostIngredientTarget {
     
     /**
      * Position and size of the folder screen
+     * These are now managed by the LayoutManager but kept for backward compatibility
      */
     private int leftPos;
     private int topPos;
@@ -82,11 +87,39 @@ public class FolderScreen implements FolderGhostIngredientTarget {
         this.parentScreen = parentScreen;
         this.folderManager = EnoughFolders.getInstance().getFolderManager();
         
+        // Initialize the layout manager first
+        this.layoutManager = new LayoutManager(() -> folderManager.getActiveFolder());
+        
         // Initialize component managers
-        this.buttonManager = new FolderButtonManager(folderManager, this::onFolderClicked);
-        this.gridManager = new IngredientGridManager(() -> folderManager.getActiveFolder());
-        this.renderer = new FolderScreenRenderer(parentScreen, () -> folderManager.getActiveFolder());
+        this.buttonManager = new FolderButtonManager(folderManager, this::onFolderClicked, layoutManager);
+        this.gridManager = new IngredientGridManager(() -> folderManager.getActiveFolder(), layoutManager);
+        
+        // Create render context with all necessary components
+        com.enoughfolders.client.data.RenderContext renderContext = 
+            new com.enoughfolders.client.data.RenderContext(
+                parentScreen,
+                folderManager,
+                buttonManager,
+                gridManager
+            );
+        
+        this.renderer = new FolderScreenRenderer(renderContext);
         this.inputHandler = new FolderInputHandler(this::createNewFolder, this::toggleAddFolderMode);
+        
+        // Initialize the integration handler
+        this.integrationHandler = new IntegrationHandler(this);
+        
+        // Add layout change listeners
+        this.layoutManager.addLayoutChangeListener(() -> {
+            // Update local position and size variables for backward compatibility
+            leftPos = layoutManager.getLeftPos();
+            topPos = layoutManager.getTopPos();
+            width = layoutManager.getWidth();
+            height = layoutManager.getHeight();
+        });
+        
+        // Initialize integrations for this folder screen
+        this.integrationHandler.initIntegrations(parentScreen);
     }
     
     /**
@@ -104,88 +137,36 @@ public class FolderScreen implements FolderGhostIngredientTarget {
         String currentInputText = newFolderNameInput != null ? newFolderNameInput.getValue() : "";
         boolean inputHadFocus = newFolderNameInput != null && newFolderNameInput.isFocused();
         
-        int parentLeftPos = 0;
-        if (parentScreen != null) {
-            int standardContainerWidth = 176;
-            parentLeftPos = (parentWidth - standardContainerWidth) / 2;
-            DebugLogger.debugValue(DebugLogger.Category.GUI_STATE, "Estimated parent screen left position: {}", parentLeftPos);
-        }
+        // Calculate initial dimensions using the layout manager
+        layoutManager.calculateInitialDimensions(parentWidth, parentHeight);
         
-        boolean isJeiRecipeGuiOpen = false;
-        Optional<JEIIntegrationCore> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegrationCore.class);
-        if (jeiIntegration.isPresent()) {
-            isJeiRecipeGuiOpen = jeiIntegration.get().isRecipeGuiOpen();
-            if (isJeiRecipeGuiOpen) {
-                DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "JEI recipe GUI is open, reducing folder UI width");
-            }
-        }
+        // Update local position and size variables
+        leftPos = layoutManager.getLeftPos();
+        topPos = layoutManager.getTopPos();
+        width = layoutManager.getWidth();
+        height = layoutManager.getHeight();
         
-        int maxWidth = Math.min(parentWidth - 40, 387);
-        
-        if (parentLeftPos > 0) {
-            int originalWidth = maxWidth;
-            maxWidth = Math.min(maxWidth, parentLeftPos - 20);
-            if (originalWidth != maxWidth) {
-                DebugLogger.debugValues(DebugLogger.Category.GUI_STATE,
-                    "Width limited to avoid parent screen overlap, from {} to {}", originalWidth, maxWidth);
-            }
-        }
-        
-        if (isJeiRecipeGuiOpen) {
-            int originalWidth = maxWidth;
-            maxWidth = Math.max(70, maxWidth - JEI_WIDTH_REDUCTION);
-            DebugLogger.debugValues(DebugLogger.Category.JEI_INTEGRATION, 
-                "Reduced width for JEI recipe GUI by {}, original: {}, new width: {}", 
-                JEI_WIDTH_REDUCTION, originalWidth, maxWidth);
-        }
-        
-        width = maxWidth;
-        leftPos = 5;
-        topPos = 5;
-        
-        // Check for FTB sidebar overlap and adjust position if necessary
-        adjustPositionForFTBSidebar();
-        
-        // Set position and dimensions for all component managers
-        buttonManager.setPositionAndDimensions(leftPos, width);
-        gridManager.setPositionAndDimensions(leftPos, topPos, width);
+        // Set position and dimensions for component managers that don't use LayoutManager yet
         renderer.setPositionAndDimensions(leftPos, topPos, width, 0); // Height will be updated later
         inputHandler.setPositionAndDimensions(leftPos, topPos, width, 0); // Height will be updated later
         
-        // Create the add folder button
-        buttonManager.createAddFolderButton(
-                leftPos + 5, 
-                topPos + 5,
-                button -> toggleAddFolderMode());
+        // Create the add folder button using LayoutManager
+        buttonManager.createAddFolderButton(button -> toggleAddFolderMode());
                 
         // Initialize folder buttons
-        int folderRowsCount = buttonManager.initFolderButtons(topPos, isAddingFolder);
-        
-        // Calculate base dimensions
-        boolean hasActiveFolder = folderManager.getActiveFolder().isPresent();
-        int folderRowsHeight = FOLDER_AREA_HEIGHT;
-        if (folderRowsCount > 1) {
-            folderRowsHeight += (folderRowsCount - 1) * 27; // FOLDER_ROW_HEIGHT
-        }
-        
-        // Calculate initial height
-        if (hasActiveFolder) {
-            height = folderRowsHeight + 97;
-        } else {
-            height = folderRowsHeight + 10;
-        }
-
-        if (wasAddingFolder) {
-            height += INPUT_FIELD_HEIGHT;
-        }
+        layoutManager.setIsAddingFolder(wasAddingFolder);
+        int folderRowsCount = buttonManager.initFolderButtons(wasAddingFolder);
+        layoutManager.setFolderRowsCount(folderRowsCount);
         
         // Create the delete button
+        int[] deleteButtonPos = layoutManager.getDeleteButtonPosition();
         deleteButton = new Button.Builder(Component.literal("X"), button -> deleteCurrentFolder())
-                .pos(leftPos + width - 25, topPos + FOLDER_AREA_HEIGHT + 5)
+                .pos(deleteButtonPos[0], deleteButtonPos[1])
                 .size(20, 20)
                 .build();
         
         // Create pagination buttons for ingredient grid
+        layoutManager.getPaginationButtonPositions(isAddingFolder);
         gridManager.createPaginationButtons(
                 button -> {
                     gridManager.previousPage();
@@ -197,11 +178,12 @@ public class FolderScreen implements FolderGhostIngredientTarget {
                 });
         
         // Create the folder name input field
+        int[] inputFieldPos = layoutManager.getFolderNameInputPosition();
         newFolderNameInput = new EditBox(
                 Minecraft.getInstance().font, 
-                leftPos + 30, 
-                topPos + 7, 
-                width - 35, 
+                inputFieldPos[0],
+                inputFieldPos[1],
+                inputFieldPos[2], 
                 16, 
                 Component.literal("Folder Name")
         );
@@ -219,6 +201,19 @@ public class FolderScreen implements FolderGhostIngredientTarget {
         
         // Initialize ingredient slots and update final dimensions
         refreshIngredientSlots();
+        
+        // Register an ingredient click handler for showing recipes/uses
+        registerIngredientClickHandler((slot, mouseButton, shift, ctrl) -> {
+            if (slot.hasIngredient()) {
+                // Left click for recipes, right click for uses
+                if (mouseButton == 0) {
+                    return integrationHandler.showRecipes(slot.getIngredient());
+                } else if (mouseButton == 1) {
+                    return integrationHandler.showUses(slot.getIngredient());
+                }
+            }
+            return false;
+        });
     }
     
     /**
@@ -228,7 +223,8 @@ public class FolderScreen implements FolderGhostIngredientTarget {
         int newHeight = gridManager.refreshIngredientSlots(isAddingFolder, buttonManager.getFolderRowsCount());
         
         // Update height for all components
-        height = newHeight;
+        layoutManager.updateHeight(newHeight);
+        height = layoutManager.getHeight();
         renderer.updateHeight(height);
         inputHandler.updateHeight(height);
     }
@@ -238,6 +234,7 @@ public class FolderScreen implements FolderGhostIngredientTarget {
      */
     private void toggleAddFolderMode() {
         isAddingFolder = !isAddingFolder;
+        layoutManager.setIsAddingFolder(isAddingFolder);
         newFolderNameInput.setVisible(isAddingFolder);
         
         if (isAddingFolder) {
@@ -254,7 +251,7 @@ public class FolderScreen implements FolderGhostIngredientTarget {
         }
         
         // Re-initialize buttons with new layout
-        buttonManager.initFolderButtons(topPos, isAddingFolder);
+        buttonManager.initFolderButtons(isAddingFolder);
         refreshIngredientSlots();
     }
     
@@ -269,7 +266,7 @@ public class FolderScreen implements FolderGhostIngredientTarget {
         }
         
         folderManager.createFolder(name.trim());
-        buttonManager.initFolderButtons(topPos, isAddingFolder);
+        buttonManager.initFolderButtons(isAddingFolder);
     }
     
     /**
@@ -295,7 +292,7 @@ public class FolderScreen implements FolderGhostIngredientTarget {
         folderManager.getActiveFolder().ifPresent(folder -> {
             folderManager.deleteFolder(folder);
             folderManager.clearActiveFolder();
-            buttonManager.initFolderButtons(topPos, isAddingFolder);
+            buttonManager.initFolderButtons(isAddingFolder);
             refreshIngredientSlots();
         });
     }
@@ -309,24 +306,18 @@ public class FolderScreen implements FolderGhostIngredientTarget {
      * @param partialTick The partial tick time
      */
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        // Create navigation controls with all UI control elements
+        NavigationControls controls = 
+            new NavigationControls(
+                buttonManager.getAddFolderButton(),
+                deleteButton,
+                gridManager.getPrevPageButton(),
+                gridManager.getNextPageButton(),
+                newFolderNameInput
+            );
         
-        renderer.render(
-            graphics,
-            mouseX,
-            mouseY,
-            partialTick,
-            buttonManager.getFolderButtons(),
-            gridManager.getIngredientSlots(),
-            buttonManager.getAddFolderButton(),
-            deleteButton,
-            gridManager.getPrevPageButton(),
-            gridManager.getNextPageButton(),
-            newFolderNameInput,
-            isAddingFolder,
-            gridManager.getCurrentPage(),
-            gridManager.getTotalPages(),
-            buttonManager.getFolderRowsCount()
-        );
+        // Render using the RenderContext
+        renderer.renderWithContext(graphics, mouseX, mouseY, partialTick, isAddingFolder, controls);
     }
     
     /**
@@ -348,19 +339,34 @@ public class FolderScreen implements FolderGhostIngredientTarget {
             }
         }
         
-        // Fall back to standard input handling
+        // Create content state with folder buttons and ingredient slots
+        FolderContentState contentState = 
+            new FolderContentState(
+                isAddingFolder,
+                gridManager.getCurrentPage(),
+                gridManager.getTotalPages(),
+                buttonManager.getFolderRowsCount(),
+                buttonManager.getFolderButtons(),
+                gridManager.getIngredientSlots()
+            );
+        
+        // Create navigation controls with all UI control elements
+        NavigationControls controls = 
+            new NavigationControls(
+                buttonManager.getAddFolderButton(),
+                deleteButton,
+                gridManager.getPrevPageButton(),
+                gridManager.getNextPageButton(),
+                newFolderNameInput
+            );
+        
+        // Fall back to standard input handling using data objects
         return inputHandler.mouseClicked(
             mouseX,
             mouseY,
             button,
-            buttonManager.getFolderButtons(),
-            gridManager.getIngredientSlots(),
-            buttonManager.getAddFolderButton(),
-            deleteButton,
-            gridManager.getPrevPageButton(),
-            gridManager.getNextPageButton(),
-            newFolderNameInput,
-            isAddingFolder,
+            contentState,
+            controls,
             folderManager.getActiveFolder().isPresent()
         );
     }
@@ -374,12 +380,24 @@ public class FolderScreen implements FolderGhostIngredientTarget {
      * @return true if the release was handled, false otherwise
      */
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        // Create content state with folder buttons and ingredient slots
+        FolderContentState contentState = 
+            new FolderContentState(
+                isAddingFolder,
+                gridManager.getCurrentPage(),
+                gridManager.getTotalPages(),
+                buttonManager.getFolderRowsCount(),
+                buttonManager.getFolderButtons(),
+                gridManager.getIngredientSlots()
+            );
+            
         return inputHandler.mouseReleased(
             mouseX,
             mouseY,
             button,
-            buttonManager.getFolderButtons(),
-            this::onIngredientAdded
+            contentState,
+            this::onIngredientAdded,
+            this
         );
     }
     
@@ -392,12 +410,33 @@ public class FolderScreen implements FolderGhostIngredientTarget {
      * @return true if the key press was handled, false otherwise
      */
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        // Create content state
+        FolderContentState contentState = 
+            new FolderContentState(
+                isAddingFolder,
+                gridManager.getCurrentPage(),
+                gridManager.getTotalPages(),
+                buttonManager.getFolderRowsCount(),
+                buttonManager.getFolderButtons(),
+                gridManager.getIngredientSlots()
+            );
+        
+        // Create navigation controls
+        NavigationControls controls = 
+            new NavigationControls(
+                buttonManager.getAddFolderButton(),
+                deleteButton,
+                gridManager.getPrevPageButton(),
+                gridManager.getNextPageButton(),
+                newFolderNameInput
+            );
+            
         return inputHandler.keyPressed(
             keyCode,
             scanCode,
             modifiers,
-            isAddingFolder,
-            newFolderNameInput
+            contentState,
+            controls
         );
     }
     
@@ -409,11 +448,32 @@ public class FolderScreen implements FolderGhostIngredientTarget {
      * @return true if the character input was handled, false otherwise
      */
     public boolean charTyped(char codePoint, int modifiers) {
+        // Create content state
+        FolderContentState contentState = 
+            new FolderContentState(
+                isAddingFolder,
+                gridManager.getCurrentPage(),
+                gridManager.getTotalPages(),
+                buttonManager.getFolderRowsCount(),
+                buttonManager.getFolderButtons(),
+                gridManager.getIngredientSlots()
+            );
+        
+        // Create navigation controls
+        NavigationControls controls = 
+            new NavigationControls(
+                buttonManager.getAddFolderButton(),
+                deleteButton,
+                gridManager.getPrevPageButton(),
+                gridManager.getNextPageButton(),
+                newFolderNameInput
+            );
+            
         return inputHandler.charTyped(
             codePoint,
             modifiers,
-            isAddingFolder,
-            newFolderNameInput
+            contentState,
+            controls
         );
     }
     
@@ -443,7 +503,7 @@ public class FolderScreen implements FolderGhostIngredientTarget {
      * @return true if the point is within the folder screen, false otherwise
      */
     public boolean isVisible(double mouseX, double mouseY) {
-        return inputHandler.isVisible(mouseX, mouseY);
+        return layoutManager.isPointInside(mouseX, mouseY);
     }
     
     /**
@@ -453,7 +513,7 @@ public class FolderScreen implements FolderGhostIngredientTarget {
      */
     @Override
     public Rect2i getContentDropArea() {
-        return gridManager.getContentDropArea(isAddingFolder, buttonManager.getFolderRowsCount());
+        return layoutManager.getContentDropArea(isAddingFolder, gridManager.getIngredientColumns());
     }
     
     /**
@@ -508,30 +568,7 @@ public class FolderScreen implements FolderGhostIngredientTarget {
      */
     @Override
     public List<FolderButtonTarget> getFolderTargets() {
-        // Try REI first
-        if (IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.rei.core.REIIntegration")
-                .filter(integration -> integration instanceof RecipeViewingIntegration)
-                .map(integration -> (RecipeViewingIntegration) integration)
-                .filter(RecipeViewingIntegration::isAvailable)
-                .isPresent()) {
-            DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using REI folder targets");
-            // When REI is present, still return JEI targets since the interface requires FolderButtonTarget
-            return getJEIFolderTargets();
-        }
-        
-        // Use JEI targets
-        if (IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.jei.core.JEIIntegrationCore")
-                .filter(integration -> integration instanceof RecipeViewingIntegration)
-                .map(integration -> (RecipeViewingIntegration) integration)
-                .filter(RecipeViewingIntegration::isAvailable)
-                .isPresent()) {
-            DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using JEI folder targets");
-            return getJEIFolderTargets();
-        }
-        
-        // No recipe viewing integration available
-        DebugLogger.debug(DebugLogger.Category.INTEGRATION, "No recipe viewing integration available");
-        return new ArrayList<>();
+        return integrationHandler.getFolderTargets(buttonManager.getFolderButtons());
     }
     
     /**
@@ -540,31 +577,8 @@ public class FolderScreen implements FolderGhostIngredientTarget {
      * @param <T> The type of folder targets to return
      * @return List of folder targets for the available recipe viewing integration
      */
-    @SuppressWarnings("unchecked")
     public <T extends FolderTarget> List<T> getTypedFolderTargets() {
-        // Try REI first
-        if (IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.rei.core.REIIntegration")
-                .filter(integration -> integration instanceof RecipeViewingIntegration)
-                .map(integration -> (RecipeViewingIntegration) integration)
-                .filter(RecipeViewingIntegration::isAvailable)
-                .isPresent()) {
-            DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using REI folder targets");
-            return (List<T>) getREIFolderTargets();
-        }
-        
-        // Try JEI second
-        if (IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.jei.core.JEIIntegrationCore")
-                .filter(integration -> integration instanceof RecipeViewingIntegration)
-                .map(integration -> (RecipeViewingIntegration) integration)
-                .filter(RecipeViewingIntegration::isAvailable)
-                .isPresent()) {
-            DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using JEI folder targets");
-            return (List<T>) getJEIFolderTargets();
-        }
-        
-        // No recipe viewing integration available
-        DebugLogger.debug(DebugLogger.Category.INTEGRATION, "No recipe viewing integration available");
-        return new ArrayList<>();
+        return integrationHandler.getTypedFolderTargets(buttonManager.getFolderButtons());
     }
 
     /**
@@ -612,32 +626,6 @@ public class FolderScreen implements FolderGhostIngredientTarget {
         }
         return false;
     }
-
-    /**
-     * Checks if FTB Library is loaded and if the sidebar would overlap with folder GUI.
-     * Adjusts the position if necessary.
-     */
-    private void adjustPositionForFTBSidebar() {
-        // Check for FTB Library integration
-        if (com.enoughfolders.integrations.ftb.FTBIntegration.isFTBLibraryLoaded()) {
-            DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Checking for FTB sidebar overlap");
-            
-            // Create a rectangle representing our current folder GUI position
-            Rect2i folderRect = new Rect2i(leftPos, topPos, width, 100);
-            
-            // Ask FTB integration to adjust the position if needed
-            Rect2i adjustedRect = com.enoughfolders.integrations.ftb.FTBIntegration.avoidExclusionAreas(folderRect);
-            
-            // If position was adjusted, update our position
-            if (adjustedRect.getY() != topPos) {
-                DebugLogger.debugValues(DebugLogger.Category.INTEGRATION,
-                    "FTB sidebar detected, adjusted Y position from {} to {}", 
-                    topPos, adjustedRect.getY());
-                
-                topPos = adjustedRect.getY();
-            }
-        }
-    }
     
     /**
      * Gets all ingredient slots in the folder grid.
@@ -655,5 +643,14 @@ public class FolderScreen implements FolderGhostIngredientTarget {
      */
     public Rect2i getEntireFolderArea() {
         return new Rect2i(leftPos, topPos, width, height);
+    }
+    
+    /**
+     * Gets the integration handler for this folder screen.
+     *
+     * @return The integration handler
+     */
+    public IntegrationHandler getIntegrationHandler() {
+        return integrationHandler;
     }
 }

@@ -1,3 +1,4 @@
+// Import UIConstants class
 package com.enoughfolders.client.gui;
 
 import com.enoughfolders.EnoughFolders;
@@ -18,11 +19,7 @@ import java.util.function.Consumer;
 /**
  * Manages folder buttons in the FolderScreen.
  */
-public class FolderButtonManager {
-    private static final int FOLDER_WIDTH = 18;
-    private static final int FOLDER_HEIGHT = 18;
-    private static final int FOLDER_ROW_HEIGHT = 27;
-    private static final int FOLDER_COLUMN_SPACING = 4;
+public class FolderButtonManager implements LayoutManager.LayoutChangeListener {
     
     private final List<FolderButton> folderButtons = new ArrayList<>();
     private final FolderManager folderManager;
@@ -32,46 +29,39 @@ public class FolderButtonManager {
     // Callback for folder clicked events
     private final Consumer<Folder> onFolderClickedCallback;
     
-    // Position of the container
-    private int leftPos;
-    private int width;
+    // Reference to the layout manager
+    private final LayoutManager layoutManager;
+    
+    // State tracking
+    private boolean isAddingFolder;
     
     /**
      * Creates a new folder button manager.
      *
      * @param folderManager The folder manager
      * @param onFolderClickedCallback Callback for when a folder is clicked
+     * @param layoutManager The layout manager for position calculations
      */
-    public FolderButtonManager(FolderManager folderManager, Consumer<Folder> onFolderClickedCallback) {
+    public FolderButtonManager(FolderManager folderManager, Consumer<Folder> onFolderClickedCallback, LayoutManager layoutManager) {
         this.folderManager = folderManager;
         this.onFolderClickedCallback = onFolderClickedCallback;
-    }
-    
-    /**
-     * Sets the position and dimensions for layout.
-     *
-     * @param leftPos Left position
-     * @param width Width of the container
-     */
-    public void setPositionAndDimensions(int leftPos, int width) {
-        this.leftPos = leftPos;
-        this.width = width;
+        this.layoutManager = layoutManager;
+        this.layoutManager.addLayoutChangeListener(this);
     }
     
     /**
      * Creates the add folder button.
      *
-     * @param x X position
-     * @param y Y position
      * @param onAddFolderPressed Callback when the button is pressed
      * @return The add folder button
      */
-    public Button createAddFolderButton(int x, int y, Button.OnPress onAddFolderPressed) {
+    public Button createAddFolderButton(Button.OnPress onAddFolderPressed) {
+        int[] addButtonPos = layoutManager.getAddFolderButtonPosition();
         addFolderButton = new Button.Builder(
                 net.minecraft.network.chat.Component.literal("+"), 
                 onAddFolderPressed)
-                .pos(x, y)
-                .size(FOLDER_WIDTH, FOLDER_HEIGHT)
+                .pos(addButtonPos[0], addButtonPos[1])
+                .size(UIConstants.FOLDER_WIDTH, UIConstants.FOLDER_HEIGHT)
                 .build();
         addFolderButton.active = true;
         
@@ -81,35 +71,32 @@ public class FolderButtonManager {
     /**
      * Initializes the folder buttons in the UI.
      *
-     * @param topPos Top position of the container
      * @param isAddingFolder Whether we're currently in add folder mode
      * @return The number of folder button rows
      */
-    public int initFolderButtons(int topPos, boolean isAddingFolder) {
+    public int initFolderButtons(boolean isAddingFolder) {
         folderButtons.clear();
+        this.isAddingFolder = isAddingFolder;
         
         List<Folder> folders = folderManager.getFolders();
         
-        int startX = leftPos + 5 + FOLDER_WIDTH + 5;
+        int[] buttonLayout = layoutManager.calculateFolderButtonLayout(isAddingFolder);
+        int startX = buttonLayout[0];  // startX
+        int currentY = buttonLayout[1]; // currentY
+        int availableWidth = buttonLayout[2]; // availableWidth
+        int firstRowWidth = buttonLayout[3]; // firstRowWidth
+        
         int currentX = startX;
-        int currentY = topPos + 5;
         int rowCount = 1;
         
-        int availableWidth = width - 10;
-        int singleFolderWidth = FOLDER_WIDTH + FOLDER_COLUMN_SPACING;
+        int singleFolderWidth = UIConstants.FOLDER_WIDTH + UIConstants.FOLDER_COLUMN_SPACING;
         
-        int firstRowWidth = availableWidth - (FOLDER_WIDTH + 5);
         int foldersInFirstRow = Math.max(1, firstRowWidth / singleFolderWidth);
-        
         int foldersPerRow = Math.max(1, availableWidth / singleFolderWidth);
         
         DebugLogger.debugValues(DebugLogger.Category.GUI_STATE, 
             "Dynamic layout: firstRow={} folders, subsequentRows={} folders, availWidth={}, folderWidth={}", 
             foldersInFirstRow, foldersPerRow, availableWidth, singleFolderWidth);
-        
-        if (isAddingFolder) {
-            currentY += 20; // INPUT_FIELD_HEIGHT
-        }
         
         for (int i = 0; i < folders.size(); i++) {
             Folder folder = folders.get(i);
@@ -120,8 +107,8 @@ public class FolderButtonManager {
             
             if ((isFirstRow && i > 0 && i % foldersInFirstRow == 0) ||
                 (!isFirstRow && positionInRow == 0)) {
-                currentX = leftPos + 5;
-                currentY += FOLDER_ROW_HEIGHT;
+                currentX = layoutManager.getLeftPos() + 5;
+                currentY += UIConstants.FOLDER_ROW_HEIGHT;
                 rowCount++;
             }
             
@@ -131,14 +118,14 @@ public class FolderButtonManager {
             FolderButton button = new FolderButton(
                     currentX, 
                     currentY, 
-                    FOLDER_WIDTH, 
-                    FOLDER_HEIGHT, 
+                    UIConstants.FOLDER_WIDTH, 
+                    UIConstants.FOLDER_HEIGHT, 
                     folder,
                     onPressHandler
             );
             folderButtons.add(button);
             
-            currentX += FOLDER_WIDTH + FOLDER_COLUMN_SPACING;
+            currentX += UIConstants.FOLDER_WIDTH + UIConstants.FOLDER_COLUMN_SPACING;
         }
         
         this.folderRowsCount = rowCount;
@@ -174,6 +161,17 @@ public class FolderButtonManager {
      */
     public int getFolderRowsCount() {
         return folderRowsCount;
+    }
+    
+    /**
+     * Handles layout changes from the LayoutManager.
+     */
+    @Override
+    public void onLayoutChanged() {
+        // Re-initialize buttons when layout changes
+        if (!folderButtons.isEmpty()) {
+            initFolderButtons(isAddingFolder);
+        }
     }
     
     /**

@@ -1,3 +1,4 @@
+// Import UIConstants class
 package com.enoughfolders.client.gui;
 
 import com.enoughfolders.EnoughFolders;
@@ -19,7 +20,7 @@ public class FolderButton extends Button {
     /**
      * Resource location for the folder button textures
      */
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(EnoughFolders.MOD_ID, "textures/gui/folders.png");
+    private static final ResourceLocation TEXTURE = UIConstants.FOLDER_TEXTURE;
     
     /**
      * The folder that this button represents
@@ -163,6 +164,8 @@ public class FolderButton extends Button {
                 EnoughFolders.LOGGER.info("Handling drop from {} on folder button: {}", 
                     integration.getDisplayName(), folder.getName());
                 
+                // We can still use the folder-based method for the integration API
+                // since we already know which specific folder to target
                 boolean success = integration.handleIngredientDrop(folder);
                 if (success) {
                     EnoughFolders.LOGGER.info("Successfully added ingredient from {} to folder: {}", 
