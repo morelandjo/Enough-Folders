@@ -8,6 +8,7 @@ import com.enoughfolders.data.Folder;
 import com.enoughfolders.integrations.IntegrationRegistry;
 import com.enoughfolders.integrations.rei.core.REIIntegration;
 import com.enoughfolders.util.DebugLogger;
+import com.enoughfolders.integrations.util.IntegrationUtils;
 import me.shedaniel.rei.api.client.registry.transfer.TransferHandler;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.entry.EntryStack;
@@ -93,7 +94,7 @@ public class REITransferHandler implements TransferHandler {
         
         // Check if drop is on a folder button
         for (FolderButton button : folderScreen.getFolderButtons()) {
-            if (isPointInRect(mouseX, mouseY, 
+            if (IntegrationUtils.isPointInRect(mouseX, mouseY, 
                     button.getX(), 
                     button.getY(), 
                     button.getWidth(), 
@@ -114,7 +115,7 @@ public class REITransferHandler implements TransferHandler {
         }
         
         // Check if drop is in the content area
-        if (isPointInRect(mouseX, mouseY, 
+        if (IntegrationUtils.isPointInRect(mouseX, mouseY, 
                 folderScreen.getContentDropArea().getX(), 
                 folderScreen.getContentDropArea().getY(), 
                 folderScreen.getContentDropArea().getWidth(), 
@@ -137,10 +138,5 @@ public class REITransferHandler implements TransferHandler {
         }
         
         return Result.createNotApplicable();
-    }
-    
-    // Helper method to check if point is in rectangle
-    private boolean isPointInRect(double x, double y, int rectX, int rectY, int width, int height) {
-        return x >= rectX && x < rectX + width && y >= rectY && y < rectY + height;
     }
 }

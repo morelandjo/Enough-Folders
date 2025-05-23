@@ -17,6 +17,13 @@ import java.util.Optional;
 
 /**
  * Handler for tracking folder screens when navigating to JEI recipe screens.
+ * <p>
+ * This handler maintains the state of folder screens when users navigate between
+ * folder screens and JEI recipe screens. It ensures that folder screens can be
+ * restored properly when returning from recipe screens.
+ * </p>
+ *
+ * @param <T> The type of container screen this handler works with, which must extend AbstractContainerScreen
  */
 public class JEIRecipeGuiHandler<T extends AbstractContainerScreen<?>> implements IGuiContainerHandler<T> {
     // Keep track of the last used folder screen
@@ -85,7 +92,9 @@ public class JEIRecipeGuiHandler<T extends AbstractContainerScreen<?>> implement
     }
     
     /**
-     * Get the currently saved folder screen, initializing it for the recipe screen if needed
+     * Get the currently saved folder screen, initializing it for the recipe screen if needed.
+     *
+     * @return An Optional containing the last used FolderScreen if available, or empty if none exists
      */
     public static Optional<FolderScreen> getLastFolderScreen() {
         if (lastFolderScreen == null) {

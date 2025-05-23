@@ -6,10 +6,11 @@ import com.enoughfolders.client.gui.FolderButton;
 import com.enoughfolders.client.gui.FolderScreen;
 import java.util.List;
 import com.enoughfolders.integrations.IntegrationRegistry;
-import com.enoughfolders.integrations.jei.core.JEIIntegrationCore;
+import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler;
 import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
 import com.enoughfolders.util.DebugLogger;
+import com.enoughfolders.integrations.util.IntegrationUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.neoforged.api.distmarker.Dist;
@@ -43,7 +44,7 @@ public class JEIDragDropManager {
             "Mouse pressed at {},{} - checking for JEI draggable ingredient", mouseX, mouseY);
         
         // Store the current dragged ingredient from JEI
-        Optional<JEIIntegrationCore> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegrationCore.class);
+        Optional<JEIIntegration> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegration.class);
         jeiIntegration.ifPresent(integration -> {
             Optional<Object> draggedIngredient = integration.getDraggedIngredient();
             if (draggedIngredient.isPresent()) {
@@ -75,7 +76,7 @@ public class JEIDragDropManager {
             if (folderScreen.isVisible(mouseX, mouseY)) {
                 List<FolderButtonTarget> jeiTargets = folderScreen.getJEIFolderTargets();
                 for (FolderButtonTarget target : jeiTargets) {
-                    if (isPointInRect(mouseX, mouseY, 
+                    if (IntegrationUtils.isPointInRect(mouseX, mouseY, 
                             target.getArea().getX(), 
                             target.getArea().getY(),
                             target.getArea().getWidth(),
@@ -95,7 +96,7 @@ public class JEIDragDropManager {
                     if (folderScreen.isVisible(mouseX, mouseY)) {
                         List<FolderButtonTarget> jeiTargets = folderScreen.getJEIFolderTargets();
                         for (FolderButtonTarget target : jeiTargets) {
-                            if (isPointInRect(mouseX, mouseY, 
+                            if (IntegrationUtils.isPointInRect(mouseX, mouseY, 
                                     target.getArea().getX(), 
                                     target.getArea().getY(),
                                     target.getArea().getWidth(),
@@ -216,7 +217,7 @@ public class JEIDragDropManager {
                                           double mouseX, double mouseY,
                                           FolderScreen folderScreen) {
         // Check if drop is in content area
-        if (isPointInRect(mouseX, mouseY, 
+        if (IntegrationUtils.isPointInRect(mouseX, mouseY, 
                 folderScreen.getContentDropArea().getX(), 
                 folderScreen.getContentDropArea().getY(), 
                 folderScreen.getContentDropArea().getWidth(), 
@@ -227,7 +228,7 @@ public class JEIDragDropManager {
             // Get the active folder
             EnoughFolders.getInstance().getFolderManager().getActiveFolder().ifPresent(folder -> {
                 // Get JEI integration
-                IntegrationRegistry.getIntegration(JEIIntegrationCore.class).ifPresent(integration -> {
+                IntegrationRegistry.getIntegration(JEIIntegration.class).ifPresent(integration -> {
                     // Convert JEI ingredient to stored format
                     integration.storeIngredient(currentDraggedIngredient).ifPresent(ingredient -> {
                         EnoughFolders.getInstance().getFolderManager().addIngredient(folder, ingredient);
@@ -242,7 +243,5 @@ public class JEIDragDropManager {
     }
     
     // Helper method to check if point is in rectangle
-    private static boolean isPointInRect(double x, double y, int rectX, int rectY, int width, int height) {
-        return x >= rectX && x < rectX + width && y >= rectY && y < rectY + height;
-    }
+
 }

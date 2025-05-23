@@ -10,6 +10,8 @@ import com.enoughfolders.integrations.api.IngredientDragProvider;
 import com.enoughfolders.integrations.api.RecipeViewingIntegration;
 import com.enoughfolders.integrations.rei.gui.handlers.REIFolderIngredientHandler;
 import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
+import com.enoughfolders.integrations.util.ReflectionUtils;
+import com.enoughfolders.integrations.util.StackTraceUtils;
 import com.enoughfolders.util.DebugLogger;
 
 import net.minecraft.client.gui.screens.Screen;
@@ -700,17 +702,8 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
         
         try {
             // Check the stack trace for REI-specific calls that indicate a recipe screen transition
-            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-            for (StackTraceElement element : stackTrace) {
-                // Check for REI recipe navigation classes/methods in the stack trace
-                if (element.getClassName().contains("shedaniel.rei") && 
-                    (element.getMethodName().contains("show") || 
-                     element.getMethodName().contains("view") || 
-                     element.getClassName().contains("RecipeScreen") ||
-                     element.getClassName().contains("DisplayScreen"))) {
-                    return true;
-                }
-            }
+            // Using centralized stack trace utility
+            return com.enoughfolders.integrations.util.StackTraceUtils.isREIRecipeTransition();
         } catch (Exception e) {
             EnoughFolders.LOGGER.debug("Error checking for REI recipe transition: {}", e.getMessage());
         }

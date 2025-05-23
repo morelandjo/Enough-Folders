@@ -6,10 +6,13 @@ import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.client.gui.IngredientSlot;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.StoredIngredient;
-import com.enoughfolders.integrations.IntegrationRegistry;
+import com.enoughfolders.di.DependencyProvider;
 import com.enoughfolders.integrations.api.FolderTarget;
+import com.enoughfolders.integrations.api.IngredientDragProvider;
 import com.enoughfolders.integrations.api.RecipeViewingIntegration;
+import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
+import com.enoughfolders.integrations.rei.core.REIIntegration;
 import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
 import com.enoughfolders.util.DebugLogger;
 
@@ -51,8 +54,18 @@ public class IntegrationHandler {
      * @param containerScreen The container screen that contains the folder screen
      */
     public void initIntegrations(AbstractContainerScreen<?> containerScreen) {
+        if (folderScreen == null) {
+            EnoughFolders.LOGGER.error("Cannot initialize integrations: folder screen is null");
+            return;
+        }
+
+        // Try to connect to integrations in priority order
         for (String integrationId : PRIORITY_ORDER) {
-            tryConnectToFolderScreen(integrationId, containerScreen);
+            if (tryConnectToFolderScreen(integrationId, containerScreen)) {
+                DebugLogger.debugValue(DebugLogger.Category.INTEGRATION, 
+                    "Connected folder screen to {} integration", integrationId);
+                return;
+            }
         }
     }
 
@@ -119,13 +132,10 @@ public class IntegrationHandler {
     private boolean tryShowRecipes(String integrationId, StoredIngredient ingredient) {
         try {
             if ("rei".equals(integrationId)) {
-                return IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.rei.core.REIIntegration")
+                return DependencyProvider.get(REIIntegration.class)
                     .filter(integration -> integration.isAvailable())
-                    .map(rei -> {
+                    .map(reiIntegration -> {
                         try {
-                            // We need to cast to access the getIngredientFromStored method which isn't in the interface
-                            com.enoughfolders.integrations.rei.core.REIIntegration reiIntegration = 
-                                (com.enoughfolders.integrations.rei.core.REIIntegration) rei;
                             Optional<?> reiIngredient = reiIntegration.getIngredientFromStored(ingredient);
                             if (reiIngredient.isPresent()) {
                                 reiIntegration.showRecipes(reiIngredient.get());
@@ -139,13 +149,10 @@ public class IntegrationHandler {
                         return false;
                     }).orElse(false);
             } else if ("jei".equals(integrationId)) {
-                return IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.jei.core.JEIIntegrationCore")
+                return DependencyProvider.get(JEIIntegration.class)
                     .filter(integration -> integration.isAvailable())
-                    .map(jei -> {
+                    .map(jeiIntegration -> {
                         try {
-                            // We need to cast to access the getIngredientFromStored method which isn't in the interface
-                            com.enoughfolders.integrations.jei.core.JEIIntegrationCore jeiIntegration = 
-                                (com.enoughfolders.integrations.jei.core.JEIIntegrationCore) jei;
                             Optional<?> jeiIngredient = jeiIntegration.getIngredientFromStored(ingredient);
                             if (jeiIngredient.isPresent()) {
                                 jeiIntegration.showRecipes(jeiIngredient.get());
@@ -176,13 +183,10 @@ public class IntegrationHandler {
     private boolean tryShowUses(String integrationId, StoredIngredient ingredient) {
         try {
             if ("rei".equals(integrationId)) {
-                return IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.rei.core.REIIntegration")
+                return DependencyProvider.get(REIIntegration.class)
                     .filter(integration -> integration.isAvailable())
-                    .map(rei -> {
+                    .map(reiIntegration -> {
                         try {
-                            // We need to cast to access the getIngredientFromStored method which isn't in the interface
-                            com.enoughfolders.integrations.rei.core.REIIntegration reiIntegration = 
-                                (com.enoughfolders.integrations.rei.core.REIIntegration) rei;
                             Optional<?> reiIngredient = reiIntegration.getIngredientFromStored(ingredient);
                             if (reiIngredient.isPresent()) {
                                 reiIntegration.showUses(reiIngredient.get());
@@ -196,13 +200,10 @@ public class IntegrationHandler {
                         return false;
                     }).orElse(false);
             } else if ("jei".equals(integrationId)) {
-                return IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.jei.core.JEIIntegrationCore")
+                return DependencyProvider.get(JEIIntegration.class)
                     .filter(integration -> integration.isAvailable())
-                    .map(jei -> {
+                    .map(jeiIntegration -> {
                         try {
-                            // We need to cast to access the getIngredientFromStored method which isn't in the interface
-                            com.enoughfolders.integrations.jei.core.JEIIntegrationCore jeiIntegration = 
-                                (com.enoughfolders.integrations.jei.core.JEIIntegrationCore) jei;
                             Optional<?> jeiIngredient = jeiIntegration.getIngredientFromStored(ingredient);
                             if (jeiIngredient.isPresent()) {
                                 jeiIntegration.showUses(jeiIngredient.get());
@@ -366,13 +367,20 @@ public class IntegrationHandler {
      */
     @SuppressWarnings("unchecked")
     private <T extends FolderTarget> List<T> getFolderTargets(String integrationId, List<FolderButton> folderButtons) {
-        return getRecipeViewingIntegration(integrationId)
-            .map(integration -> {
-                List<?> targets = integration.createFolderTargets(folderButtons);
-                // Cast the targets to the requested type
-                return (List<T>) targets;
-            })
-            .orElse(new ArrayList<>());
+        Optional<RecipeViewingIntegration> integration = getRecipeViewingIntegration(integrationId);
+        
+        if (integration.isPresent()) {
+            RecipeViewingIntegration recipeViewer = integration.get();
+            List<? extends FolderTarget> targets = recipeViewer.createFolderTargets(folderButtons);
+            
+            DebugLogger.debugValues(DebugLogger.Category.INTEGRATION, 
+                "Created {} folder targets for {} integration", 
+                targets.size(), recipeViewer.getDisplayName());
+            
+            return (List<T>) targets;
+        }
+        
+        return new ArrayList<>();
     }
 
     // Deprecated handleIngredientDrop method removed - use handleIngredientDrop(double, double, List<FolderButton>) instead
@@ -386,22 +394,11 @@ public class IntegrationHandler {
      */
     private boolean tryHandleIngredientDrop(String integrationId, Folder folder) {
         try {
-            String className = null;
+            Optional<IngredientDragProvider> provider = getIngredientDragProvider(integrationId);
             
-            if ("jei".equals(integrationId)) {
-                className = "com.enoughfolders.integrations.jei.core.JEIIntegrationCore";
-            } else if ("rei".equals(integrationId)) {
-                className = "com.enoughfolders.integrations.rei.core.REIIntegration";
-            }
-            
-            if (className == null) {
-                return false;
-            }
-            
-            return IntegrationRegistry.getIntegrationByClassName(className)
-                .filter(integration -> integration instanceof com.enoughfolders.integrations.api.IngredientDragProvider)
-                .map(integration -> (com.enoughfolders.integrations.api.IngredientDragProvider) integration)
-                .filter(dragProvider -> dragProvider.isAvailable())
+            return provider
+                .filter(IngredientDragProvider::isAvailable)
+                .filter(IngredientDragProvider::isIngredientBeingDragged)
                 .map(dragProvider -> dragProvider.handleIngredientDrop(folder))
                 .orElse(false);
         } catch (Exception e) {
@@ -420,22 +417,16 @@ public class IntegrationHandler {
      * @return true if the drop was handled, false otherwise
      */
     public boolean handleIngredientDrop(double mouseX, double mouseY, List<FolderButton> folderButtons) {
-        DebugLogger.debugValues(DebugLogger.Category.INTEGRATION, 
-            "Processing ingredient drop at {},{} with {} folder buttons", 
-            mouseX, mouseY, folderButtons.size());
-            
-        // Find the folder button under the cursor
+        // Try to find a folder button at the given coordinates
         for (FolderButton button : folderButtons) {
-            if (button.isPointInButton((int)mouseX, (int)mouseY)) {
-                // If the mouse is over a folder button, try to drop onto that folder
-                Folder folder = button.getFolder();
-                
-                // Try integrations in priority order
+            if (button.isHovered()) {
+                // Try to handle the drop with each integration
                 for (String integrationId : PRIORITY_ORDER) {
-                    if (tryHandleIngredientDrop(integrationId, folder)) {
+                    if (tryHandleIngredientDrop(integrationId, button.getFolder())) {
                         return true;
                     }
                 }
+                break; // Stop after first matching button
             }
         }
         
@@ -449,22 +440,37 @@ public class IntegrationHandler {
      * @return Optional containing the integration, or empty if not available
      */
     private Optional<RecipeViewingIntegration> getRecipeViewingIntegration(String integrationId) {
-        String className = null;
-        
         if ("jei".equals(integrationId)) {
-            className = "com.enoughfolders.integrations.jei.core.JEIIntegrationCore";
+            return DependencyProvider.get(JEIIntegration.class)
+                .map(jei -> (RecipeViewingIntegration) jei)
+                .filter(RecipeViewingIntegration::isAvailable);
         } else if ("rei".equals(integrationId)) {
-            className = "com.enoughfolders.integrations.rei.core.REIIntegration";
+            return DependencyProvider.get(REIIntegration.class)
+                .map(rei -> (RecipeViewingIntegration) rei)
+                .filter(RecipeViewingIntegration::isAvailable);
         }
         
-        if (className == null) {
-            return Optional.empty();
+        return Optional.empty();
+    }
+
+    /**
+     * Gets an IngredientDragProvider for the given integration ID.
+     *
+     * @param integrationId The ID of the integration to get
+     * @return Optional containing the provider, or empty if not available
+     */
+    private Optional<IngredientDragProvider> getIngredientDragProvider(String integrationId) {
+        if ("jei".equals(integrationId)) {
+            return DependencyProvider.get(JEIIntegration.class)
+                .map(jei -> (IngredientDragProvider) jei)
+                .filter(IngredientDragProvider::isAvailable);
+        } else if ("rei".equals(integrationId)) {
+            return DependencyProvider.get(REIIntegration.class)
+                .map(rei -> (IngredientDragProvider) rei)
+                .filter(IngredientDragProvider::isAvailable);
         }
         
-        return IntegrationRegistry.getIntegrationByClassName(className)
-            .filter(integration -> integration instanceof RecipeViewingIntegration)
-            .map(integration -> (RecipeViewingIntegration) integration)
-            .filter(RecipeViewingIntegration::isAvailable);
+        return Optional.empty();
     }
 
     /**
@@ -489,5 +495,14 @@ public class IntegrationHandler {
             }
         }
         return false;
+    }
+
+    /**
+     * Gets the folder screen associated with this integration handler.
+     * 
+     * @return The folder screen
+     */
+    public FolderScreen getFolderScreen() {
+        return folderScreen;
     }
 }

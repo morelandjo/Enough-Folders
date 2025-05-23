@@ -258,26 +258,5 @@ public class JEIRecipeManager {
      * @param screen The screen that's being closed
      * @return True if we're transitioning to a recipe screen, false otherwise
      */
-    public boolean isTransitioningToRecipeScreen(Screen screen) {
-        if (!runtimeManager.hasRuntime()) {
-            return false;
-        }
-        
-        try {
-            // We need to check if this closure is due to JEI opening a recipe view
-            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-            for (StackTraceElement element : stackTrace) {
-                // Check if JEI recipe classes are in the stack trace
-                if (element.getClassName().contains("mezz.jei") && 
-                    (element.getMethodName().contains("show") || 
-                     element.getClassName().contains("RecipesGui"))) {
-                    return true;
-                }
-            }
-        } catch (Exception e) {
-            EnoughFolders.LOGGER.debug("Error checking for JEI recipe transition: {}", e.getMessage());
-        }
-        
-        return false;
-    }
+
 }

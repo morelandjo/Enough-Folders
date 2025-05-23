@@ -2,9 +2,12 @@ package com.enoughfolders.client.event;
 
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.gui.FolderScreen;
+import com.enoughfolders.data.FolderManager;
+import com.enoughfolders.di.DependencyProvider;
+import com.enoughfolders.di.IntegrationProviderRegistry;
 import com.enoughfolders.integrations.IntegrationRegistry;
 import com.enoughfolders.integrations.api.RecipeViewingIntegration;
-import com.enoughfolders.integrations.jei.core.JEIIntegrationCore;
+import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.util.DebugLogger;
 
 import net.minecraft.client.Minecraft;
@@ -36,7 +39,14 @@ public class ClientEventHandler {
      * Initialize event handler.
      */
     public static void initialize() {
-        IntegrationRegistry.initialize();
+        // Register the FolderManager with the DI system
+        DependencyProvider.registerSingleton(FolderManager.class, EnoughFolders.getInstance().getFolderManager());
+        
+        // Initialize integration registry using the new DI system
+        IntegrationProviderRegistry.initialize();
+        
+        // Initialize bridge to maintain backward compatibility
+        com.enoughfolders.di.IntegrationRegistryBridge.initializeBridge();
     }
     
     /**
@@ -127,7 +137,7 @@ public class ClientEventHandler {
         List<RecipeViewingIntegration> integrations = new ArrayList<>();
         
         // Add JEI integration if available
-        IntegrationRegistry.getIntegration(JEIIntegrationCore.class)
+        IntegrationRegistry.getIntegration(JEIIntegration.class)
             .ifPresent(integrations::add);
         
         // Add REI integration if available
@@ -222,7 +232,7 @@ public class ClientEventHandler {
             
             // Special case for JEI recipe screen click handling with additional functionality
             try {
-                Optional<JEIIntegrationCore> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegrationCore.class);
+                Optional<JEIIntegration> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegration.class);
                 if (jeiIntegration.isPresent() && jeiIntegration.get().isRecipeScreen(currentScreen) && 
                     jeiIntegration.get().getLastFolderScreen().isPresent()) {
                     Class<?> recipesGuiClass = Class.forName("mezz.jei.api.runtime.IRecipesGui");
@@ -388,7 +398,7 @@ public class ClientEventHandler {
         if ("rei".equals(integrationId)) {
             return "com.enoughfolders.integrations.rei.core.REIIntegration";
         } else if ("jei".equals(integrationId)) {
-            return "com.enoughfolders.integrations.jei.core.JEIIntegrationCore";
+            return "com.enoughfolders.integrations.jei.core.JEIIntegration";
         }
         return "";
     }

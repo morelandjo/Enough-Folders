@@ -52,6 +52,12 @@ public class REIRecipeScreenRenderer {
     private static int lastScreenWidth = 0;
     private static int lastScreenHeight = 0;
 
+    /**
+     * Event handler for post-render events on screens.
+     * Renders the folder navigation UI when applicable.
+     *
+     * @param event The screen render post event
+     */
     @SubscribeEvent
     public static void onScreenRender(ScreenEvent.Render.Post event) {
         // Skip if REI is not available
@@ -124,7 +130,10 @@ public class REIRecipeScreenRenderer {
     }
     
     /**
-     * Event handler for mouse click on REI screens
+     * Event handler for mouse click on REI screens.
+     * Handles navigation button clicks in the folder UI overlay.
+     *
+     * @param event The mouse button pressed event
      */
     @SubscribeEvent
     public static void onMouseClicked(ScreenEvent.MouseButtonPressed.Pre event) {

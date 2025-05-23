@@ -4,6 +4,8 @@ import com.enoughfolders.client.event.ClientEventHandler;
 import com.enoughfolders.client.input.KeyBindings;
 import com.enoughfolders.client.input.KeyHandler;
 import com.enoughfolders.data.FolderManager;
+import com.enoughfolders.di.DependencyProvider;
+import com.enoughfolders.di.IntegrationProviderRegistry;
 import com.enoughfolders.util.DebugConfig;
 import com.enoughfolders.util.DebugLogger;
 import net.neoforged.api.distmarker.Dist;
@@ -50,39 +52,30 @@ public class EnoughFolders {
     public EnoughFolders(IEventBus modEventBus) {
         instance = this;
         
-        // We only need to register client-side components
+        // Initialize debugging system
+        DebugConfig.load();
+        DebugLogger.debug(DebugLogger.Category.INITIALIZATION, "Debug configuration loaded");
+
+        // Check if we're on client - only run client setup code if so
         if (FMLEnvironment.dist == Dist.CLIENT) {
-            // Keep this as a main log entry since it's important initialization info
-            LOGGER.info("Initializing Enough Folders client components");
-            
-            // Initialize debug configuration
-            DebugConfig.load();
-            
-            // Initialize the folder manager
-            folderManager = new FolderManager();
+            // Initialize folder manager
+            this.folderManager = new FolderManager();
             DebugLogger.debug(DebugLogger.Category.INITIALIZATION, "Folder manager created");
             
-            // Initialize client event handler
-            ClientEventHandler.initialize();
-            DebugLogger.debug(DebugLogger.Category.INITIALIZATION, "Client event handler initialized");
+            // Register folder manager as a singleton in the dependency system
+            DependencyProvider.registerSingleton(FolderManager.class, this.folderManager);
             
-            // Register key mapping registration handler to the mod event bus
-            modEventBus.register(KeyBindings.class);
+            // Initialize client-side event handlers and setup
+            initializeClientComponents();
             
-            // Initialize key bindings
-            KeyBindings.init();
-            DebugLogger.debug(DebugLogger.Category.INITIALIZATION, "Key bindings initialized");
-            
-            // Initialize key handler
-            KeyHandler.init();
-            DebugLogger.debug(DebugLogger.Category.INITIALIZATION, "Key handler initialized");
-            
-            // Register the command registration event handler
-            NeoForge.EVENT_BUS.register(this);
+            // Initialize mod integrations through dependency injection
+            IntegrationProviderRegistry.initialize();
         }
         
-        // Keep this as a main log entry
-        LOGGER.info("Enough Folders initialized");
+        // Register common event handlers (server commands etc.)
+        NeoForge.EVENT_BUS.register(this);
+        
+        LOGGER.info("EnoughFolders initialized");
         DebugLogger.debug(DebugLogger.Category.INITIALIZATION, "Mod initialization complete");
     }
     
@@ -97,22 +90,40 @@ public class EnoughFolders {
     }
 
     /**
-     * Gets the singleton instance of the mod.
-     * 
-     * @return The singleton instance of the EnoughFolders mod
+     * Get the mod instance.
+     *
+     * @return The mod instance
      */
     public static EnoughFolders getInstance() {
         return instance;
     }
 
     /**
-     * Gets the folder manager.
-     * 
-     * @return The folder manager instance
+     * Get the folder manager for accessing folder data and operations.
+     *
+     * @return The folder manager
      */
     public FolderManager getFolderManager() {
-        DebugLogger.debug(DebugLogger.Category.FOLDER_MANAGER, 
-            "getFolderManager called from " + Thread.currentThread().getStackTrace()[2].getClassName());
         return folderManager;
+    }
+
+    /**
+     * Initialize client-side components.
+     * Only called when on the client side.
+     */
+    private void initializeClientComponents() {
+        // Initialize key bindings
+        KeyBindings.init();
+        DebugLogger.debug(DebugLogger.Category.INITIALIZATION, "Key bindings initialized");
+        
+        // Initialize client event handlers
+        ClientEventHandler.initialize();
+        DebugLogger.debug(DebugLogger.Category.INITIALIZATION, "Client event handler initialized");
+        
+        // Initialize key handler for custom key bindings
+        KeyHandler.init();
+        DebugLogger.debug(DebugLogger.Category.INITIALIZATION, "Key handler initialized");
+        
+        LOGGER.info("EnoughFolders client components initialized");
     }
 }

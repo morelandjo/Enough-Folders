@@ -5,7 +5,7 @@ import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.integrations.IntegrationRegistry;
-import com.enoughfolders.integrations.jei.core.JEIIntegrationCore;
+import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.util.DebugLogger;
 import net.minecraft.client.renderer.Rect2i;
 
@@ -94,7 +94,7 @@ public class LayoutManager {
         
         // Check if JEI recipe GUI is open
         boolean isJeiRecipeGuiOpen = false;
-        Optional<JEIIntegrationCore> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegrationCore.class);
+        Optional<JEIIntegration> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegration.class);
         if (jeiIntegration.isPresent()) {
             isJeiRecipeGuiOpen = jeiIntegration.get().isRecipeGuiOpen();
         }

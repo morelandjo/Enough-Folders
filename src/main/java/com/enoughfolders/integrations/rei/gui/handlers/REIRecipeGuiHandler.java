@@ -10,8 +10,20 @@ import java.util.Optional;
 
 /**
  * Handler for tracking folder screens when navigating to REI recipe screens.
+ * <p>
+ * This handler maintains the state of folder screens when users navigate between
+ * folder screens and REI recipe screens. It ensures that folder screens can be
+ * restored properly when returning from recipe screens.
+ * </p>
  */
 public class REIRecipeGuiHandler {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private REIRecipeGuiHandler() {
+        // Utility class should not be instantiated
+    }
     // Keep track of the last used folder screen
     private static FolderScreen lastFolderScreen = null;
     // Keep track if the folder screen has been initialized for the recipe screen
@@ -93,7 +105,9 @@ public class REIRecipeGuiHandler {
     }
     
     /**
-     * Get the currently saved folder screen, initializing it for the recipe screen if needed
+     * Get the currently saved folder screen, initializing it for the recipe screen if needed.
+     *
+     * @return An Optional containing the last used FolderScreen if available, or empty if none exists
      */
     public static Optional<FolderScreen> getLastFolderScreen() {
         if (lastFolderScreen == null) {

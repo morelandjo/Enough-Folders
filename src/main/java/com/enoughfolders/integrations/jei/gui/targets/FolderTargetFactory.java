@@ -4,7 +4,7 @@ import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.integrations.IntegrationRegistry;
-import com.enoughfolders.integrations.jei.core.JEIIntegrationCore;
+import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.util.DebugLogger;
 import mezz.jei.api.gui.handlers.IGhostIngredientHandler.Target;
 import net.minecraft.client.renderer.Rect2i;
@@ -15,8 +15,20 @@ import java.util.Optional;
 
 /**
  * Factory for creating JEI targets for folder UI elements.
+ * <p>
+ * This utility class provides methods to create target objects that JEI can use
+ * to determine where ingredients can be dropped in the EnoughFolders UI.
+ * The factory creates targets for both folder buttons and the content area.
+ * </p>
  */
 public class FolderTargetFactory {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private FolderTargetFactory() {
+        // Utility class should not be instantiated
+    }
     
     /**
      * Creates a target for a folder button.
@@ -45,7 +57,7 @@ public class FolderTargetFactory {
                     folder.getName(), ingredientObj.getClass().getSimpleName());
                 
                 // Get JEI integration
-                IntegrationRegistry.getIntegration(JEIIntegrationCore.class).ifPresent(jeiIntegration -> {
+                IntegrationRegistry.getIntegration(JEIIntegration.class).ifPresent(jeiIntegration -> {
                     // Convert the ingredient to StoredIngredient format
                     jeiIntegration.storeIngredient(ingredientObj)
                         .ifPresent(storedIngredient -> {
@@ -101,7 +113,7 @@ public class FolderTargetFactory {
                     folder.getName(), ingredientObj.getClass().getSimpleName());
                 
                 // Get JEI integration
-                IntegrationRegistry.getIntegration(JEIIntegrationCore.class).ifPresent(jeiIntegration -> {
+                IntegrationRegistry.getIntegration(JEIIntegration.class).ifPresent(jeiIntegration -> {
                     // Convert the ingredient to StoredIngredient format
                     jeiIntegration.storeIngredient(ingredientObj)
                         .ifPresent(storedIngredient -> {
@@ -180,16 +192,4 @@ public class FolderTargetFactory {
         return targets;
     }
     
-    /**
-     * Utility method to check if a point is within a rectangle.
-     *
-     * @param x      The x coordinate
-     * @param y      The y coordinate
-     * @param rect   The rectangle to check
-     * @return true if the point is inside the rectangle
-     */
-    public static boolean isPointInRect(double x, double y, Rect2i rect) {
-        return x >= rect.getX() && x < rect.getX() + rect.getWidth() && 
-               y >= rect.getY() && y < rect.getY() + rect.getHeight();
-    }
 }
