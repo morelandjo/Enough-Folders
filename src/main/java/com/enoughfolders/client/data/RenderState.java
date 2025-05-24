@@ -3,8 +3,7 @@ package com.enoughfolders.client.data;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
- * Data object containing the basic rendering state parameters.
- * Groups commonly used rendering parameters to simplify method signatures.
+ * Rendering state parameters.
  */
 public class RenderState {
     private final GuiGraphics graphics;

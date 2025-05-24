@@ -4,9 +4,9 @@ import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.FolderManager;
 import com.enoughfolders.data.StoredIngredient;
-import com.enoughfolders.integrations.IntegrationRegistry;
 import com.enoughfolders.integrations.ModIntegration;
 import com.enoughfolders.util.DebugLogger;
+import com.enoughfolders.di.IntegrationProviderRegistry;
 
 import java.lang.reflect.Method;
 import java.util.Optional;
@@ -37,7 +37,7 @@ public class EMIAddToFolderHandler {
             Class.forName("dev.emi.emi.api.EmiApi");
             
             // Check if EMI integration is available via registry
-            if (!IntegrationRegistry.isIntegrationAvailable("emi")) {
+            if (!IntegrationProviderRegistry.hasIntegrationWithShortId("emi")) {
                 EnoughFolders.LOGGER.debug("EMI integration not available via registry");
                 return;
             }
@@ -56,7 +56,7 @@ public class EMIAddToFolderHandler {
             EnoughFolders.LOGGER.info("Active folder found: {}", activeFolder.get().getName());
             
             String emiIntegrationClassName = "com.enoughfolders.integrations.emi.core.EMIIntegration";
-            Optional<ModIntegration> emiIntegrationOpt = IntegrationRegistry.getIntegrationByClassName(emiIntegrationClassName);
+            Optional<ModIntegration> emiIntegrationOpt = IntegrationProviderRegistry.getIntegrationByClassName(emiIntegrationClassName);
             
             if (emiIntegrationOpt.isEmpty()) {
                 EnoughFolders.LOGGER.debug("EMI integration not found in registry by class name");

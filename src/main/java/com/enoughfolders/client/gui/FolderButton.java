@@ -3,7 +3,7 @@ package com.enoughfolders.client.gui;
 
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.Folder;
-import com.enoughfolders.integrations.IntegrationRegistry;
+import com.enoughfolders.di.IntegrationProviderRegistry;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -93,7 +93,7 @@ public class FolderButton extends Button {
         }
         
         // Check all drag providers for any dragged ingredients
-        for (var provider : IntegrationRegistry.getAllDragProviders()) {
+        for (var provider : IntegrationProviderRegistry.findIngredientDragProviders()) {
             if (provider.isAvailable() && provider.isIngredientBeingDragged()) {
                 EnoughFolders.LOGGER.debug("Folder button '{}' highlighting for {} drag at {},{}", 
                     folder.getName(), provider.getDisplayName(), mouseX, mouseY);
@@ -159,7 +159,7 @@ public class FolderButton extends Button {
         EnoughFolders.LOGGER.debug("Attempting drop on folder button: {}", folder.getName());
         
         // Check for any available integration with drag and drop capability
-        for (var integration : IntegrationRegistry.getAllDragProviders()) {
+        for (var integration : IntegrationProviderRegistry.findIngredientDragProviders()) {
             if (integration.isAvailable() && integration.isIngredientBeingDragged()) {
                 EnoughFolders.LOGGER.info("Handling drop from {} on folder button: {}", 
                     integration.getDisplayName(), folder.getName());

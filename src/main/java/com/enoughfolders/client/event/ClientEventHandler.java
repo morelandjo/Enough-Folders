@@ -5,7 +5,6 @@ import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.data.FolderManager;
 import com.enoughfolders.di.DependencyProvider;
 import com.enoughfolders.di.IntegrationProviderRegistry;
-import com.enoughfolders.integrations.IntegrationRegistry;
 import com.enoughfolders.integrations.api.RecipeViewingIntegration;
 import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.util.DebugLogger;
@@ -46,14 +45,11 @@ public class ClientEventHandler {
      * Initialize event handler.
      */
     public static void initialize() {
-        // Register the FolderManager with the DI system
+        // Register the FolderManager
         DependencyProvider.registerSingleton(FolderManager.class, EnoughFolders.getInstance().getFolderManager());
         
-        // Initialize integration registry using the new DI system
+        // Initialize integration registry
         IntegrationProviderRegistry.initialize();
-        
-        // Initialize bridge to maintain backward compatibility
-        com.enoughfolders.di.IntegrationRegistryBridge.initializeBridge();
     }
     
     /**
@@ -144,16 +140,19 @@ public class ClientEventHandler {
         List<RecipeViewingIntegration> integrations = new ArrayList<>();
         
         // Add JEI integration if available
-        IntegrationRegistry.getIntegration(JEIIntegration.class)
+        DependencyProvider.get(JEIIntegration.class)
             .ifPresent(integrations::add);
         
         // Add REI integration if available
-        IntegrationRegistry.getIntegrationByClassName("com.enoughfolders.integrations.rei.core.REIIntegration")
-            .ifPresent(integration -> {
-                if (integration instanceof RecipeViewingIntegration) {
-                    integrations.add((RecipeViewingIntegration) integration);
-                }
-            });
+        try {
+            Class<?> reiIntegrationClass = Class.forName("com.enoughfolders.integrations.rei.core.REIIntegration");
+            Optional<?> reiIntegration = DependencyProvider.get(reiIntegrationClass);
+            if (reiIntegration.isPresent() && reiIntegration.get() instanceof RecipeViewingIntegration) {
+                integrations.add((RecipeViewingIntegration) reiIntegration.get());
+            }
+        } catch (ClassNotFoundException e) {
+            // REI integration not available, ignore
+        }
         
         return integrations;
     }
@@ -239,7 +238,7 @@ public class ClientEventHandler {
             
             // Special case for JEI recipe screen click handling with additional functionality
             try {
-                Optional<JEIIntegration> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegration.class);
+                Optional<JEIIntegration> jeiIntegration = DependencyProvider.get(JEIIntegration.class);
                 if (jeiIntegration.isPresent() && jeiIntegration.get().isRecipeScreen(currentScreen) && 
                     jeiIntegration.get().getLastFolderScreen().isPresent()) {
                     Class<?> recipesGuiClass = Class.forName("mezz.jei.api.runtime.IRecipesGui");
@@ -381,34 +380,30 @@ public class ClientEventHandler {
      */
     private static void connectToRecipeViewer(String integrationId, FolderScreen folderScreen, AbstractContainerScreen<?> containerScreen) {
         try {
-            if (IntegrationRegistry.isIntegrationAvailable(integrationId)) {
-                IntegrationRegistry.getIntegrationByClassName(getRecipeViewerClassName(integrationId))
-                    .ifPresent(integration -> {
-                        if (integration instanceof RecipeViewingIntegration) {
-                            ((RecipeViewingIntegration) integration).connectToFolderScreen(folderScreen, containerScreen);
+            if (IntegrationProviderRegistry.hasIntegrationWithShortId(integrationId)) {
+                // Get integration by class for type safety
+                if ("jei".equals(integrationId)) {
+                    DependencyProvider.get(JEIIntegration.class)
+                        .ifPresent(integration -> {
+                            integration.connectToFolderScreen(folderScreen, containerScreen);
+                            EnoughFolders.LOGGER.debug("Connected folder screen to {} recipe viewer", integrationId);
+                        });
+                } else if ("rei".equals(integrationId)) {
+                    try {
+                        Class<?> reiIntegrationClass = Class.forName("com.enoughfolders.integrations.rei.core.REIIntegration");
+                        Optional<?> reiIntegration = DependencyProvider.get(reiIntegrationClass);
+                        if (reiIntegration.isPresent() && reiIntegration.get() instanceof RecipeViewingIntegration) {
+                            ((RecipeViewingIntegration) reiIntegration.get()).connectToFolderScreen(folderScreen, containerScreen);
                             EnoughFolders.LOGGER.debug("Connected folder screen to {} recipe viewer", integrationId);
                         }
-                    });
+                    } catch (ClassNotFoundException e) {
+                        // REI integration not available, ignore
+                    }
+                }
             }
         } catch (Exception e) {
             EnoughFolders.LOGGER.debug("Could not connect folder to {} recipe viewer: {}", integrationId, e.getMessage());
         }
     }
-    
-    /**
-     * Get the class name for a recipe viewer integration.
-     * 
-     * @param integrationId The ID of the integration
-     * @return The fully qualified class name
-     */
-    private static String getRecipeViewerClassName(String integrationId) {
-        if ("rei".equals(integrationId)) {
-            return "com.enoughfolders.integrations.rei.core.REIIntegration";
-        } else if ("jei".equals(integrationId)) {
-            return "com.enoughfolders.integrations.jei.core.JEIIntegration";
-        }
-        return "";
-    }
-    
 
 }

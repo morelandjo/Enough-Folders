@@ -6,9 +6,7 @@ import com.enoughfolders.data.FolderManager;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
 /**
- * A comprehensive context object for folder screen rendering.
- * Provides centralized access to all components needed for rendering,
- * creating a clearer separation of concerns between FolderScreen and FolderScreenRenderer.
+ * Folder screen rendering object.
  */
 public class RenderContext {
     private final AbstractContainerScreen<?> parentScreen;
@@ -23,7 +21,7 @@ public class RenderContext {
     private int height;
     
     /**
-     * Creates a new render context with all necessary components for rendering.
+     * Creates a new render context.
      *
      * @param parentScreen The container screen that hosts the folder UI
      * @param folderManager The folder manager that provides folder data

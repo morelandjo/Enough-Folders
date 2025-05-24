@@ -2,7 +2,8 @@
 package com.enoughfolders.client.gui;
 
 import com.enoughfolders.data.StoredIngredient;
-import com.enoughfolders.integrations.IntegrationRegistry;
+import com.enoughfolders.di.IntegrationProviderRegistry;
+import com.enoughfolders.integrations.ModIntegration;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
@@ -43,7 +44,11 @@ public class IngredientSlot {
             graphics.fill(x, y, x + UIConstants.INGREDIENT_SLOT_SIZE, y + UIConstants.INGREDIENT_SLOT_SIZE, 0x80FFFFFF);
         }
         
-        IntegrationRegistry.renderIngredient(graphics, ingredient, x + 1, y + 1, UIConstants.INGREDIENT_SLOT_SIZE - 2, UIConstants.INGREDIENT_SLOT_SIZE - 2);
+        // Find the appropriate integration and render the ingredient
+        ModIntegration integration = findIntegrationFor(ingredient);
+        if (integration != null) {
+            integration.renderIngredient(graphics, ingredient, x + 1, y + 1, UIConstants.INGREDIENT_SLOT_SIZE - 2, UIConstants.INGREDIENT_SLOT_SIZE - 2);
+        }
     }
     
     /**
@@ -153,5 +158,20 @@ public class IngredientSlot {
      */
     public StoredIngredient getStoredIngredient() {
         return ingredient;
+    }
+    
+    /**
+     * Finds the appropriate integration that can handle the given ingredient.
+     * 
+     * @param ingredient The stored ingredient to find a handler for
+     * @return The integration that can handle the ingredient, or null if none found
+     */
+    private static ModIntegration findIntegrationFor(StoredIngredient ingredient) {
+        for (ModIntegration integration : IntegrationProviderRegistry.getAllIntegrations()) {
+            if (integration.canHandleIngredient(ingredient)) {
+                return integration;
+            }
+        }
+        return null;
     }
 }

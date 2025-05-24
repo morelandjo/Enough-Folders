@@ -4,9 +4,9 @@ import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.FolderManager;
 import com.enoughfolders.data.StoredIngredient;
-import com.enoughfolders.integrations.IntegrationRegistry;
 import com.enoughfolders.integrations.ModIntegration;
 import com.enoughfolders.util.DebugLogger;
+import com.enoughfolders.di.IntegrationProviderRegistry;
 
 import java.util.Optional;
 
@@ -48,7 +48,7 @@ public class JEIAddToFolderHandler {
             
             // Get the JEI integration using the class name
             String jeiIntegrationClassName = "com.enoughfolders.integrations.jei.core.JEIIntegration";
-            Optional<ModIntegration> jeiIntegrationOpt = IntegrationRegistry.getIntegrationByClassName(jeiIntegrationClassName);
+            Optional<ModIntegration> jeiIntegrationOpt = IntegrationProviderRegistry.getIntegrationByClassName(jeiIntegrationClassName);
             
             if (jeiIntegrationOpt.isPresent()) {
                 Object jeiIntegration = jeiIntegrationOpt.get();

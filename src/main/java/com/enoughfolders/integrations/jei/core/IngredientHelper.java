@@ -3,7 +3,7 @@ package com.enoughfolders.integrations.jei.core;
 
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.StoredIngredient;
-import com.enoughfolders.integrations.IntegrationRegistry;
+import com.enoughfolders.di.DependencyProvider;
 import com.google.gson.Gson;
 import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.api.ingredients.ITypedIngredient;
@@ -42,7 +42,7 @@ public class IngredientHelper {
      */
     public static <T> StoredIngredient createStoredIngredient(Object ingredientObject) {
         // Get the JEI integration instance before trying to access runtime
-        Optional<JEIIntegration> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegration.class);
+        Optional<JEIIntegration> jeiIntegration = DependencyProvider.get(JEIIntegration.class);
         if (jeiIntegration.isEmpty()) {
             return null;
         }
@@ -101,7 +101,7 @@ public class IngredientHelper {
     @SuppressWarnings("unchecked")
     public static <T> ITypedIngredient<T> getTypedIngredientFromStored(StoredIngredient storedIngredient) {
         // Get the JEI integration instance before trying to access runtime
-        Optional<JEIIntegration> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegration.class);
+        Optional<JEIIntegration> jeiIntegration = DependencyProvider.get(JEIIntegration.class);
         if (jeiIntegration.isEmpty()) {
             return null;
         }

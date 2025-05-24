@@ -5,7 +5,6 @@ import net.minecraft.client.gui.components.EditBox;
 
 /**
  * Data object containing the UI control elements for navigation in the folder screen.
- * Groups related navigation controls to simplify method signatures.
  */
 public class NavigationControls {
     private final Button addFolderButton;

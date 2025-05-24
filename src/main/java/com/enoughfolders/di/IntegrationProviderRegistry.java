@@ -18,8 +18,8 @@ import java.util.stream.Collectors;
 /**
  * Registry for managing integration providers through dependency injection.
  * <p>
- * This class serves as a bridge between the old IntegrationRegistry and the new DI system,
- * allowing for a gradual transition to dependency injection.
+ * This class provides a centralized way to manage mod integrations using the
+ * dependency injection system, offering type-safe access to integration instances.
  * </p>
  */
 /**
@@ -216,6 +216,22 @@ public class IntegrationProviderRegistry {
                 .findFirst();
     }
     
+    /**
+     * Check if an integration with the given short ID exists.
+     * Maps short IDs like "rei", "jei" to their corresponding integration types.
+     * 
+     * @param shortId The short ID of the integration ("rei", "jei", "emi", etc.)
+     * @return true if an integration with the given short ID exists, false otherwise
+     */
+    public static boolean hasIntegrationWithShortId(String shortId) {
+        return switch (shortId.toLowerCase()) {
+            case "rei" -> DependencyProvider.get(com.enoughfolders.integrations.rei.core.REIIntegration.class).isPresent();
+            case "jei" -> DependencyProvider.get(com.enoughfolders.integrations.jei.core.JEIIntegration.class).isPresent();
+            case "emi" -> DependencyProvider.get(com.enoughfolders.integrations.emi.core.EMIIntegration.class).isPresent();
+            default -> false;
+        };
+    }
+
     /**
      * Get all registered integration instances.
      * 

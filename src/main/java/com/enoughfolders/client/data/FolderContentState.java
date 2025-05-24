@@ -7,7 +7,6 @@ import java.util.List;
 
 /**
  * Data object containing the content state for the folder UI.
- * Groups related folder content parameters to simplify method signatures.
  */
 public class FolderContentState {
     private final boolean isAddingFolder;
@@ -52,7 +51,7 @@ public class FolderContentState {
     }
 
     /**
-     * Gets the current page of ingredients (0-based).
+     * Gets the current page of ingredients.
      * 
      * @return The current page
      */

@@ -2,7 +2,7 @@ package com.enoughfolders.integrations.jei.gui.handlers;
 
 import com.enoughfolders.client.event.ClientEventHandler;
 import com.enoughfolders.client.gui.FolderScreen;
-import com.enoughfolders.integrations.IntegrationRegistry;
+import com.enoughfolders.di.DependencyProvider;
 import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
 import com.enoughfolders.integrations.jei.gui.targets.FolderGhostIngredientTarget;
@@ -80,7 +80,7 @@ public class FolderScreenHandler implements
             doStart);
         
         // Check for JEI integration
-        Optional<JEIIntegration> jeiIntegration = IntegrationRegistry.getIntegration(JEIIntegration.class);
+        Optional<JEIIntegration> jeiIntegration = DependencyProvider.get(JEIIntegration.class);
         if (jeiIntegration.isEmpty()) {
             DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "JEI integration not available");
             return new ArrayList<>();
@@ -113,7 +113,7 @@ public class FolderScreenHandler implements
         DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "FolderScreenHandler.onComplete called");
         
         // Clear the current dragged ingredient reference
-        IntegrationRegistry.getIntegration(JEIIntegration.class)
+        DependencyProvider.get(JEIIntegration.class)
             .ifPresent(JEIIntegration::clearCurrentDraggedObject);
     }
 
@@ -176,7 +176,7 @@ public class FolderScreenHandler implements
     @Override
     public void onIngredientAdded() {
         // Clear the dragged ingredient from the JEI integration
-        IntegrationRegistry.getIntegration(JEIIntegration.class)
+        DependencyProvider.get(JEIIntegration.class)
             .ifPresent(JEIIntegration::clearCurrentDraggedObject);
         
         if (currentScreen == null) {

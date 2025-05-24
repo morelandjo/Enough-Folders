@@ -364,6 +364,158 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
     }
     
     /**
+     * Gets the ingredient currently under the mouse cursor in the REI UI.
+     * This method is specifically designed for keyboard shortcuts like Shift+A.
+     * 
+     * @return Optional containing the ingredient, or empty if none is found
+     */
+    public Optional<Object> getIngredientUnderMouse() {
+        System.out.println("REI getIngredientUnderMouse called - SYSTEM PRINT");
+        EnoughFolders.LOGGER.info("getIngredientUnderMouse called");
+        try {
+            if (!isAvailable()) {
+                EnoughFolders.LOGGER.info("REI integration not available, can't get ingredient under mouse");
+                return Optional.empty();
+            }
+            
+            EnoughFolders.LOGGER.info("REI integration is available, proceeding");
+            
+            // Get REI runtime
+            try {
+                me.shedaniel.rei.api.client.REIRuntime runtime = me.shedaniel.rei.api.client.REIRuntime.getInstance();
+                if (runtime == null) {
+                    EnoughFolders.LOGGER.info("REI runtime is null, can't get ingredient under mouse");
+                    return Optional.empty();
+                }
+                
+                EnoughFolders.LOGGER.info("REI runtime found");
+                
+                // Get the current Minecraft instance and screen
+                net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
+                net.minecraft.client.gui.screens.Screen currentScreen = minecraft.screen;
+                
+                if (currentScreen == null) {
+                    EnoughFolders.LOGGER.info("No current screen available");
+                    return Optional.empty();
+                }
+                
+                EnoughFolders.LOGGER.info("Current screen: {}", currentScreen.getClass().getSimpleName());
+                
+                // ---- APPROACH 1: Try to get the focused stack from REI's overlay first ----
+                if (runtime.isOverlayVisible()) {
+                    EnoughFolders.LOGGER.info("REI overlay is visible, checking overlay entries");
+                    
+                    // Try to get the hovered entry from REI's overlay                    
+                    Optional<me.shedaniel.rei.api.client.overlay.ScreenOverlay> overlayOpt = runtime.getOverlay();
+                    if (overlayOpt.isPresent()) {
+                        me.shedaniel.rei.api.client.overlay.ScreenOverlay overlay = overlayOpt.get();
+                        
+                        // Check entry list
+                        me.shedaniel.rei.api.client.overlay.OverlayListWidget entryList = overlay.getEntryList();
+                        if (entryList != null) {
+                            me.shedaniel.rei.api.common.entry.EntryStack<?> focusedStack = getSafelyFocusedStack(entryList);
+                            if (focusedStack != null && !focusedStack.isEmpty()) {
+                                EnoughFolders.LOGGER.info("Found focused entry in main entry list");
+                                return Optional.of(focusedStack);
+                            }
+                        }
+                        
+                        // Check favorites list
+                        Optional<me.shedaniel.rei.api.client.overlay.OverlayListWidget> favoritesListOpt = overlay.getFavoritesList();
+                        if (favoritesListOpt.isPresent()) {
+                            me.shedaniel.rei.api.client.overlay.OverlayListWidget favoritesList = favoritesListOpt.get();
+                            if (favoritesList != null) {
+                                me.shedaniel.rei.api.common.entry.EntryStack<?> focusedStack = getSafelyFocusedStack(favoritesList);
+                                if (focusedStack != null && !focusedStack.isEmpty()) {
+                                    EnoughFolders.LOGGER.info("Found focused entry in favorites list");
+                                    return Optional.of(focusedStack);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // ---- APPROACH 2: Try getting the focused entry using the current screen ----
+                // Get current mouse position
+                double mouseX = minecraft.mouseHandler.xpos() * (double) minecraft.getWindow().getGuiScaledWidth() / (double) minecraft.getWindow().getScreenWidth();
+                double mouseY = minecraft.mouseHandler.ypos() * (double) minecraft.getWindow().getGuiScaledHeight() / (double) minecraft.getWindow().getScreenHeight();
+                me.shedaniel.math.Point mousePoint = new me.shedaniel.math.Point(mouseX, mouseY);
+                
+                EnoughFolders.LOGGER.info("Mouse position: ({}, {})", mouseX, mouseY);
+                
+                // Try getting the stack at the current mouse position
+                me.shedaniel.rei.api.common.entry.EntryStack<?> focusedStack = 
+                    me.shedaniel.rei.api.client.registry.screen.ScreenRegistry.getInstance()
+                        .getFocusedStack(currentScreen, mousePoint);
+                
+                if (focusedStack != null && !focusedStack.isEmpty()) {
+                    EnoughFolders.LOGGER.info("Found focused entry under mouse cursor: {}", 
+                        focusedStack.getType().toString());
+                    return Optional.of(focusedStack);
+                }
+                
+                // ---- APPROACH 3: Try to access REI's internal state for keyboard interactions ----
+                try {
+                    // For keyboard interactions, try to check if there's a selected entry in the search field context
+                    // This approach works when users navigate with keyboard and then press Shift+A
+                    if (runtime.isOverlayVisible()) {
+                        Optional<me.shedaniel.rei.api.client.overlay.ScreenOverlay> overlayOpt = runtime.getOverlay();
+                        if (overlayOpt.isPresent()) {
+                            me.shedaniel.rei.api.client.overlay.ScreenOverlay overlay = overlayOpt.get();
+                            me.shedaniel.rei.api.client.overlay.OverlayListWidget entryList = overlay.getEntryList();
+                            
+                            if (entryList != null) {
+                                // Try to get the currently selected (keyboard navigated) entry
+                                try {
+                                    // REI should have a currently focused widget that we can access
+                                    // Even if mouse isn't over it, keyboard navigation should set focus
+                                    me.shedaniel.rei.api.common.entry.EntryStack<?> selectedStack = entryList.getFocusedStack();
+                                    if (selectedStack != null && !selectedStack.isEmpty()) {
+                                        EnoughFolders.LOGGER.info("Found selected entry via keyboard navigation");
+                                        return Optional.of(selectedStack);
+                                    }
+                                } catch (Exception ignored) {
+                                    // getFocusedStack might not be available in all REI versions
+                                }
+                                
+                                // Try alternative approach: Check the REI search field for selected entries
+                                try {
+                                    // Sometimes the focus is in the search field context rather than directly on entries
+                                    // Try to get focused widget from the overlay itself rather than just the entry list
+                                    EnoughFolders.LOGGER.info("Checking REI overlay for focused widget beyond entry list");
+                                    
+                                    // If we still don't have focus, this might be a limitation of the current REI API
+                                    // For now, we'll log this scenario and return empty
+                                    // Future improvements could involve REI plugin hooks or alternative detection methods
+                                    
+                                } catch (Exception e) {
+                                    EnoughFolders.LOGGER.debug("Could not access REI search context: {}", e.getMessage());
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    EnoughFolders.LOGGER.debug("Failed to get keyboard-selected ingredient: {}", e.getMessage());
+                }
+                
+                EnoughFolders.LOGGER.info("No ingredient found under mouse cursor");
+            } catch (AssertionError e) {
+                // This is expected if REI is not fully initialized
+                EnoughFolders.LOGGER.info("REI internals not initialized yet: {}", e.getMessage());
+                return Optional.empty();
+            }
+            
+        } catch (Exception e) {
+            EnoughFolders.LOGGER.error("Error getting ingredient under mouse: {}", e.getMessage());
+            e.printStackTrace();
+            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
+                "Exception details: {}", e);
+        }
+        
+        return Optional.empty();
+    }
+
+    /**
      * Shows recipes for the provided ingredient in the REI recipe GUI.
      *
      * @param ingredient The ingredient to show recipes for

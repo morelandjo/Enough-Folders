@@ -4,7 +4,7 @@ package com.enoughfolders.client.gui;
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.FolderManager;
-import com.enoughfolders.integrations.IntegrationRegistry;
+import com.enoughfolders.di.IntegrationProviderRegistry;
 import com.enoughfolders.integrations.api.FolderTarget;
 import com.enoughfolders.integrations.api.RecipeViewingIntegration;
 import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
@@ -184,7 +184,7 @@ public class FolderButtonManager implements LayoutManager.LayoutChangeListener {
      */
     @SuppressWarnings("unchecked")
     private <T extends FolderTarget> List<T> getFolderTargets(String integrationClassName, Class<T> targetClass) {
-        return IntegrationRegistry.getIntegrationByClassName(integrationClassName)
+        return IntegrationProviderRegistry.getIntegrationByClassName(integrationClassName)
             .filter(integration -> integration instanceof RecipeViewingIntegration)
             .map(integration -> (RecipeViewingIntegration) integration)
             .filter(RecipeViewingIntegration::isAvailable)
@@ -223,7 +223,7 @@ public class FolderButtonManager implements LayoutManager.LayoutChangeListener {
      * @return List of folder targets for drag-and-drop
      */
     public List<? extends FolderTarget> getFolderTargetsForIntegration(String integrationClassName) {
-        return IntegrationRegistry.getIntegrationByClassName(integrationClassName)
+        return IntegrationProviderRegistry.getIntegrationByClassName(integrationClassName)
             .filter(integration -> integration instanceof RecipeViewingIntegration)
             .map(integration -> (RecipeViewingIntegration) integration)
             .filter(RecipeViewingIntegration::isAvailable)

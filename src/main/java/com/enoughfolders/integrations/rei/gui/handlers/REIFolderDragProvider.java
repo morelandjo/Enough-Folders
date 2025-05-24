@@ -4,7 +4,7 @@ import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.client.gui.IngredientSlot;
 import com.enoughfolders.data.Folder;
-import com.enoughfolders.integrations.IntegrationRegistry;
+import com.enoughfolders.di.DependencyProvider;
 import com.enoughfolders.integrations.rei.core.REIIntegration;
 import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
 import com.enoughfolders.util.DebugLogger;
@@ -113,7 +113,7 @@ public class REIFolderDragProvider implements REIClientPlugin {
             }
             
             // Get REI integration
-            Optional<REIIntegration> reiIntegration = IntegrationRegistry.getIntegration(REIIntegration.class);
+            Optional<REIIntegration> reiIntegration = DependencyProvider.get(REIIntegration.class);
             if (reiIntegration.isEmpty() || !reiIntegration.get().isAvailable()) {
                 return null;
             }
@@ -335,7 +335,7 @@ public class REIFolderDragProvider implements REIClientPlugin {
             "Processing dropped REI stack of type '{}' for folder: '{}'", 
             entryStack.getType(), folder.getName());
             
-        IntegrationRegistry.getIntegration(REIIntegration.class).ifPresent(integration -> {
+        DependencyProvider.get(REIIntegration.class).ifPresent(integration -> {
             // Convert REI ingredient to stored format
             integration.storeIngredient(entryStack).ifPresent(ingredient -> {
                 EnoughFolders.getInstance().getFolderManager().addIngredient(folder, ingredient);

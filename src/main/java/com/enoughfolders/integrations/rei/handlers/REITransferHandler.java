@@ -5,7 +5,7 @@ import com.enoughfolders.client.event.ClientEventHandler;
 import com.enoughfolders.client.gui.FolderButton;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.data.Folder;
-import com.enoughfolders.integrations.IntegrationRegistry;
+import com.enoughfolders.di.DependencyProvider;
 import com.enoughfolders.integrations.rei.core.REIIntegration;
 import com.enoughfolders.util.DebugLogger;
 import com.enoughfolders.integrations.util.IntegrationUtils;
@@ -111,7 +111,7 @@ public class REITransferHandler implements TransferHandler {
                     button.getHeight())) {
                 
                 // Use the REI integration to convert and add the ingredient
-                IntegrationRegistry.getIntegration(REIIntegration.class).ifPresent(integration -> {
+                DependencyProvider.get(REIIntegration.class).ifPresent(integration -> {
                     integration.storeIngredient(entryStack).ifPresent(ingredient -> {
                         EnoughFolders.getInstance().getFolderManager().addIngredient(button.getFolder(), ingredient);
                         folderScreen.onIngredientAdded();
@@ -134,7 +134,7 @@ public class REITransferHandler implements TransferHandler {
             // Get the active folder
             Optional<Folder> activeFolder = EnoughFolders.getInstance().getFolderManager().getActiveFolder();
             if (activeFolder.isPresent()) {
-                IntegrationRegistry.getIntegration(REIIntegration.class).ifPresent(integration -> {
+                DependencyProvider.get(REIIntegration.class).ifPresent(integration -> {
                     integration.storeIngredient(entryStack).ifPresent(ingredient -> {
                         EnoughFolders.getInstance().getFolderManager().addIngredient(activeFolder.get(), ingredient);
                         folderScreen.onIngredientAdded();

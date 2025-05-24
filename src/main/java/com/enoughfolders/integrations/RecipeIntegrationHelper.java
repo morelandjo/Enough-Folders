@@ -5,6 +5,8 @@ import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.integrations.rei.core.REIIntegration;
 import com.enoughfolders.util.DebugLogger;
+import com.enoughfolders.di.IntegrationProviderRegistry;
+import com.enoughfolders.di.DependencyProvider;
 
 import java.util.Optional;
 
@@ -36,8 +38,8 @@ public class RecipeIntegrationHelper {
      * @return true if at least one recipe viewing mod is available
      */
     public static boolean isRecipeViewingAvailable() {
-        return IntegrationRegistry.isIntegrationAvailable("rei") ||
-               IntegrationRegistry.isIntegrationAvailable("jei");
+        return IntegrationProviderRegistry.hasIntegrationWithShortId("rei") ||
+               IntegrationProviderRegistry.hasIntegrationWithShortId("jei");
     }
     
     /**
@@ -49,7 +51,7 @@ public class RecipeIntegrationHelper {
     public static boolean showRecipes(StoredIngredient ingredient) {
         // Try integrations in priority order
         for (String integrationId : PRIORITY_ORDER) {
-            if (IntegrationRegistry.isIntegrationAvailable(integrationId)) {
+            if (IntegrationProviderRegistry.hasIntegrationWithShortId(integrationId)) {
                 if (tryShowRecipes(integrationId, ingredient)) {
                     return true;
                 }
@@ -67,7 +69,7 @@ public class RecipeIntegrationHelper {
     public static boolean showUses(StoredIngredient ingredient) {
         // Try integrations in priority order
         for (String integrationId : PRIORITY_ORDER) {
-            if (IntegrationRegistry.isIntegrationAvailable(integrationId)) {
+            if (IntegrationProviderRegistry.hasIntegrationWithShortId(integrationId)) {
                 if (tryShowUses(integrationId, ingredient)) {
                     return true;
                 }
@@ -86,7 +88,7 @@ public class RecipeIntegrationHelper {
     private static boolean tryShowRecipes(String integrationId, StoredIngredient ingredient) {
         try {
             if ("rei".equals(integrationId)) {
-                return IntegrationRegistry.getIntegration(REIIntegration.class)
+                return DependencyProvider.get(REIIntegration.class)
                     .map(rei -> {
                         Optional<?> reiIngredient = rei.getIngredientFromStored(ingredient);
                         if (reiIngredient.isPresent()) {
@@ -96,7 +98,7 @@ public class RecipeIntegrationHelper {
                         return false;
                     }).orElse(false);
             } else if ("jei".equals(integrationId)) {
-                return IntegrationRegistry.getIntegration(JEIIntegration.class)
+                return DependencyProvider.get(JEIIntegration.class)
                     .map(jei -> {
                         Optional<?> jeiIngredient = jei.getIngredientFromStored(ingredient);
                         if (jeiIngredient.isPresent()) {
@@ -125,7 +127,7 @@ public class RecipeIntegrationHelper {
     private static boolean tryShowUses(String integrationId, StoredIngredient ingredient) {
         try {
             if ("rei".equals(integrationId)) {
-                return IntegrationRegistry.getIntegration(REIIntegration.class)
+                return DependencyProvider.get(REIIntegration.class)
                     .map(rei -> {
                         Optional<?> reiIngredient = rei.getIngredientFromStored(ingredient);
                         if (reiIngredient.isPresent()) {
@@ -135,7 +137,7 @@ public class RecipeIntegrationHelper {
                         return false;
                     }).orElse(false);
             } else if ("jei".equals(integrationId)) {
-                return IntegrationRegistry.getIntegration(JEIIntegration.class)
+                return DependencyProvider.get(JEIIntegration.class)
                     .map(jei -> {
                         Optional<?> jeiIngredient = jei.getIngredientFromStored(ingredient);
                         if (jeiIngredient.isPresent()) {

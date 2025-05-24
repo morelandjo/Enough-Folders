@@ -1,7 +1,7 @@
 package com.enoughfolders.integrations.jei.core;
 
 import com.enoughfolders.EnoughFolders;
-import com.enoughfolders.integrations.IntegrationRegistry;
+import com.enoughfolders.di.DependencyProvider;
 import com.enoughfolders.integrations.jei.gui.handlers.DragDropHandler;
 import com.enoughfolders.integrations.jei.gui.handlers.FolderScreenHandler;
 import com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler;
@@ -53,7 +53,7 @@ public class JEIPlugin implements IModPlugin {
     public void onRuntimeAvailable(@Nonnull IJeiRuntime jeiRuntime) {
         EnoughFolders.LOGGER.info("DIAGNOSIS: JEI Runtime becoming available - registering with integration");
         // Get JEI integration and provide it with the runtime
-        IntegrationRegistry.getIntegration(JEIIntegration.class)
+        DependencyProvider.get(JEIIntegration.class)
                 .ifPresent(integration -> integration.setJeiRuntime(jeiRuntime));
         
         EnoughFolders.LOGGER.info("JEI Runtime available, plugin integration active");

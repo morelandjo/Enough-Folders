@@ -3,7 +3,7 @@ package com.enoughfolders.integrations.jei.gui.targets;
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.data.Folder;
-import com.enoughfolders.integrations.IntegrationRegistry;
+import com.enoughfolders.di.DependencyProvider;
 import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.util.DebugLogger;
 import mezz.jei.api.gui.handlers.IGhostIngredientHandler.Target;
@@ -58,7 +58,7 @@ public class FolderTargetFactory {
                     folder.getName(), ingredientObj.getClass().getSimpleName());
                 
                 // Get JEI integration
-                IntegrationRegistry.getIntegration(JEIIntegration.class).ifPresent(jeiIntegration -> {
+                DependencyProvider.get(JEIIntegration.class).ifPresent(jeiIntegration -> {
                     // Convert the ingredient to StoredIngredient format
                     jeiIntegration.storeIngredient(ingredientObj)
                         .ifPresent(storedIngredient -> {
@@ -115,7 +115,7 @@ public class FolderTargetFactory {
                     folder.getName(), ingredientObj.getClass().getSimpleName());
                 
                 // Get JEI integration
-                IntegrationRegistry.getIntegration(JEIIntegration.class).ifPresent(jeiIntegration -> {
+                DependencyProvider.get(JEIIntegration.class).ifPresent(jeiIntegration -> {
                     // Convert the ingredient to StoredIngredient format
                     jeiIntegration.storeIngredient(ingredientObj)
                         .ifPresent(storedIngredient -> {
@@ -173,7 +173,7 @@ public class FolderTargetFactory {
                 Folder activeFolder = activeFolderOpt.get();
                 
                 // Get JEI integration
-                IntegrationRegistry.getIntegration(JEIIntegration.class).ifPresent(jeiIntegration -> {
+                DependencyProvider.get(JEIIntegration.class).ifPresent(jeiIntegration -> {
                     // Convert the ingredient to StoredIngredient format
                     jeiIntegration.storeIngredient(ingredientObj)
                         .ifPresent(storedIngredient -> {
