@@ -13,7 +13,17 @@ import net.minecraft.client.renderer.Rect2i;
  * The actual EMI plugin registration is handled through the @EmiEntrypoint annotation
  * in the EMIPluginEntrypoint class.
  */
+/**
+ * Main plugin class for EMI integration with EnoughFolders.
+ */
 public class EMIPlugin {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private EMIPlugin() {
+        // Utility class should not be instantiated
+    }
     
     private static boolean registered = false;
     
@@ -81,6 +91,12 @@ public class EMIPlugin {
      * Get the folder screen exclusion area for EMI.
      * This method is called by the EMI plugin to get exclusion zones.
      */
+    /**
+     * Adds folder UI areas as exclusion zones for EMI overlays.
+     * 
+     * @param screen The screen containing folder UI
+     * @param consumer The EMI exclusion area consumer
+     */
     public static void addFolderExclusionArea(Object screen, Object consumer) {
         if (!(screen instanceof AbstractContainerScreen<?>)) {
             return;
@@ -123,6 +139,11 @@ public class EMIPlugin {
     
     /**
      * Check if the plugin is registered.
+     */
+    /**
+     * Checks if the EMI plugin has been registered.
+     * 
+     * @return True if the plugin has been registered, false otherwise
      */
     public static boolean isRegistered() {
         return registered;

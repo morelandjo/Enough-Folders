@@ -12,7 +12,17 @@ import java.util.function.Supplier;
 /**
  * Factory for creating integration instances with proper dependency injection.
  */
+/**
+ * Factory for creating integration instances.
+ */
 public class IntegrationFactory {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private IntegrationFactory() {
+        // Utility class should not be instantiated
+    }
     private static final Map<Class<?>, Supplier<?>> factories = new HashMap<>();
 
     /**

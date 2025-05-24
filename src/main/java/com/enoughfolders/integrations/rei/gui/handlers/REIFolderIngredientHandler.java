@@ -18,6 +18,11 @@ public class REIFolderIngredientHandler {
 
     private final REIIntegration reiIntegration;
 
+    /**
+     * Creates a new REI folder ingredient handler.
+     * 
+     * @param reiIntegration The REI integration instance
+     */
     public REIFolderIngredientHandler(REIIntegration reiIntegration) {
         this.reiIntegration = reiIntegration;
     }

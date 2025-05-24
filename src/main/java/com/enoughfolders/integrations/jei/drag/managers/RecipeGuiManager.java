@@ -13,6 +13,13 @@ import java.util.Optional;
  * Manages interaction with folder UI on JEI recipe screens.
  */
 public class RecipeGuiManager {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private RecipeGuiManager() {
+        // Utility class should not be instantiated
+    }
     /**
      * Handle mouse clicks on the folder UI when viewing JEI recipes
      * @param screen The current JEI recipe screen

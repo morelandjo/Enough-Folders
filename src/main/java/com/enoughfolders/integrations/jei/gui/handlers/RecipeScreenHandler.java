@@ -36,6 +36,9 @@ public class RecipeScreenHandler implements IGlobalGuiHandler, IGhostIngredientH
     // Log frequency limiter (milliseconds)
     private static final long LOG_INTERVAL = 1000; // Log at most once per second
     
+    /**
+     * Creates a new recipe screen handler for managing folder UI on recipe screens.
+     */
     public RecipeScreenHandler() {
         EnoughFolders.LOGGER.debug("RecipeScreenHandler created for JEI recipe exclusion areas");
     }

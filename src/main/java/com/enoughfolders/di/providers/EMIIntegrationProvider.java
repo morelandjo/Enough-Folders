@@ -7,7 +7,17 @@ import net.neoforged.fml.ModList;
 /**
  * Provider for EMI integration.
  */
+/**
+ * Provider for EMI integration.
+ */
 public class EMIIntegrationProvider implements IntegrationProvider<EMIIntegration> {
+    
+    /**
+     * Creates a new EMI integration provider.
+     */
+    public EMIIntegrationProvider() {
+        // Default constructor
+    }
     
     private static final String MOD_ID = "emi";
     

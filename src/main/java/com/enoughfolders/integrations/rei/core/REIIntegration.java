@@ -20,9 +20,19 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Integration for Roughly Enough Items (REI) mod.
+ * Integration with Roughly Enough Items (REI) mod.
+ * <p>
+ * This class provides functionality for integrating EnoughFolders with the REI recipe and item browser.
+ * </p>
  */
 public class REIIntegration implements ModIntegration, IngredientDragProvider, RecipeViewingIntegration {
+    
+    /**
+     * Creates a new REI integration instance.
+     */
+    public REIIntegration() {
+        // Default constructor
+    }
     
     private boolean initialized = false;
     private boolean available = false;
@@ -260,9 +270,7 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
                         EnoughFolders.LOGGER.debug("Successfully created ItemStack for '{}': {}", 
                             itemId, itemStack.getItem().toString());
                         return Optional.of(itemStack);
-                    } else {
-                        EnoughFolders.LOGGER.error("Failed to get item from registry: {}", itemId);
-                    }
+                    } 
                 } else {
                     EnoughFolders.LOGGER.debug("StoredIngredient has unsupported type: {}", 
                         storedIngredient.getType());

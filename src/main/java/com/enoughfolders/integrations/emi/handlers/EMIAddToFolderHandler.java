@@ -14,7 +14,17 @@ import java.util.Optional;
 /**
  * Dedicated handler for adding EMI ingredients to folders via keyboard shortcuts.
  */
+/**
+ * Handles adding ingredients to folders through EMI integration.
+ */
 public class EMIAddToFolderHandler {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private EMIAddToFolderHandler() {
+        // Utility class should not be instantiated
+    }
 
     /**
      * Adds the currently hovered EMI ingredient to the active folder.

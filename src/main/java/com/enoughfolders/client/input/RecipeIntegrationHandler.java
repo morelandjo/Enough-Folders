@@ -6,7 +6,17 @@ import com.enoughfolders.util.DebugLogger;
 /**
  * A central handler for recipe mod integration keyboard events.
  */
+/**
+ * Handles integration with recipe viewing mods for key bindings and interactions.
+ */
 public class RecipeIntegrationHandler {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private RecipeIntegrationHandler() {
+        // Utility class should not be instantiated
+    }
     /**
      * Flag to track if JEI is available
      */

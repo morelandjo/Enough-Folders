@@ -7,7 +7,17 @@ import net.neoforged.fml.ModList;
 /**
  * Provider for REI integration.
  */
+/**
+ * Provider for REI integration.
+ */
 public class REIIntegrationProvider implements IntegrationProvider<REIIntegration> {
+    
+    /**
+     * Creates a new REI integration provider.
+     */
+    public REIIntegrationProvider() {
+        // Default constructor
+    }
     
     private static final String MOD_ID = "roughlyenoughitems";
     

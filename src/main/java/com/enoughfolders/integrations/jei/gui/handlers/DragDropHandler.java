@@ -20,7 +20,21 @@ import java.util.Optional;
 /**
  * Handles drag and drop of ingredients from JEI to folders.
  */
+/**
+ * Handler for drag and drop operations with JEI ghost ingredients.
+ * <p>
+ * This handler manages the drag and drop of ingredients from JEI to the
+ * EnoughFolders UI, providing visual feedback and handling the drop operations.
+ * </p>
+ */
 public class DragDropHandler implements IGhostIngredientHandler<Screen> {
+    
+    /**
+     * Creates a new drag drop handler for JEI ghost ingredients.
+     */
+    public DragDropHandler() {
+        // Default constructor
+    }
     
     /**
      * Gets the targets that can receive the dragged ingredient.

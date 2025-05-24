@@ -15,6 +15,13 @@ import java.util.function.Supplier;
  * </p>
  */
 public class DependencyProvider {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private DependencyProvider() {
+        // Utility class should not be instantiated
+    }
     private static final Map<Class<?>, Supplier<?>> dependencies = new HashMap<>();
     private static final Map<Class<?>, Object> singletons = new HashMap<>();
 
@@ -111,7 +118,15 @@ public class DependencyProvider {
     /**
      * Exception thrown when a required dependency is not found.
      */
+    /**
+     * Exception thrown when a requested dependency is not found in the registry.
+     */
     public static class DependencyNotFoundException extends RuntimeException {
+        /**
+         * Constructs a new dependency not found exception with the specified message.
+         * 
+         * @param message The detail message explaining the exception
+         */
         public DependencyNotFoundException(String message) {
             super(message);
         }

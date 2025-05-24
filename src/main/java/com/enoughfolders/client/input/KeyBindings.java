@@ -13,7 +13,17 @@ import org.lwjgl.glfw.GLFW;
 /**
  * Manages keybindings.
  */
+/**
+ * Manages key bindings for the EnoughFolders mod.
+ */
 public class KeyBindings {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private KeyBindings() {
+        // Utility class should not be instantiated
+    }
     /**
      * The translation key category for all keybindings.
      */
@@ -53,7 +63,17 @@ public class KeyBindings {
     /**
      * Separate class for handling keyboard input events.
      */
+    /**
+     * Handler for key input events.
+     */
     public static class KeyInputHandler {
+        
+        /**
+         * Creates a new key input handler.
+         */
+        public KeyInputHandler() {
+            // Default constructor
+        }
         /**
          * Direct keyboard input handler for the key bindings.
          * 

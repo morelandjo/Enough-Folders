@@ -22,7 +22,18 @@ import java.util.stream.Collectors;
  * allowing for a gradual transition to dependency injection.
  * </p>
  */
+/**
+ * Registry for integration providers that allows for dynamic discovery and
+ * initialization of mod integrations.
+ */
 public class IntegrationProviderRegistry {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private IntegrationProviderRegistry() {
+        // Utility class should not be instantiated
+    }
     
     private static final List<IntegrationProvider<?>> providers = new ArrayList<>();
     private static final List<ModIntegration> instances = new ArrayList<>();
@@ -82,6 +93,12 @@ public class IntegrationProviderRegistry {
      * Register an integration provider.
      * 
      * @param provider The provider to register
+     */
+    /**
+     * Register a dependency provider that creates a new instance each time it's requested.
+     *
+     * @param <T> The type of the integration
+     * @param provider The provider instance for the integration
      */
     public static <T extends ModIntegration> void registerProvider(IntegrationProvider<T> provider) {
         if (provider.isAvailable()) {

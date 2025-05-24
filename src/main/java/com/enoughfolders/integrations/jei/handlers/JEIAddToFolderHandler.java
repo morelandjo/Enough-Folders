@@ -13,7 +13,17 @@ import java.util.Optional;
 /**
  * Dedicated handler for adding JEI ingredients to folders via keyboard shortcuts.
  */
+/**
+ * Handles adding ingredients to folders through JEI integration.
+ */
 public class JEIAddToFolderHandler {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private JEIAddToFolderHandler() {
+        // Utility class should not be instantiated
+    }
 
     /**
      * Handles the key press to add a JEI ingredient to the active folder.

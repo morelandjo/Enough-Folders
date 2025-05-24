@@ -19,6 +19,13 @@ import java.util.Optional;
  */
 @EventBusSubscriber(modid = EnoughFolders.MOD_ID, value = Dist.CLIENT)
 public class JEIRecipeScreenRenderer {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private JEIRecipeScreenRenderer() {
+        // Utility class should not be instantiated
+    }
     /**
      * Flag to check if JEI is available
      */

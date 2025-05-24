@@ -9,6 +9,13 @@ import net.neoforged.fml.ModList;
  */
 public class JEIIntegrationProvider implements IntegrationProvider<JEIIntegration> {
     
+    /**
+     * Creates a new JEI integration provider.
+     */
+    public JEIIntegrationProvider() {
+        // Default constructor
+    }
+    
     private static final String MOD_ID = "jei";
     
     @Override

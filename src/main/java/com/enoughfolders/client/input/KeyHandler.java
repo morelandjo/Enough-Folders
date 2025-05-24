@@ -10,7 +10,17 @@ import net.neoforged.neoforge.common.NeoForge;
 /**
  * Handles keyboard input events.
  */
+/**
+ * Handles custom key input processing for the EnoughFolders mod.
+ */
 public class KeyHandler {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private KeyHandler() {
+        // Utility class should not be instantiated
+    }
     /**
      * Initializes the key handler.
      */

@@ -15,9 +15,15 @@ import java.util.Map;
 
 /**
  * Configuration manager for debug settings.
- * 
  */
 public class DebugConfig {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private DebugConfig() {
+        // Utility class should not be instantiated
+    }
     /** 
      * Name of the debug settings configuration file
      */

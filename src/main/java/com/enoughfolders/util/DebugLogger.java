@@ -8,9 +8,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Custom debug logger
+ * Custom debug logger for organizing debug messages into functional areas.
  */
 public class DebugLogger {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private DebugLogger() {
+        // Utility class should not be instantiated
+    }
     private static Logger LOGGER;
     private static boolean isTestEnvironment = false;
     

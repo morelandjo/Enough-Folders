@@ -24,6 +24,9 @@ import java.util.Optional;
 /**
  * Handles JEI integration for any container screen containing FolderScreen overlay.
  */
+/**
+ * Handler for JEI interactions with folder screens.
+ */
 public class FolderScreenHandler implements 
     IGuiContainerHandler<AbstractContainerScreen<?>>,
     IGhostIngredientHandler<AbstractContainerScreen<?>>, 

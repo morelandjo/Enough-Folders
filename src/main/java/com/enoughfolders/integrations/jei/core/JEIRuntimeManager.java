@@ -12,6 +12,13 @@ import java.util.Optional;
 public class JEIRuntimeManager {
     
     /**
+     * Creates a new JEI runtime manager.
+     */
+    public JEIRuntimeManager() {
+        // Default constructor
+    }
+    
+    /**
      * The JEI runtime, obtained from the JEIPlugin
      */
     private IJeiRuntime jeiRuntime;

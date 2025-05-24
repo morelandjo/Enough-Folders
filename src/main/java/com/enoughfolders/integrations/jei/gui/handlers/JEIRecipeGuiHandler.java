@@ -25,7 +25,19 @@ import java.util.Optional;
  *
  * @param <T> The type of container screen this handler works with, which must extend AbstractContainerScreen
  */
+/**
+ * Handles JEI recipe GUI interactions for container screens.
+ * 
+ * @param <T> The type of container screen this handler works with
+ */
 public class JEIRecipeGuiHandler<T extends AbstractContainerScreen<?>> implements IGuiContainerHandler<T> {
+    
+    /**
+     * Creates a new JEI recipe GUI handler.
+     */
+    public JEIRecipeGuiHandler() {
+        // Default constructor
+    }
     // Keep track of the last used folder screen
     private static FolderScreen lastFolderScreen = null;
     // Keep track if the folder screen has been initialized for the recipe screen

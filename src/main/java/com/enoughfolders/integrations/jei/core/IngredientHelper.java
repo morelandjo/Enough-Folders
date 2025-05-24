@@ -20,7 +20,17 @@ import java.util.Optional;
 /**
  * Helper class for working with JEI ingredients.
  */
+/**
+ * Helper utility for working with JEI ingredients.
+ */
 public class IngredientHelper {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private IngredientHelper() {
+        // Utility class should not be instantiated
+    }
     private static final Gson GSON = new Gson();
 
     /**
@@ -116,7 +126,6 @@ public class IngredientHelper {
                 
                 // Handle component data if it was stored
                 if (parts.length > 1 && parts[1].startsWith("BlockEntityData:")) {
-                    // TODO: Implement proper component data reconstruction if this scenario exists
                     EnoughFolders.LOGGER.debug("Found component data in stored ingredient: {}", parts[1]);
                 }
                 

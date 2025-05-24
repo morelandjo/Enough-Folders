@@ -19,7 +19,17 @@ import java.util.Optional;
  * Handles rendering the folder UI on REI recipe screens.
  */
 @EventBusSubscriber(modid = EnoughFolders.MOD_ID, value = Dist.CLIENT)
+/**
+ * Handles rendering the folder UI on REI recipe screens.
+ */
 public class REIRecipeScreenRenderer {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private REIRecipeScreenRenderer() {
+        // Utility class should not be instantiated
+    }
     /**
      * Flag to check if REI is available
      */

@@ -26,7 +26,6 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -36,7 +35,17 @@ import java.util.stream.Stream;
  */
 @OnlyIn(Dist.CLIENT)
 @REIPluginClient
+/**
+ * REI client plugin that provides drag and drop functionality for folder UI.
+ */
 public class REIFolderDragProvider implements REIClientPlugin {
+    
+    /**
+     * Creates a new REI folder drag provider.
+     */
+    public REIFolderDragProvider() {
+        // Default constructor
+    }
 
     private final DragProviderImpl dragProvider = new DragProviderImpl();
     private final DragVisitorImpl dragVisitor = new DragVisitorImpl();

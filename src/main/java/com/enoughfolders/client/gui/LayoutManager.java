@@ -1,7 +1,6 @@
 // Import UIConstants class
 package com.enoughfolders.client.gui;
 
-import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.integrations.IntegrationRegistry;

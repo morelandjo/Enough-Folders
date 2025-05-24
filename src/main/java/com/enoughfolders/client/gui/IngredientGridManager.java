@@ -4,7 +4,6 @@ package com.enoughfolders.client.gui;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.util.DebugLogger;
-import com.enoughfolders.util.DebugLogger.Category;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.Rect2i;
 

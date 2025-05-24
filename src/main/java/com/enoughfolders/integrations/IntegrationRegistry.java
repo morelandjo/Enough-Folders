@@ -12,7 +12,17 @@ import java.util.Optional;
 /**
  * Registry for all mod integrations.
  */
+/**
+ * Registry for mod integrations that provides access to integrated mod functionality.
+ */
 public class IntegrationRegistry {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private IntegrationRegistry() {
+        // Utility class should not be instantiated
+    }
     private static final List<ModIntegration> integrations = new ArrayList<>();
     private static boolean initialized = false;
     

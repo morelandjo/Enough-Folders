@@ -11,7 +11,17 @@ import java.util.Optional;
 /**
  * Utility class for handling integration priorities and operations
  */
+/**
+ * Helper utility for common recipe integration operations across different recipe viewer mods.
+ */
 public class RecipeIntegrationHelper {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private RecipeIntegrationHelper() {
+        // Utility class should not be instantiated
+    }
     /**
      * Integration priority order, highest priority first.
      */

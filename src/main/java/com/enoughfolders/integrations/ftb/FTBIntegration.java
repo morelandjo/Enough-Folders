@@ -10,7 +10,17 @@ import java.util.List;
  * Utility class for FTB integration
  * 
  */
+/**
+ * Integration with FTB mods for EnoughFolders.
+ */
 public class FTBIntegration {
+    
+    /**
+     * Creates a new FTB integration instance.
+     */
+    public FTBIntegration() {
+        // Default constructor
+    }
     
     // Use the SidebarProvider interface from the provider-based implementation
     private static final SidebarProvider sidebarProvider = SidebarProviderFactory.create();

@@ -33,6 +33,13 @@ import java.util.Optional;
  */
 @EventBusSubscriber(modid = EnoughFolders.MOD_ID, value = Dist.CLIENT, bus = Bus.GAME)
 public class ClientEventHandler {
+    
+    /**
+     * Creates a new client event handler.
+     */
+    public ClientEventHandler() {
+        // Default constructor
+    }
     private static final Map<AbstractContainerScreen<?>, FolderScreen> FOLDER_SCREENS = new HashMap<>();
     
     /**

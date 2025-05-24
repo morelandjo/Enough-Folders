@@ -21,7 +21,17 @@ import java.util.Optional;
 /**
  * Handles drag and drop operations from REI to EnoughFolders using the TransferHandler API.
  */
+/**
+ * Handles transfer operations between REI and folder screens.
+ */
 public class REITransferHandler implements TransferHandler {
+    
+    /**
+     * Creates a new REI transfer handler.
+     */
+    public REITransferHandler() {
+        // Default constructor
+    }
     
     @Override
     public double getPriority() {

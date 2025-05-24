@@ -29,6 +29,9 @@ public class EMIIntegration implements ModIntegration, IngredientDragProvider, R
     private boolean initialized = false;
     private boolean available = false;
     
+    /**
+     * Creates a new EMI integration instance.
+     */
     public EMIIntegration() {
         try {
             // Check if EMI classes are available
@@ -238,6 +241,11 @@ public class EMIIntegration implements ModIntegration, IngredientDragProvider, R
     /**
      * Get the ingredient currently under the mouse cursor.
      * EMI uses hovered ingredients instead of dragged ingredients.
+     */
+    /**
+     * Gets the ingredient currently under the mouse cursor.
+     * 
+     * @return Optional containing the ingredient if found, empty otherwise
      */
     public Optional<?> getIngredientUnderMouse() {
         if (!available) {
@@ -482,6 +490,11 @@ public class EMIIntegration implements ModIntegration, IngredientDragProvider, R
     /**
      * Check if EMI mod is loaded
      */
+    /**
+     * Checks if EMI mod is loaded and available.
+     * 
+     * @return true if EMI is loaded, false otherwise
+     */
     public static boolean isEMILoaded() {
         try {
             Class.forName("dev.emi.emi.api.EmiApi");
@@ -493,6 +506,11 @@ public class EMIIntegration implements ModIntegration, IngredientDragProvider, R
     
     /**
      * Get EMI version if available
+     */
+    /**
+     * Gets the installed version of EMI.
+     * 
+     * @return the EMI version string, or "unknown" if EMI is not loaded
      */
     public static String getEMIVersion() {
         if (!isEMILoaded()) {

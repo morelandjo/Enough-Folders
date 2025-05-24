@@ -10,6 +10,11 @@ import java.util.function.Supplier;
  * which enables better dependency management and testing.
  * </p>
  */
+/**
+ * Provider interface for creating integration instances.
+ * 
+ * @param <T> The type of integration this provider creates
+ */
 public interface IntegrationProvider<T extends ModIntegration> {
     
     /**

@@ -24,7 +24,17 @@ import java.util.Optional;
  * Global manager for handling JEI drag and drop operations.
  */
 @EventBusSubscriber(modid = EnoughFolders.MOD_ID, value = Dist.CLIENT)
+/**
+ * Manages drag and drop operations for JEI ingredients.
+ */
 public class JEIDragDropManager {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private JEIDragDropManager() {
+        // Utility class should not be instantiated
+    }
     
     // Keep track of the currently dragged ingredient
     private static Object currentDraggedIngredient = null;
@@ -32,6 +42,11 @@ public class JEIDragDropManager {
     
     // Called when a mouse button is pressed (start of potential drag)
     @SubscribeEvent
+    /**
+     * Handles mouse press events for JEI drag and drop operations.
+     * 
+     * @param event The mouse button pressed event
+     */
     public static void onMousePressed(ScreenEvent.MouseButtonPressed.Pre event) {
         currentDraggedIngredient = null;
         isDragging = false;
@@ -113,6 +128,16 @@ public class JEIDragDropManager {
     
     // Called when the mouse is released (end of potential drag)
     @SubscribeEvent
+    /**
+     * Handles mouse release events for JEI drag and drop operations.
+     * 
+     * @param event The mouse button released event
+     */
+    /**
+     * Handles mouse release events for JEI drag and drop operations.
+     * 
+     * @param event The mouse button released event
+     */
     public static void onMouseReleased(ScreenEvent.MouseButtonReleased.Pre event) {
         if (isDragging && currentDraggedIngredient != null) {
             // Get the coordinates

@@ -15,6 +15,13 @@ import java.util.Optional;
  */
 public class IntegrationRegistryBridge {
     
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private IntegrationRegistryBridge() {
+        // Utility class should not be instantiated
+    }
+    
     private static boolean bridgeInitialized = false;
     
     /**
