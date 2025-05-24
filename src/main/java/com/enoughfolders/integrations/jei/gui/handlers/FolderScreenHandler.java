@@ -101,6 +101,7 @@ public class FolderScreenHandler implements
         
         DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, 
             "Total targets returned: {}", targets.size());
+        
         return targets;
     }
 
@@ -140,6 +141,19 @@ public class FolderScreenHandler implements
         return new Rect2i(0, 0, 0, 0);
     }
     
+    @Override
+    public Rect2i getEntireFolderArea() {
+        if (currentScreen == null) {
+            return new Rect2i(0, 0, 0, 0);
+        }
+        
+        Optional<FolderScreen> folderScreenOpt = ClientEventHandler.getFolderScreen(currentScreen);
+        if (folderScreenOpt.isPresent()) {
+            return folderScreenOpt.get().getEntireFolderArea();
+        }
+        return new Rect2i(0, 0, 0, 0);
+    }
+
     @Override
     public List<FolderButtonTarget> getFolderTargets() {
         if (currentScreen == null) {

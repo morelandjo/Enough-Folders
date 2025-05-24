@@ -196,7 +196,8 @@ public class EMIIntegration implements ModIntegration, IngredientDragProvider, R
                 "Registering EMI drag and drop support", ""
             );
             
-            EMIDragManager.initialize();
+            // EMI drag and drop is now handled through the official EMI API
+            // via EMIFolderDragDropHandler registered in EMIPluginEntrypoint
             
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
@@ -221,7 +222,9 @@ public class EMIIntegration implements ModIntegration, IngredientDragProvider, R
         }
         
         try {
-            return EMIDragManager.getDraggedIngredient();
+            // EMI doesn't have a traditional drag state like JEI/REI
+            // Instead, we use the ingredient under mouse cursor
+            return getIngredientUnderMouse();
         } catch (Exception e) {
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
@@ -261,7 +264,27 @@ public class EMIIntegration implements ModIntegration, IngredientDragProvider, R
         }
         
         try {
-            return EMIDragManager.handleIngredientDrop(folder);
+            // Handle ingredient drop by getting the ingredient under mouse and converting it
+            Optional<?> ingredientOpt = getIngredientUnderMouse();
+            if (ingredientOpt.isEmpty()) {
+                return false;
+            }
+            
+            Object ingredient = ingredientOpt.get();
+            Optional<StoredIngredient> storedOpt = storeIngredient(ingredient);
+            if (storedOpt.isEmpty()) {
+                return false;
+            }
+            
+            StoredIngredient storedIngredient = storedOpt.get();
+            folder.addIngredient(storedIngredient);
+            
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "Successfully dropped EMI ingredient into folder: {}", storedIngredient.getValue()
+            );
+            
+            return true;
         } catch (Exception e) {
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,

@@ -234,11 +234,9 @@ public class FolderScreenRenderer {
         int width = 16;
         int height = 16;
         
-        boolean isHovered = mouseX >= x && mouseX < x + deleteButton.getWidth() && 
-                           mouseY >= y && mouseY < y + deleteButton.getHeight();
-        
+        // Delete button uses the same texture whether hovered or not
         int textureU = 16;
-        int textureV = isHovered ? 16 : 0;
+        int textureV = 0;
         
         graphics.blit(TEXTURE, x, y, textureU, textureV, width, height, 64, 64);
         

@@ -3,7 +3,8 @@ package com.enoughfolders.integrations.emi.gui.targets;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.integrations.api.FolderTarget;
-import com.enoughfolders.integrations.emi.core.EMIDragManager;
+import com.enoughfolders.integrations.emi.core.EMIIntegration;
+import com.enoughfolders.integrations.IntegrationRegistry;
 import com.enoughfolders.util.DebugLogger;
 
 /**
@@ -64,7 +65,10 @@ public class EMIFolderTarget implements FolderTarget {
                 return false;
             }
             
-            return EMIDragManager.handleIngredientDrop(folder);
+            // Use EMI integration directly instead of EMIDragManager
+            return IntegrationRegistry.getIntegration(EMIIntegration.class)
+                .map(integration -> integration.handleIngredientDrop(folder))
+                .orElse(false);
         } catch (Exception e) {
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
@@ -80,7 +84,10 @@ public class EMIFolderTarget implements FolderTarget {
      */
     public boolean canAcceptDrag() {
         try {
-            return EMIDragManager.isIngredientBeingDragged() && folder != null;
+            // Check if EMI integration has a dragged ingredient and folder is available
+            return IntegrationRegistry.getIntegration(EMIIntegration.class)
+                .map(integration -> integration.getDraggedIngredient().isPresent() && folder != null)
+                .orElse(false);
         } catch (Exception e) {
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,

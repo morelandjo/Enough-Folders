@@ -2,7 +2,6 @@ package com.enoughfolders.integrations.emi.core;
 
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.event.ClientEventHandler;
-import com.enoughfolders.integrations.emi.gui.handlers.EMIFolderDragDropHandler;
 import com.enoughfolders.util.DebugLogger;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
@@ -62,9 +61,8 @@ public class EMIPlugin {
                 "Registering EMI drag and drop handlers", ""
             );
             
-            // For now, we'll handle drag and drop through our own mechanisms
-            // since EMI's drag and drop API might be different from JEI/REI
-            EMIFolderDragDropHandler.initialize();
+            // EMI drag and drop handlers are now registered through EMIPluginEntrypoint
+            // via the official EMI plugin API system
             
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,

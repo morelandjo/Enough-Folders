@@ -16,25 +16,7 @@ public class IntegrationRegistry {
     private static final List<ModIntegration> integrations = new ArrayList<>();
     private static boolean initialized = false;
     
-    /**
-     * Initialize all integrations.
-     * 
-     * @deprecated This method is no longer used. Integrations are now managed through 
-     * the dependency injection system via IntegrationProviderRegistry and IntegrationRegistryBridge.
-     * This method is kept for compatibility but does nothing.
-     */
-    @Deprecated
-    public static synchronized void initialize() {
-        // This method is now deprecated and does nothing.
-        // Integrations are initialized through the new DI system.
-        if (!initialized) {
-            com.enoughfolders.util.DebugLogger.debug(
-                com.enoughfolders.util.DebugLogger.Category.INTEGRATION,
-                "IntegrationRegistry.initialize() called but deprecated - integrations are managed by DI system"
-            );
-            initialized = true;
-        }
-    }
+    // Deprecated initialize() method removed - integrations are now managed through DI system
     
     /**
      * Register a mod integration.
@@ -139,9 +121,10 @@ public class IntegrationRegistry {
      * @return true if the integration is available, false otherwise
      */
     public static boolean isIntegrationAvailable(String integrationId) {
-        // Make sure integrations are initialized
+        // Make sure the DI bridge is initialized
         if (!initialized) {
-            initialize();
+            com.enoughfolders.di.IntegrationRegistryBridge.initializeBridge();
+            initialized = true;
         }
         
         // Check each integration

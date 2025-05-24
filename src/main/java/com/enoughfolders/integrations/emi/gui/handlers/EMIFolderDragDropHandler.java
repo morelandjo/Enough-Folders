@@ -25,16 +25,7 @@ public class EMIFolderDragDropHandler {
     
     private static boolean initialized = false;
     
-    /**
-     * Initialize the drag drop handler. This is for compatibility with the existing EMIPlugin.java
-     */
-    public static void initialize() {
-        DebugLogger.debug(
-            DebugLogger.Category.INTEGRATION,
-            "EMI folder drag drop handler initialized (legacy method)"
-        );
-        // The actual registration happens in register() method called by EMIPluginEntrypoint
-    }
+    // Legacy compatibility methods removed - proper registration happens via EMI API
     
     /**
      * Register EMI drag and drop handlers.

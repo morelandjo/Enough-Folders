@@ -10,8 +10,6 @@ import com.enoughfolders.integrations.api.IngredientDragProvider;
 import com.enoughfolders.integrations.api.RecipeViewingIntegration;
 import com.enoughfolders.integrations.rei.gui.handlers.REIFolderIngredientHandler;
 import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
-import com.enoughfolders.integrations.util.ReflectionUtils;
-import com.enoughfolders.integrations.util.StackTraceUtils;
 import com.enoughfolders.util.DebugLogger;
 
 import net.minecraft.client.gui.screens.Screen;
@@ -99,6 +97,7 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
                 return Optional.empty();
             }
             
+            // First try direct REI format lookup
             if (storedIngredient.getType().equals("net.minecraft.world.item.ItemStack")) {
                 // Parse the item ID
                 String itemId = storedIngredient.getValue();
@@ -130,6 +129,13 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
                     return Optional.of(entryStack);
                 }
             }
+            
+            // If direct lookup failed, try cross-integration compatibility
+            Optional<?> crossIntegrationResult = tryConvertFromOtherIntegration(storedIngredient);
+            if (crossIntegrationResult.isPresent()) {
+                return crossIntegrationResult;
+            }
+            
         } catch (Exception e) {
             EnoughFolders.LOGGER.error("Error converting stored ingredient to REI ingredient: {}", e.getMessage());
             DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
@@ -729,5 +735,102 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
         
         DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, "Created {} REI folder targets", targets.size());
         return targets;
+    }
+    
+    /**
+     * Attempts to convert ingredients stored by other integrations (EMI, JEI) to REI format.
+     * This provides cross-integration compatibility when switching between integrations.
+     *
+     * @param storedIngredient The stored ingredient from another integration
+     * @return Optional containing the converted ingredient, or empty if conversion failed
+     */
+    private Optional<?> tryConvertFromOtherIntegration(StoredIngredient storedIngredient) {
+        try {
+            String typeName = storedIngredient.getType();
+            String value = storedIngredient.getValue();
+            
+            // Handle EMI format: type="minecraft:item", value="minecraft:stone"
+            if ("minecraft:item".equals(typeName)) {
+                return convertEMIItemToREI(value);
+            }
+            
+            // Handle JEI format if needed (JEI uses full class names)
+            if ("net.minecraft.world.item.ItemStack".equals(typeName)) {
+                // This should be handled by the main method already, but included for completeness
+                return convertJEIItemToREI(value);
+            }
+            
+            // Add more integration formats as needed
+            
+            EnoughFolders.LOGGER.debug("No cross-integration conversion available for type: {}", typeName);
+            
+        } catch (Exception e) {
+            EnoughFolders.LOGGER.error("Failed to convert ingredient from other integration", e);
+        }
+        
+        return Optional.empty();
+    }
+    
+    /**
+     * Converts an EMI-format item (ResourceLocation string) to a REI EntryStack.
+     *
+     * @param resourceLocationString The ResourceLocation string (e.g., "minecraft:stone")
+     * @return Optional containing the converted EntryStack, or empty if conversion failed
+     */
+    private Optional<?> convertEMIItemToREI(String resourceLocationString) {
+        try {
+            EnoughFolders.LOGGER.debug("Converting EMI item to REI format: {}", resourceLocationString);
+            
+            // Parse the ResourceLocation
+            net.minecraft.resources.ResourceLocation resourceLocation = 
+                net.minecraft.resources.ResourceLocation.parse(resourceLocationString);
+            
+            // Get the item from the registry
+            net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(resourceLocation);
+            
+            if (item != null && item != net.minecraft.world.item.Items.AIR) {
+                // Create ItemStack and convert to REI EntryStack
+                ItemStack itemStack = new ItemStack(item);
+                var entryStack = me.shedaniel.rei.api.common.entry.EntryStack.of(
+                    me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes.ITEM, 
+                    itemStack
+                );
+                
+                EnoughFolders.LOGGER.debug("Successfully converted EMI item to REI: {}", resourceLocationString);
+                return Optional.of(entryStack);
+            } else {
+                EnoughFolders.LOGGER.warn("Failed to find item in registry: {}", resourceLocationString);
+            }
+        } catch (Exception e) {
+            EnoughFolders.LOGGER.error("Failed to convert EMI item to REI format: {}", resourceLocationString, e);
+        }
+        
+        return Optional.empty();
+    }
+    
+    /**
+     * Converts a JEI-format item UID to a REI EntryStack.
+     * This handles the case where JEI items might be stored in a different format.
+     *
+     * @param itemUid The JEI item UID string
+     * @return Optional containing the converted EntryStack, or empty if conversion failed
+     */
+    private Optional<?> convertJEIItemToREI(String itemUid) {
+        try {
+            // JEI UID format might be different, but for ItemStacks it's often the ResourceLocation
+            // Extract registry name from the item ID (handle @ and other separators)
+            String itemId = itemUid;
+            if (itemId.contains("@")) {
+                itemId = itemId.substring(0, itemId.indexOf("@"));
+            }
+            
+            // Parse as ResourceLocation and convert similar to EMI
+            return convertEMIItemToREI(itemId);
+            
+        } catch (Exception e) {
+            EnoughFolders.LOGGER.error("Failed to convert JEI item to REI format: {}", itemUid, e);
+        }
+        
+        return Optional.empty();
     }
 }

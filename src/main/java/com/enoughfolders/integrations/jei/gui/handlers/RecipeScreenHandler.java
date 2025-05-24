@@ -143,6 +143,16 @@ public class RecipeScreenHandler implements IGlobalGuiHandler, IGhostIngredientH
     }
     
     @Override
+    public Rect2i getEntireFolderArea() {
+        Optional<FolderScreen> folderScreenOpt = JEIRecipeGuiHandler.getLastFolderScreen();
+        if (folderScreenOpt.isPresent()) {
+            FolderScreen folderScreen = folderScreenOpt.get();
+            return folderScreen.getEntireFolderArea();
+        }
+        return new Rect2i(0, 0, 0, 0); // Empty area if no folder screen
+    }
+    
+    @Override
     public List<FolderButtonTarget> getFolderTargets() {
         Optional<FolderScreen> folderScreenOpt = JEIRecipeGuiHandler.getLastFolderScreen();
         if (folderScreenOpt.isPresent()) {

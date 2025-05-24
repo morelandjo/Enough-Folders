@@ -31,11 +31,11 @@ public final class UIConstants {
     public static final int INPUT_FIELD_HEIGHT = 20;
 
     // Integration-specific constants
-    public static final int JEI_WIDTH_REDUCTION = 20;
+    public static final int JEI_WIDTH_REDUCTION = 10;
 
     // Pagination controls
-    public static final int PAGE_BUTTON_WIDTH = 12;
-    public static final int PAGE_BUTTON_HEIGHT = 12;
+    public static final int PAGE_BUTTON_WIDTH = 16;
+    public static final int PAGE_BUTTON_HEIGHT = 16;
 
     // Background color constants
     public static final int DEFAULT_BACKGROUND_COLOR = 0xF0100010;

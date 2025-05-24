@@ -63,9 +63,9 @@ public class IngredientGridManager implements LayoutManager.LayoutChangeListener
      * Calculates the number of ingredient columns based on available width.
      */
     private void calculateIngredientColumns() {
-        int availableWidth = layoutManager.getWidth() - 10;
+        int availableWidth = layoutManager.getWidth() - 6; // Reduced padding from 10 to 6 pixels
         int ingredientWidth = UIConstants.INGREDIENT_SLOT_SIZE + UIConstants.INGREDIENT_SPACING;
-        int maxColumns = Math.max(1, (availableWidth - 1) / ingredientWidth);
+        int maxColumns = Math.max(1, availableWidth / ingredientWidth);
         this.ingredientColumns = maxColumns;
         DebugLogger.debugValues(DebugLogger.Category.GUI_STATE, 
                               "Dynamically calculated ingredient columns: {} (from available width: {}px)", 
@@ -85,14 +85,14 @@ public class IngredientGridManager implements LayoutManager.LayoutChangeListener
                 net.minecraft.network.chat.Component.literal("<"), 
                 prevPageCallback)
                 .pos(paginationPositions[0], paginationPositions[1])
-                .size(20, 20)
+                .size(UIConstants.PAGE_BUTTON_WIDTH, UIConstants.PAGE_BUTTON_HEIGHT)
                 .build();
         
         this.nextPageButton = new Button.Builder(
                 net.minecraft.network.chat.Component.literal(">"), 
                 nextPageCallback)
                 .pos(paginationPositions[2], paginationPositions[3])
-                .size(20, 20)
+                .size(UIConstants.PAGE_BUTTON_WIDTH, UIConstants.PAGE_BUTTON_HEIGHT)
                 .build();
                 
         updatePagination();
@@ -145,7 +145,7 @@ public class IngredientGridManager implements LayoutManager.LayoutChangeListener
             int rowsNeeded = contentArea[2];
             
             int contentHeight = rowsNeeded * UIConstants.INGREDIENT_SLOT_SIZE;
-            int newTotalHeight = UIConstants.FOLDER_AREA_HEIGHT + 55 + contentHeight + 20 + contentArea[3];
+            int newTotalHeight = UIConstants.FOLDER_AREA_HEIGHT + 55 + contentHeight + 10 + contentArea[3];
             
             layoutManager.updateHeight(newTotalHeight);
             

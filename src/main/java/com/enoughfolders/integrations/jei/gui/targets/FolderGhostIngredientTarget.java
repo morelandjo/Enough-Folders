@@ -19,6 +19,14 @@ public interface FolderGhostIngredientTarget {
     Rect2i getContentDropArea();
     
     /**
+     * Get the entire folder UI area which can be used as a drop target.
+     * This matches EMI's behavior of highlighting the entire folder area.
+     * 
+     * @return The entire folder area
+     */
+    Rect2i getEntireFolderArea();
+    
+    /**
      * Get a list of all folder button targets that can receive
      * JEI ingredient drops directly.
      * 

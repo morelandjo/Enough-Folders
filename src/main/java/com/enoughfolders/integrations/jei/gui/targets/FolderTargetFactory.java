@@ -47,7 +47,8 @@ public class FolderTargetFactory {
         return new Target<I>() {
             @Override
             public Rect2i getArea() {
-                return area;
+                // Get the full folder area from the notifyTarget  
+                return notifyTarget.getEntireFolderArea();
             }
             
             @Override
@@ -103,7 +104,8 @@ public class FolderTargetFactory {
         return new Target<I>() {
             @Override
             public Rect2i getArea() {
-                return area;
+                // Get the full folder area from the notifyTarget
+                return notifyTarget.getEntireFolderArea();
             }
 
             @Override
@@ -136,6 +138,64 @@ public class FolderTargetFactory {
         };
     }
     
+    /**
+     * Creates a target for the entire folder area to match EMI's behavior.
+     *
+     * @param <I>           The ingredient type
+     * @param area          The area of the entire folder screen
+     * @param notifyTarget  The target to notify when an ingredient is added
+     * @return A JEI target for the entire folder area
+     */
+    public static <I> Target<I> createEntireFolderAreaTarget(
+            Rect2i area, 
+            FolderGhostIngredientTarget notifyTarget) {
+        
+        return new Target<I>() {
+            @Override
+            public Rect2i getArea() {
+                return area;
+            }
+
+            @Override
+            public void accept(I ingredientObj) {
+                DebugLogger.debugValues(DebugLogger.Category.JEI_INTEGRATION,
+                    "Entire folder area accept() called with ingredient {}", 
+                    ingredientObj.getClass().getSimpleName());
+                
+                // Get the active folder to add ingredient to
+                Optional<Folder> activeFolderOpt = EnoughFolders.getInstance().getFolderManager().getActiveFolder();
+                if (activeFolderOpt.isEmpty()) {
+                    DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION,
+                        "No active folder to add ingredient to");
+                    return;
+                }
+                
+                Folder activeFolder = activeFolderOpt.get();
+                
+                // Get JEI integration
+                IntegrationRegistry.getIntegration(JEIIntegration.class).ifPresent(jeiIntegration -> {
+                    // Convert the ingredient to StoredIngredient format
+                    jeiIntegration.storeIngredient(ingredientObj)
+                        .ifPresent(storedIngredient -> {
+                            try {
+                                // Add the ingredient to the active folder
+                                EnoughFolders.getInstance().getFolderManager()
+                                    .addIngredient(activeFolder, storedIngredient);
+                                
+                                // Notify the GUI that an ingredient was added
+                                notifyTarget.onIngredientAdded();
+                                
+                                DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION,
+                                    "Ingredient added to active folder via entire area: {}", activeFolder.getName());
+                            } catch (Exception e) {
+                                EnoughFolders.LOGGER.error("Error adding ingredient to folder via entire area", e);
+                            }
+                        });
+                });
+            }
+        };
+    }
+
     /**
      * Creates all targets for a folder screen.
      *

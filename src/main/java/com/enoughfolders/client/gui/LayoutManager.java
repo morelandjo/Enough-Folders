@@ -99,13 +99,13 @@ public class LayoutManager {
             isJeiRecipeGuiOpen = jeiIntegration.get().isRecipeGuiOpen();
         }
         
-        // Calculate maximum width based on screen size
-        int maxWidth = Math.min(parentWidth - 40, 387);
+        // Calculate maximum width based on screen size - moderately increased limit to allow more space for ingredients
+        int maxWidth = Math.min(parentWidth - 40, 420);
         
-        // Adjust width to avoid parent screen overlap
+        // Adjust width to avoid parent screen overlap - balanced margin to prevent overlap
         if (parentLeftPos > 0) {
             int originalWidth = maxWidth;
-            maxWidth = Math.min(maxWidth, parentLeftPos - 20);
+            maxWidth = Math.min(maxWidth, parentLeftPos - 15);
             if (originalWidth != maxWidth) {
                 DebugLogger.debugValues(DebugLogger.Category.GUI_STATE,
                     "Width limited to avoid parent screen overlap, from {} to {}", originalWidth, maxWidth);
@@ -327,7 +327,8 @@ public class LayoutManager {
         
         // Calculate rows needed
         int rowsUsed = (int) Math.ceil(totalSlotsOnPage / (double) ingredientColumns);
-        int rowsNeeded = Math.max(rowsUsed + 1, 1);
+        // Only add extra row if we haven't reached the maximum rows limit
+        int rowsNeeded = rowsUsed < UIConstants.INGREDIENT_ROWS ? Math.max(rowsUsed + 1, 1) : rowsUsed;
         
         return new int[] { contentStartX, contentStartY, rowsNeeded, verticalOffset };
     }

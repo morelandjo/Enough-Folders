@@ -1,6 +1,5 @@
 package com.enoughfolders.integrations.jei.gui.handlers;
 
-import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.integrations.IntegrationRegistry;
 import com.enoughfolders.integrations.jei.core.JEIIntegration;
@@ -62,23 +61,22 @@ public class DragDropHandler implements IGhostIngredientHandler<Screen> {
                 "Setting current dragged ingredient: {}", ingredient.getClass().getSimpleName());
         }
         
-        // Get the active folder (if any) for the content drop area
-        Optional<Folder> activeFolder = EnoughFolders.getInstance().getFolderManager().getActiveFolder();
-        if (activeFolder.isPresent()) {
-            // Get folder drop area (single area)
-            Rect2i dropArea = targetGui.getContentDropArea();
-            Folder folder = activeFolder.get();
-            
-            DebugLogger.debugValues(DebugLogger.Category.JEI_INTEGRATION,
-                "Adding content grid drop target for active folder: {}, area: {}x{} at {}x{}", 
-                folder.getName(), dropArea.getWidth(), dropArea.getHeight(), 
-                dropArea.getX(), dropArea.getY());
-            
-            // Create target using the factory
-            targets.add(FolderTargetFactory.createContentAreaTarget(dropArea, folder, targetGui));
-        } else {
-            DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "No active folder found, skipping content grid target");
-        }
+        // Add the entire folder screen area as a target to match EMI's behavior
+        Rect2i entireFolderArea = targetGui.getEntireFolderArea();
+        DebugLogger.debugValues(DebugLogger.Category.JEI_INTEGRATION,
+            "Adding entire folder screen area target: {}x{} at {}x{}", 
+            entireFolderArea.getWidth(), entireFolderArea.getHeight(), 
+            entireFolderArea.getX(), entireFolderArea.getY());
+        
+        // Log more detailed information about the highlight area
+        DebugLogger.debugValues(DebugLogger.Category.JEI_INTEGRATION,
+            "JEI Highlighting: Entire area bounds = ({}, {}) to ({}, {})",
+            entireFolderArea.getX(), entireFolderArea.getY(),
+            entireFolderArea.getX() + entireFolderArea.getWidth(),
+            entireFolderArea.getY() + entireFolderArea.getHeight());
+        
+        // Create target for the entire folder area - this will accept drops to any active folder
+        targets.add(FolderTargetFactory.createEntireFolderAreaTarget(entireFolderArea, targetGui));
         
         // Get targets for all visible folder buttons
         List<FolderButtonTarget> folderTargets = targetGui.getFolderTargets();

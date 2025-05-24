@@ -13,8 +13,11 @@ import mezz.jei.api.ingredients.subtypes.UidContext;
 import mezz.jei.api.runtime.IJeiRuntime;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.util.Optional;
 
@@ -59,17 +62,34 @@ public class JEIIngredientManager {
             
             IJeiRuntime runtime = runtimeOpt.get();
             
+            // First try direct JEI format lookup
             for (IIngredientType<?> type : runtime.getIngredientManager().getRegisteredIngredientTypes()) {
                 if (type.getIngredientClass().getName().equals(typeName)) {
-                    @SuppressWarnings({"deprecation", "unchecked"})
-                    Optional<? extends ITypedIngredient<?>> typedIngredient = 
-                            runtime.getIngredientManager().getTypedIngredientByUid((IIngredientType) type, value);
-                    
-                    if (typedIngredient.isPresent()) {
-                        return Optional.ofNullable(typedIngredient.get().getIngredient());
+                    // Use modern API approach instead of deprecated getTypedIngredientByUid
+                    IIngredientHelper<Object> helper = getHelperForType(type);
+                    if (helper != null) {
+                        try {
+                            // Try to find the ingredient by recreating it from the UID
+                            // This is a more complex approach but avoids the deprecated method
+                            for (Object ingredient : runtime.getIngredientManager().getAllIngredients(type)) {
+                                String ingredientUid = helper.getUid(ingredient, UidContext.Ingredient).toString();
+                                if (value.equals(ingredientUid)) {
+                                    return Optional.of(ingredient);
+                                }
+                            }
+                        } catch (Exception e) {
+                            EnoughFolders.LOGGER.debug("Failed to match ingredient by UID for type {}: {}", typeName, e.getMessage());
+                        }
                     }
                 }
             }
+            
+            // If direct lookup failed, try cross-integration compatibility
+            Optional<?> crossIntegrationResult = tryConvertFromOtherIntegration(storedIngredient, runtime);
+            if (crossIntegrationResult.isPresent()) {
+                return crossIntegrationResult;
+            }
+            
         } catch (Exception e) {
             EnoughFolders.LOGGER.error("Failed to get ingredient from stored data", e);
         }
@@ -156,9 +176,7 @@ public class JEIIngredientManager {
                         return Optional.of((ItemStack) typedIngredient.getIngredient());
                     }
                     
-                    @SuppressWarnings("unchecked")
-                    IIngredientTypeWithSubtypes<Item, ItemStack> itemType = 
-                            (IIngredientTypeWithSubtypes<Item, ItemStack>) VanillaTypes.ITEM_STACK;
+                    IIngredientTypeWithSubtypes<Item, ItemStack> itemType = VanillaTypes.ITEM_STACK;
                     
                     if (ingredient instanceof Item item) {
                         return Optional.of(itemType.getDefaultIngredient(item));
@@ -225,7 +243,6 @@ public class JEIIngredientManager {
      * @param type The ingredient type class
      * @return The ingredient helper, or null if not found
      */
-    @SuppressWarnings("unchecked")
     private <T> IIngredientHelper<T> getHelperForType(IIngredientType<?> type) {
         try {
             Optional<IJeiRuntime> runtimeOpt = runtimeManager.getJeiRuntime();
@@ -235,10 +252,89 @@ public class JEIIngredientManager {
             
             IJeiRuntime runtime = runtimeOpt.get();
             
-            return (IIngredientHelper<T>) runtime.getIngredientManager().getIngredientHelper((IIngredientType<T>) type);
+            @SuppressWarnings("unchecked")
+            IIngredientType<T> typedType = (IIngredientType<T>) type;
+            return runtime.getIngredientManager().getIngredientHelper(typedType);
         } catch (Exception e) {
             EnoughFolders.LOGGER.error("Failed to get ingredient helper for type: " + type, e);
             return null;
         }
+    }
+    
+    /**
+     * Attempts to convert ingredients stored by other integrations (EMI, REI) to JEI format.
+     * This provides cross-integration compatibility when switching between integrations.
+     *
+     * @param storedIngredient The stored ingredient from another integration
+     * @param runtime The JEI runtime instance
+     * @return Optional containing the converted ingredient, or empty if conversion failed
+     */
+    private Optional<?> tryConvertFromOtherIntegration(StoredIngredient storedIngredient, IJeiRuntime runtime) {
+        try {
+            String typeName = storedIngredient.getType();
+            String value = storedIngredient.getValue();
+            
+            // Handle EMI format: type="minecraft:item", value="minecraft:stone"
+            if ("minecraft:item".equals(typeName)) {
+                return convertEMIItemToJEI(value, runtime);
+            }
+            
+            // Handle REI format if needed (REI typically uses similar format to EMI)
+            if ("rei:item".equals(typeName)) {
+                return convertEMIItemToJEI(value, runtime);
+            }
+            
+            // Add more integration formats as needed
+            
+            EnoughFolders.LOGGER.debug("No cross-integration conversion available for type: {}", typeName);
+            
+        } catch (Exception e) {
+            EnoughFolders.LOGGER.error("Failed to convert ingredient from other integration", e);
+        }
+        
+        return Optional.empty();
+    }
+    
+    /**
+     * Converts an EMI-format item (ResourceLocation string) to a JEI ItemStack.
+     *
+     * @param resourceLocationString The ResourceLocation string (e.g., "minecraft:stone")
+     * @param runtime The JEI runtime instance
+     * @return Optional containing the converted ItemStack, or empty if conversion failed
+     */
+    private Optional<?> convertEMIItemToJEI(String resourceLocationString, IJeiRuntime runtime) {
+        try {
+            // Parse the ResourceLocation string
+            ResourceLocation resourceLocation = ResourceLocation.parse(resourceLocationString);
+            
+            // Get the item from the registry
+            Item item = BuiltInRegistries.ITEM.get(resourceLocation);
+            
+            if (item == null || item == Items.AIR) {
+                EnoughFolders.LOGGER.debug("Item not found in registry: {}", resourceLocationString);
+                return Optional.empty();
+            }
+            
+            // Create an ItemStack
+            ItemStack itemStack = new ItemStack(item);
+            
+            if (itemStack.isEmpty()) {
+                return Optional.empty();
+            }
+            
+            // Verify that JEI can handle this ItemStack
+            Optional<? extends ITypedIngredient<?>> typedIngredient = runtime.getIngredientManager()
+                    .createTypedIngredient(itemStack);
+            
+            if (typedIngredient.isPresent()) {
+                EnoughFolders.LOGGER.debug("Successfully converted EMI ingredient {} to JEI ItemStack", resourceLocationString);
+                return Optional.of(itemStack);
+            }
+            
+        } catch (Exception e) {
+            EnoughFolders.LOGGER.error("Failed to convert EMI item to JEI: {}", resourceLocationString, e);
+        }
+        
+        return Optional.empty();
     }
 }

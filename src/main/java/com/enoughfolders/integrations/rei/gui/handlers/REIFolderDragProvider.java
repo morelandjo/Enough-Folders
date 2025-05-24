@@ -312,85 +312,8 @@ public class REIFolderDragProvider implements REIClientPlugin {
         
         @Override
         public Stream<BoundsProvider> getDraggableAcceptingBounds(DraggingContext<Screen> context, DraggableStack stack) {
-            if (!(context.getScreen() instanceof AbstractContainerScreen<?>)) {
-                return Stream.empty();
-            }
-            
-            AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) context.getScreen();
-            
-            // Get the folder screen associated with this container
-            Optional<FolderScreen> folderScreenOpt = com.enoughfolders.client.event.ClientEventHandler.getFolderScreen(screen);
-            if (folderScreenOpt.isEmpty()) {
-                return Stream.empty();
-            }
-            
-            FolderScreen folderScreen = folderScreenOpt.get();
-            
-            // Only proceed if the folder screen is visible at current mouse position
-            Point mousePos = context.getCurrentPosition();
-            double mouseX, mouseY;
-            if (mousePos != null) {
-                mouseX = mousePos.getX();
-                mouseY = mousePos.getY();
-            } else {
-                mouseX = Minecraft.getInstance().mouseHandler.xpos();
-                mouseY = Minecraft.getInstance().mouseHandler.ypos();
-            }
-            
-            if (!folderScreen.isVisible(mouseX, mouseY)) {
-                return Stream.empty();
-            }
-            
-            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "Getting drag accepting bounds");
-            
-            List<Rectangle> bounds = new ArrayList<>();
-            
-            // Get active folder if any
-            Optional<Folder> activeFolder = EnoughFolders.getInstance().getFolderManager().getActiveFolder();
-            
-            // Add the entire folder area if there's an active folder
-            if (activeFolder.isPresent()) {
-                var entireFolderArea = folderScreen.getEntireFolderArea();
-                Rectangle entireRect = new Rectangle(entireFolderArea.getX(), entireFolderArea.getY(), 
-                                                entireFolderArea.getWidth(), entireFolderArea.getHeight());
-                bounds.add(entireRect);
-                
-                DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
-                    "Added entire folder area bounds: {}x{} at {},{}", 
-                    entireRect.width, entireRect.height, entireRect.x, entireRect.y);
-                
-                // Also add content area for more precise highlighting
-                var contentArea = folderScreen.getContentDropArea();
-                Rectangle contentRect = new Rectangle(contentArea.getX(), contentArea.getY(), 
-                                                contentArea.getWidth(), contentArea.getHeight());
-                bounds.add(contentRect);
-                
-                DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
-                    "Added content area bounds: {}x{} at {},{}", 
-                    contentRect.width, contentRect.height, contentRect.x, contentRect.y);
-            }
-            
-            // Add all folder target bounds
-            List<REIFolderTarget> reiTargets = folderScreen.getREIFolderTargets();
-            for (REIFolderTarget target : reiTargets) {
-                Rectangle rect = new Rectangle(target.getX(), target.getY(), 
-                                            target.getWidth(), target.getHeight());
-                bounds.add(rect);
-                
-                DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
-                    "Added folder target bounds for {}: {}x{} at {},{}", 
-                    target.getFolder().getName(), rect.width, rect.height, rect.x, rect.y);
-            }
-            
-            if (bounds.isEmpty()) {
-                DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "No accepting bounds found");
-                return Stream.empty();
-            }
-            
-            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                "Returning {} drag accepting bounds", bounds.size());
-            
-            return Stream.of(BoundsProvider.ofRectangles(bounds));
+            // REI highlighting disabled due to architectural differences causing GUI rendering conflicts
+            return Stream.empty();
         }
     }
     
