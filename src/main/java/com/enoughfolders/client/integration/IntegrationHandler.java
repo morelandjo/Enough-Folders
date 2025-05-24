@@ -14,6 +14,7 @@ import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
 import com.enoughfolders.integrations.rei.core.REIIntegration;
 import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
+import com.enoughfolders.integrations.emi.core.EMIIntegration;
 import com.enoughfolders.util.DebugLogger;
 
 import net.minecraft.client.gui.screens.Screen;
@@ -34,7 +35,8 @@ public class IntegrationHandler {
      */
     private static final String[] PRIORITY_ORDER = {
         "rei",
-        "jei"
+        "jei",
+        "emi"
     };
 
     private final FolderScreen folderScreen;
@@ -165,6 +167,23 @@ public class IntegrationHandler {
                         }
                         return false;
                     }).orElse(false);
+            } else if ("emi".equals(integrationId)) {
+                return DependencyProvider.get(EMIIntegration.class)
+                    .filter(integration -> integration.isAvailable())
+                    .map(emiIntegration -> {
+                        try {
+                            Optional<?> emiIngredient = emiIntegration.getIngredientFromStored(ingredient);
+                            if (emiIngredient.isPresent()) {
+                                emiIntegration.showRecipes(emiIngredient.get());
+                                DebugLogger.debugValues(DebugLogger.Category.INTEGRATION, 
+                                    "Showed recipes for ingredient using EMI");
+                                return true;
+                            }
+                        } catch (Exception e) {
+                            EnoughFolders.LOGGER.error("Error showing recipes with EMI", e);
+                        }
+                        return false;
+                    }).orElse(false);
             }
             return false;
         } catch (Exception e) {
@@ -213,6 +232,23 @@ public class IntegrationHandler {
                             }
                         } catch (Exception e) {
                             EnoughFolders.LOGGER.error("Error showing uses with JEI", e);
+                        }
+                        return false;
+                    }).orElse(false);
+            } else if ("emi".equals(integrationId)) {
+                return DependencyProvider.get(EMIIntegration.class)
+                    .filter(integration -> integration.isAvailable())
+                    .map(emiIntegration -> {
+                        try {
+                            Optional<?> emiIngredient = emiIntegration.getIngredientFromStored(ingredient);
+                            if (emiIngredient.isPresent()) {
+                                emiIntegration.showUses(emiIngredient.get());
+                                DebugLogger.debugValues(DebugLogger.Category.INTEGRATION, 
+                                    "Showed uses for ingredient using EMI");
+                                return true;
+                            }
+                        } catch (Exception e) {
+                            EnoughFolders.LOGGER.error("Error showing uses with EMI", e);
                         }
                         return false;
                     }).orElse(false);
@@ -448,6 +484,10 @@ public class IntegrationHandler {
             return DependencyProvider.get(REIIntegration.class)
                 .map(rei -> (RecipeViewingIntegration) rei)
                 .filter(RecipeViewingIntegration::isAvailable);
+        } else if ("emi".equals(integrationId)) {
+            return DependencyProvider.get(EMIIntegration.class)
+                .map(emi -> (RecipeViewingIntegration) emi)
+                .filter(RecipeViewingIntegration::isAvailable);
         }
         
         return Optional.empty();
@@ -467,6 +507,10 @@ public class IntegrationHandler {
         } else if ("rei".equals(integrationId)) {
             return DependencyProvider.get(REIIntegration.class)
                 .map(rei -> (IngredientDragProvider) rei)
+                .filter(IngredientDragProvider::isAvailable);
+        } else if ("emi".equals(integrationId)) {
+            return DependencyProvider.get(EMIIntegration.class)
+                .map(emi -> (IngredientDragProvider) emi)
                 .filter(IngredientDragProvider::isAvailable);
         }
         

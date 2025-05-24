@@ -71,33 +71,104 @@ public class REIPlugin implements REIClientPlugin {
         DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
             "Registering screens for REI integration");
         
-        // Register exclusion zones to keep REI from overlapping with folder UI
+        // Create a proper exclusion zone provider for folder UI using REI's interface
+        me.shedaniel.rei.api.client.registry.screen.ExclusionZonesProvider<net.minecraft.client.gui.screens.Screen> folderExclusionZoneProvider = 
+            new me.shedaniel.rei.api.client.registry.screen.ExclusionZonesProvider<net.minecraft.client.gui.screens.Screen>() {
+                @Override
+                public java.util.Collection<me.shedaniel.math.Rectangle> provide(net.minecraft.client.gui.screens.Screen screen) {
+                    List<me.shedaniel.math.Rectangle> areas = new ArrayList<>();
+                    
+                    // Try to get folder screen from the current screen for container screens
+                    if (screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>) {
+                        com.enoughfolders.client.event.ClientEventHandler.getFolderScreen(
+                            (net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>) screen)
+                            .ifPresent(folderScreen -> {
+                                // Get the screen area and convert to REI's Rectangle format
+                                net.minecraft.client.renderer.Rect2i screenArea = folderScreen.getScreenArea();
+                                
+                                // Add the area with a slight buffer to ensure REI doesn't overlap
+                                areas.add(new me.shedaniel.math.Rectangle(
+                                    screenArea.getX() - 2,
+                                    screenArea.getY() - 2,
+                                    screenArea.getWidth() + 4,
+                                    screenArea.getHeight() + 4
+                                ));
+                                
+                                DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION, 
+                                    "Added folder UI exclusion zone for container screen: {}x{} at {},{}",
+                                    screenArea.getWidth(), screenArea.getHeight(), 
+                                    screenArea.getX(), screenArea.getY());
+                            });
+                    } else {
+                        // For REI recipe screens, get the saved folder screen from the handler
+                        com.enoughfolders.integrations.rei.gui.handlers.REIRecipeGuiHandler.getLastFolderScreen()
+                            .ifPresent(folderScreen -> {
+                                // Get the screen area and convert to REI's Rectangle format
+                                net.minecraft.client.renderer.Rect2i screenArea = folderScreen.getScreenArea();
+                                
+                                // Add the area with a slight buffer to ensure REI doesn't overlap
+                                areas.add(new me.shedaniel.math.Rectangle(
+                                    screenArea.getX() - 2,
+                                    screenArea.getY() - 2,
+                                    screenArea.getWidth() + 4,
+                                    screenArea.getHeight() + 4
+                                ));
+                                
+                                DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION, 
+                                    "Added folder UI exclusion zone for REI recipe screen: {}x{} at {},{} for screen type: {}",
+                                    screenArea.getWidth(), screenArea.getHeight(), 
+                                    screenArea.getX(), screenArea.getY(),
+                                    screen.getClass().getSimpleName());
+                            });
+                    }
+                    
+                    return areas;
+                }
+            };
+        
+        // Register exclusion zones for container screens
         registry.exclusionZones().register(
             net.minecraft.client.gui.screens.inventory.AbstractContainerScreen.class, 
-            screen -> {
-                List<me.shedaniel.math.Rectangle> areas = new ArrayList<>();
-                
-                // Get the folder screen area if present
-                com.enoughfolders.client.event.ClientEventHandler.getFolderScreen(screen).ifPresent(folderScreen -> {
-                    // Get the screen area and convert to REI's Rectangle format
-                    net.minecraft.client.renderer.Rect2i screenArea = folderScreen.getScreenArea();
-                    
-                    // Add the area with a slight buffer to ensure REI doesn't overlap
-                    areas.add(new me.shedaniel.math.Rectangle(
-                        screenArea.getX() - 2,
-                        screenArea.getY() - 2,
-                        screenArea.getWidth() + 4,
-                        screenArea.getHeight() + 4
-                    ));
-                });
-                
-                return areas;
-            }
+            folderExclusionZoneProvider
         );
+        
+        // Register exclusion zones for REI recipe screens
+        try {
+            // DefaultDisplayViewingScreen - main REI recipe viewing screen
+            Class<?> defaultDisplayViewingScreenClass = Class.forName("me.shedaniel.rei.impl.client.gui.screen.DefaultDisplayViewingScreen");
+            registry.exclusionZones().register(defaultDisplayViewingScreenClass, folderExclusionZoneProvider);
+            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
+                "Registered exclusion zones for DefaultDisplayViewingScreen");
+        } catch (ClassNotFoundException e) {
+            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
+                "DefaultDisplayViewingScreen class not found: " + e.getMessage());
+        }
+        
+        try {
+            // ViewsScreen - REI recipe search and browsing screen
+            Class<?> viewsScreenClass = Class.forName("me.shedaniel.rei.impl.client.view.ViewsScreen");
+            registry.exclusionZones().register(viewsScreenClass, folderExclusionZoneProvider);
+            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
+                "Registered exclusion zones for ViewsScreen");
+        } catch (ClassNotFoundException e) {
+            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
+                "ViewsScreen class not found: " + e.getMessage());
+        }
+        
+        try {
+            // Also try to register for any general REI screen base class if it exists
+            Class<?> reiScreenClass = Class.forName("me.shedaniel.rei.impl.client.gui.screen.AbstractDisplayViewingScreen");
+            registry.exclusionZones().register(reiScreenClass, folderExclusionZoneProvider);
+            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
+                "Registered exclusion zones for AbstractDisplayViewingScreen");
+        } catch (ClassNotFoundException e) {
+            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
+                "AbstractDisplayViewingScreen class not found: " + e.getMessage());
+        }
         
         if (!exclusionZonesRegistered) {
             DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
-                "Registered exclusion zones for folder UI");
+                "Registered exclusion zones for folder UI on all REI screens");
             exclusionZonesRegistered = true;
         }
     }

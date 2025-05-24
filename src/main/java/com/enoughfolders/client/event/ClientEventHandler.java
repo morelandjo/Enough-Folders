@@ -109,12 +109,15 @@ public class ClientEventHandler {
                 if (integration.isAvailable() && integration.isTransitioningToRecipeScreen(currentScreen)) {
                     goingToRecipeScreen = true;
                     EnoughFolders.LOGGER.debug("Detected transition to {} recipe screen", integration.getDisplayName());
+                    System.out.println("DETECTED RECIPE TRANSITION FOR: " + integration.getDisplayName());
                     break;
                 }
             }
             
             // Remove the folder screen from container map
             FOLDER_SCREENS.remove(containerScreen);
+        } else {
+            System.out.println("Screen closing - not a container screen: " + (currentScreen != null ? currentScreen.getClass().getSimpleName() : "null"));
         }
         
         // Only clear the saved folder screens when NOT going to a recipe screen

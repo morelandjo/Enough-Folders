@@ -57,9 +57,22 @@ public final class StackTraceUtils {
      */
     public static boolean isREIRecipeTransition() {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        return containsClassAndMethod(stackTrace, "shedaniel.rei", 
-                new String[]{"show", "view"}, 
-                new String[]{"RecipeScreen", "DisplayScreen"});
+        
+        // Add detailed logging for debugging
+        boolean result = containsClassAndMethod(stackTrace, "shedaniel.rei", 
+                new String[]{"show", "view", "open", "display"}, 
+                new String[]{"RecipeScreen", "DisplayScreen", "ViewSearchBuilder", "ViewsScreen", "DefaultDisplayViewingScreen", "DisplayViewingScreen"});
+        
+        if (result) {
+            System.out.println("REI Recipe Transition Detected! Stack trace:");
+            for (StackTraceElement element : stackTrace) {
+                if (element.getClassName().contains("shedaniel.rei")) {
+                    System.out.println("  " + element.getClassName() + "." + element.getMethodName() + "()");
+                }
+            }
+        }
+        
+        return result;
     }
     
     /**
