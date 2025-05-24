@@ -35,7 +35,7 @@ public final class StackTraceUtils {
      * @return true if transitioning to a recipe screen in any supported integration
      */
     public static boolean isTransitioningToRecipeScreen(Screen screen) {
-        return isJEIRecipeTransition() || isREIRecipeTransition();
+        return isJEIRecipeTransition() || isREIRecipeTransition() || isEMIRecipeTransition();
     }
 
     /**
@@ -60,6 +60,18 @@ public final class StackTraceUtils {
         return containsClassAndMethod(stackTrace, "shedaniel.rei", 
                 new String[]{"show", "view"}, 
                 new String[]{"RecipeScreen", "DisplayScreen"});
+    }
+    
+    /**
+     * Checks if the current stack trace contains classes and methods associated with EMI recipe transitions.
+     * 
+     * @return true if EMI recipe screen transition is detected in the stack trace
+     */
+    public static boolean isEMIRecipeTransition() {
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        return containsClassAndMethod(stackTrace, "dev.emi.emi", 
+                new String[]{"display", "show", "view"}, 
+                new String[]{"RecipeScreen", "EmiScreen"});
     }
 
     /**

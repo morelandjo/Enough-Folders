@@ -56,6 +56,11 @@ repositories {
             includeGroup "maven.modrinth"
         }
     }
+    // EMI Maven Repository  
+    maven {
+        name = "TerraformersMC EMI"
+        url = "https://maven.terraformersmc.com/"
+    }
     maven {
         name = "Shedaniel Maven"
         url = "https://maven.shedaniel.me/"
@@ -63,6 +68,16 @@ repositories {
     maven {
         name = "Architectury Maven"
         url = "https://maven.architectury.dev/"
+    }
+    maven {
+        name = "TerraformersMC"
+        url = "https://maven.terraformersmc.com/"
+    }
+    
+    // EMI Maven Repository
+    maven {
+        name = "EMI Maven"
+        url = "https://maven.terraformersmc.com/"
     }
 }
 
@@ -179,6 +194,10 @@ dependencies {
     runtimeOnly("me.shedaniel:RoughlyEnoughItems-neoforge:16.0.797") {
         exclude group: 'net.minecraftforge'
     }
+    
+    // EMI dependencies - marked as compileOnly to make them optional at runtime
+    compileOnly "dev.emi:emi-neoforge:1.1.22+1.21.1:api"
+    runtimeOnly "dev.emi:emi-neoforge:1.1.22+1.21.1"
     
    
     

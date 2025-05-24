@@ -67,6 +67,7 @@ public class REIAddToFolderHandler {
                 
                 // Store the ingredient
                 Method storeIngredientMethod = reiIntegration.getClass().getMethod("storeIngredient", Object.class);
+                @SuppressWarnings("unchecked")
                 Optional<StoredIngredient> storedIngredientOpt = 
                     (Optional<StoredIngredient>) storeIngredientMethod.invoke(reiIntegration, ingredient);
                 

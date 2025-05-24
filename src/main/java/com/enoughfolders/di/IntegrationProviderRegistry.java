@@ -1,6 +1,7 @@
 package com.enoughfolders.di;
 
 import com.enoughfolders.EnoughFolders;
+import com.enoughfolders.di.providers.EMIIntegrationProvider;
 import com.enoughfolders.di.providers.JEIIntegrationProvider;
 import com.enoughfolders.di.providers.REIIntegrationProvider;
 import com.enoughfolders.integrations.ModIntegration;
@@ -52,14 +53,20 @@ public class IntegrationProviderRegistry {
         
         // Register FTB Library integration
         registerSingleton(new FTBLibraryIntegration());
-        
-        // Register REI integration provider
+         // Register REI integration provider
         if (!jeiOnly) {
             registerProvider(new REIIntegrationProvider());
         } else {
             EnoughFolders.LOGGER.info("Running in JEI-only mode, REI integration disabled");
         }
-        
+
+        // Register EMI integration provider
+        if (!jeiOnly && !reiOnly) {
+            registerProvider(new EMIIntegrationProvider());
+        } else {
+            EnoughFolders.LOGGER.info("Running in exclusive mode, EMI integration disabled");
+        }
+
         // Initialize all registered integrations
         instances.forEach(integration -> {
             integration.initialize();

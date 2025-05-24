@@ -653,4 +653,13 @@ public class FolderScreen implements FolderGhostIngredientTarget {
     public IntegrationHandler getIntegrationHandler() {
         return integrationHandler;
     }
+    
+    /**
+     * Gets the layout manager for this folder screen.
+     * 
+     * @return The layout manager
+     */
+    public LayoutManager getLayoutManager() {
+        return layoutManager;
+    }
 }

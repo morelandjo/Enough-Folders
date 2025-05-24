@@ -4,7 +4,6 @@ import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.integrations.IntegrationRegistry;
 import com.enoughfolders.integrations.ModIntegration;
 
-import java.lang.reflect.Method;
 import java.util.Optional;
 
 /**
@@ -85,6 +84,8 @@ public class IntegrationRegistryBridge {
             return DependencyProvider.has(com.enoughfolders.integrations.jei.core.JEIIntegration.class);
         } else if ("rei".equals(integrationId)) {
             return DependencyProvider.has(com.enoughfolders.integrations.rei.core.REIIntegration.class);
+        } else if ("emi".equals(integrationId)) {
+            return DependencyProvider.has(com.enoughfolders.integrations.emi.core.EMIIntegration.class);
         }
         
         return false;

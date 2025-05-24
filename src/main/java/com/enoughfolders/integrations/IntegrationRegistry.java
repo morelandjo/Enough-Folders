@@ -2,9 +2,6 @@ package com.enoughfolders.integrations;
 
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.StoredIngredient;
-import com.enoughfolders.integrations.ftb.core.FTBLibraryIntegration;
-import com.enoughfolders.integrations.jei.core.JEIIntegration;
-import com.enoughfolders.integrations.rei.core.REIIntegration;
 
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -21,71 +18,22 @@ public class IntegrationRegistry {
     
     /**
      * Initialize all integrations.
+     * 
+     * @deprecated This method is no longer used. Integrations are now managed through 
+     * the dependency injection system via IntegrationProviderRegistry and IntegrationRegistryBridge.
+     * This method is kept for compatibility but does nothing.
      */
+    @Deprecated
     public static synchronized void initialize() {
-        if (initialized) {
+        // This method is now deprecated and does nothing.
+        // Integrations are initialized through the new DI system.
+        if (!initialized) {
             com.enoughfolders.util.DebugLogger.debug(
                 com.enoughfolders.util.DebugLogger.Category.INTEGRATION,
-                "IntegrationRegistry already initialized, skipping"
+                "IntegrationRegistry.initialize() called but deprecated - integrations are managed by DI system"
             );
-            return;
+            initialized = true;
         }
-        
-        com.enoughfolders.util.DebugLogger.debug(
-            com.enoughfolders.util.DebugLogger.Category.INTEGRATION,
-            "Initializing IntegrationRegistry"
-        );
-        
-        // Check for system properties that affect which integrations to load
-        boolean jeiOnly = Boolean.parseBoolean(System.getProperty("enoughfolders.jei_only", "false"));
-        boolean reiOnly = Boolean.parseBoolean(System.getProperty("enoughfolders.rei_only", "false"));
-        
-        EnoughFolders.LOGGER.info("EnoughFolders: System property 'enoughfolders.jei_only' = {}", jeiOnly);
-        EnoughFolders.LOGGER.info("EnoughFolders: System property 'enoughfolders.rei_only' = {}", reiOnly);
-        
-        // Register conditional JEI integration
-        if (!reiOnly) {
-            try {
-                // Check if JEI classes are available before adding the integration
-                Class.forName("mezz.jei.api.runtime.IJeiRuntime");
-                integrations.add(new JEIIntegration());
-                EnoughFolders.LOGGER.info("JEI integration enabled");
-            } catch (ClassNotFoundException e) {
-                EnoughFolders.LOGGER.info("JEI not found, integration disabled");
-            }
-        } else {
-            EnoughFolders.LOGGER.info("Running in REI-only mode, JEI integration disabled");
-        }
-        
-        // Add FTB Library integration
-        integrations.add(new FTBLibraryIntegration());
-        
-        // Register conditional REI integration 
-        if (!jeiOnly) {
-            try {
-                // Check if REI classes are available before adding the integration
-                Class.forName("me.shedaniel.rei.api.client.REIRuntime");
-                integrations.add(new REIIntegration());
-                if (reiOnly) {
-                    EnoughFolders.LOGGER.info("EnoughFolders: Running in REI-only mode");
-                }
-                EnoughFolders.LOGGER.info("REI integration enabled");
-            } catch (ClassNotFoundException e) {
-                EnoughFolders.LOGGER.info("REI not found, integration disabled");
-            }
-        } else {
-            EnoughFolders.LOGGER.info("Running in JEI-only mode, REI integration disabled");
-        }
-        
-        // Initialize all integrations
-        integrations.forEach(integration -> integration.initialize());
-        initialized = true;
-        
-        com.enoughfolders.util.DebugLogger.debugValue(
-            com.enoughfolders.util.DebugLogger.Category.INTEGRATION,
-            "IntegrationRegistry initialization complete, integrations count: {}", 
-            integrations.size()
-        );
     }
     
     /**

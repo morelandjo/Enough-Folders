@@ -18,6 +18,11 @@ public class RecipeIntegrationHandler {
     private static boolean reiAvailable = false;
     
     /**
+     * Flag to track if EMI is available
+     */
+    private static boolean emiAvailable = false;
+    
+    /**
      * Initializes the handler and checks which integrations are available.
      */
     public static void init() {
@@ -40,7 +45,16 @@ public class RecipeIntegrationHandler {
             EnoughFolders.LOGGER.info("REI runtime classes not found");
         }
         
-        EnoughFolders.LOGGER.info("Recipe integration handler initialized, JEI: {}, REI: {}", jeiAvailable, reiAvailable);
+        try {
+            Class.forName("dev.emi.emi.api.EmiApi");
+            emiAvailable = true;
+            EnoughFolders.LOGGER.info("EMI runtime classes found");
+        } catch (ClassNotFoundException e) {
+            emiAvailable = false;
+            EnoughFolders.LOGGER.info("EMI runtime classes not found");
+        }
+        
+        EnoughFolders.LOGGER.info("Recipe integration handler initialized, JEI: {}, REI: {}, EMI: {}", jeiAvailable, reiAvailable, emiAvailable);
     }
     
     /**
@@ -56,6 +70,10 @@ public class RecipeIntegrationHandler {
         
         if (reiAvailable) {
             tryReiAddToFolder();
+        }
+        
+        if (emiAvailable) {
+            tryEmiAddToFolder();
         }
     }
     
@@ -82,6 +100,19 @@ public class RecipeIntegrationHandler {
         } catch (Throwable t) {
             // If it fails for any reason, log it but don't crash
             EnoughFolders.LOGGER.error("Failed to handle REI add to folder", t);
+        }
+    }
+    
+    /**
+     * Attempts to add an ingredient to a folder using EMI integration.
+     */
+    private static void tryEmiAddToFolder() {
+        try {
+            com.enoughfolders.integrations.emi.handlers.EMIAddToFolderHandler.handleAddToFolderKeyPress();
+            DebugLogger.debug(DebugLogger.Category.INPUT, "EMI add to folder handler executed");
+        } catch (Throwable t) {
+            // If it fails for any reason, log it but don't crash
+            EnoughFolders.LOGGER.error("Failed to handle EMI add to folder", t);
         }
     }
 }
