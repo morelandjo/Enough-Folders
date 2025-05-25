@@ -16,16 +16,6 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Handler for tracking folder screens when navigating to JEI recipe screens.
- * <p>
- * This handler maintains the state of folder screens when users navigate between
- * folder screens and JEI recipe screens. It ensures that folder screens can be
- * restored properly when returning from recipe screens.
- * </p>
- *
- * @param <T> The type of container screen this handler works with, which must extend AbstractContainerScreen
- */
-/**
  * Handles JEI recipe GUI interactions for container screens.
  * 
  * @param <T> The type of container screen this handler works with

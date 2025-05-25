@@ -21,7 +21,6 @@ public class EMIFolderTarget implements FolderTarget {
      * Creates a new EMI folder target from a folder screen.
      */
     public EMIFolderTarget(FolderScreen folderScreen) {
-        // Use the getScreenArea method to get position and size information
         net.minecraft.client.renderer.Rect2i screenArea = folderScreen.getScreenArea();
         this.x = screenArea.getX();
         this.y = screenArea.getY();
@@ -65,7 +64,6 @@ public class EMIFolderTarget implements FolderTarget {
                 return false;
             }
             
-            // Use EMI integration directly instead of EMIDragManager
             return DependencyProvider.get(EMIIntegration.class)
                 .map(integration -> integration.handleIngredientDrop(folder))
                 .orElse(false);

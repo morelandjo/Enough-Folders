@@ -12,9 +12,6 @@ import java.lang.reflect.Method;
 import java.util.Optional;
 
 /**
- * Dedicated handler for adding EMI ingredients to folders via keyboard shortcuts.
- */
-/**
  * Handles adding ingredients to folders through EMI integration.
  */
 public class EMIAddToFolderHandler {
@@ -63,10 +60,9 @@ public class EMIAddToFolderHandler {
                 return;
             }
             
-            // Get the ingredient under mouse using reflection
+            // Get the ingredient under mouse
             ModIntegration emiIntegration = emiIntegrationOpt.get();
             
-            // Call getIngredientUnderMouse via reflection (EMI uses hovered ingredients, not dragged)
             Method getIngredientUnderMouseMethod = emiIntegration.getClass().getMethod("getIngredientUnderMouse");
             Optional<?> ingredientOpt = (Optional<?>) getIngredientUnderMouseMethod.invoke(emiIntegration);
             
@@ -113,7 +109,6 @@ public class EMIAddToFolderHandler {
             // EMI is not available, that's fine
             EnoughFolders.LOGGER.debug("EMI classes not found, skipping EMI integration");
         } catch (Exception e) {
-            // Something went wrong with reflection or EMI API
             EnoughFolders.LOGGER.error("Error interacting with EMI runtime", e);
         }
     }

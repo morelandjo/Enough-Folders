@@ -10,11 +10,6 @@ import java.util.Optional;
 
 /**
  * Handler for tracking folder screens when navigating to REI recipe screens.
- * <p>
- * This handler maintains the state of folder screens when users navigate between
- * folder screens and REI recipe screens. It ensures that folder screens can be
- * restored properly when returning from recipe screens.
- * </p>
  */
 public class REIRecipeGuiHandler {
     
@@ -38,7 +33,7 @@ public class REIRecipeGuiHandler {
      */
     public static void saveLastFolderScreen(FolderScreen folderScreen) {
         lastFolderScreen = folderScreen;
-        folderScreenInitialized = false; // Mark as needing initialization
+        folderScreenInitialized = false;
         
         // Force initialization with current screen dimensions to ensure proper display
         int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();

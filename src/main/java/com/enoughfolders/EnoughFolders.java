@@ -25,17 +25,17 @@ import org.apache.logging.log4j.Logger;
 @Mod(EnoughFolders.MOD_ID)
 public class EnoughFolders {
     /** 
-     * The mod ID used for registration, configs, and resources 
+     * mod ID
      */
     public static final String MOD_ID = "enoughfolders";
     
     /**
-     * Logger instance for the mod
+     * Logger instance
      */
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
     
     /**
-     * Singleton instance of the mod
+     * Singleton instance
      */
     private static EnoughFolders instance;
     
@@ -56,23 +56,22 @@ public class EnoughFolders {
         DebugConfig.load();
         DebugLogger.debug(DebugLogger.Category.INITIALIZATION, "Debug configuration loaded");
 
-        // Check if we're on client - only run client setup code if so
         if (FMLEnvironment.dist == Dist.CLIENT) {
             // Initialize folder manager
             this.folderManager = new FolderManager();
             DebugLogger.debug(DebugLogger.Category.INITIALIZATION, "Folder manager created");
             
-            // Register folder manager as a singleton in the dependency system
+            // Register folder manager as a singleton
             DependencyProvider.registerSingleton(FolderManager.class, this.folderManager);
             
             // Initialize client-side event handlers and setup
             initializeClientComponents();
             
-            // Initialize mod integrations through dependency injection
+            // Initialize mod integrations
             IntegrationProviderRegistry.initialize();
         }
         
-        // Register common event handlers (server commands etc.)
+        // Register common event handlers
         NeoForge.EVENT_BUS.register(this);
         
         LOGGER.info("EnoughFolders initialized");
@@ -109,7 +108,6 @@ public class EnoughFolders {
 
     /**
      * Initialize client-side components.
-     * Only called when on the client side.
      */
     private void initializeClientComponents() {
         // Initialize key bindings

@@ -20,13 +20,6 @@ import java.util.Optional;
 /**
  * Handles drag and drop of ingredients from JEI to folders.
  */
-/**
- * Handler for drag and drop operations with JEI ghost ingredients.
- * <p>
- * This handler manages the drag and drop of ingredients from JEI to the
- * EnoughFolders UI, providing visual feedback and handling the drop operations.
- * </p>
- */
 public class DragDropHandler implements IGhostIngredientHandler<Screen> {
     
     /**
@@ -75,19 +68,11 @@ public class DragDropHandler implements IGhostIngredientHandler<Screen> {
                 "Setting current dragged ingredient: {}", ingredient.getClass().getSimpleName());
         }
         
-        // Add the entire folder screen area as a target to match EMI's behavior
         Rect2i entireFolderArea = targetGui.getEntireFolderArea();
         DebugLogger.debugValues(DebugLogger.Category.JEI_INTEGRATION,
             "Adding entire folder screen area target: {}x{} at {}x{}", 
             entireFolderArea.getWidth(), entireFolderArea.getHeight(), 
             entireFolderArea.getX(), entireFolderArea.getY());
-        
-        // Log more detailed information about the highlight area
-        DebugLogger.debugValues(DebugLogger.Category.JEI_INTEGRATION,
-            "JEI Highlighting: Entire area bounds = ({}, {}) to ({}, {})",
-            entireFolderArea.getX(), entireFolderArea.getY(),
-            entireFolderArea.getX() + entireFolderArea.getWidth(),
-            entireFolderArea.getY() + entireFolderArea.getHeight());
         
         // Create target for the entire folder area - this will accept drops to any active folder
         targets.add(FolderTargetFactory.createEntireFolderAreaTarget(entireFolderArea, targetGui));

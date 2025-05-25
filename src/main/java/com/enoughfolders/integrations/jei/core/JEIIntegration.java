@@ -30,12 +30,6 @@ import java.util.Optional;
 
 /**
  * Integration with JEI mod.
- * <p>
- * This is the main integration point between EnoughFolders and JEI.
- * It acts as a facade for various JEI integration components, providing
- * a unified API for ingredient management, drag-and-drop functionality,
- * and recipe operations.
- * </p>
  */
 public class JEIIntegration implements ModIntegration, IngredientDragProvider, RecipeViewingIntegration {
     

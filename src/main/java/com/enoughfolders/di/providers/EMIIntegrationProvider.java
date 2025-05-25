@@ -7,9 +7,6 @@ import net.neoforged.fml.ModList;
 /**
  * Provider for EMI integration.
  */
-/**
- * Provider for EMI integration.
- */
 public class EMIIntegrationProvider implements IntegrationProvider<EMIIntegration> {
     
     /**

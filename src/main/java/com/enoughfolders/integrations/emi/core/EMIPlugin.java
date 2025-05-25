@@ -6,15 +6,9 @@ import com.enoughfolders.util.DebugLogger;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
 
+
 /**
- * EMI Plugin for Enough Folders integration.
- * This class implements EMI exclusion zones to prevent EMI from overlapping the folder GUI.
- * 
- * The actual EMI plugin registration is handled through the @EmiEntrypoint annotation
- * in the EMIPluginEntrypoint class.
- */
-/**
- * Main plugin class for EMI integration with EnoughFolders.
+ * Main plugin class for EMI integration
  */
 public class EMIPlugin {
     
@@ -28,8 +22,7 @@ public class EMIPlugin {
     private static boolean registered = false;
     
     /**
-     * Register the plugin with EMI - this just initializes our handlers.
-     * The actual EMI plugin registration happens through EMIPluginEntrypoint.
+     * Register the plugin with EMI - this just initializes handlers.
      */
     public static void register() {
         if (registered) {
@@ -41,9 +34,6 @@ public class EMIPlugin {
                 DebugLogger.Category.INTEGRATION,
                 "Initializing EMI handlers for Enough Folders", ""
             );
-            
-            // Register our drag and drop handlers
-            registerDragDropHandlers();
             
             registered = true;
             
@@ -62,36 +52,6 @@ public class EMIPlugin {
     }
     
     /**
-     * Register drag and drop handlers with EMI.
-     */
-    private static void registerDragDropHandlers() {
-        try {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Registering EMI drag and drop handlers", ""
-            );
-            
-            // EMI drag and drop handlers are now registered through EMIPluginEntrypoint
-            // via the official EMI plugin API system
-            
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "EMI drag and drop handlers registered", ""
-            );
-            
-        } catch (Exception e) {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Error registering EMI drag and drop handlers: {}", e.getMessage()
-            );
-        }
-    }
-    
-    /**
-     * Get the folder screen exclusion area for EMI.
-     * This method is called by the EMI plugin to get exclusion zones.
-     */
-    /**
      * Adds folder UI areas as exclusion zones for EMI overlays.
      * 
      * @param screen The screen containing folder UI
@@ -108,7 +68,7 @@ public class EMIPlugin {
                 // Get the folder screen area
                 Rect2i screenArea = folderScreen.getScreenArea();
                 
-                // Create a Bounds object using reflection
+                // Create a Bounds object
                 Class<?> boundsClass = Class.forName("dev.emi.emi.api.widget.Bounds");
                 java.lang.reflect.Constructor<?> boundsConstructor = boundsClass.getConstructor(int.class, int.class, int.class, int.class);
                 Object bounds = boundsConstructor.newInstance(
@@ -137,9 +97,6 @@ public class EMIPlugin {
         });
     }
     
-    /**
-     * Check if the plugin is registered.
-     */
     /**
      * Checks if the EMI plugin has been registered.
      * 

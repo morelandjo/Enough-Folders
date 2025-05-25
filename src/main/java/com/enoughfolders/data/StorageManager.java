@@ -1,8 +1,6 @@
 package com.enoughfolders.data;
 
 import com.enoughfolders.EnoughFolders;
-import com.enoughfolders.util.DebugLogger;
-import com.enoughfolders.util.DebugLogger.Category;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;

@@ -1,6 +1,5 @@
 package com.enoughfolders.integrations.jei.gui.handlers;
 
-import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
 import com.enoughfolders.integrations.jei.gui.targets.FolderGhostIngredientTarget;
@@ -27,20 +26,14 @@ import java.util.Optional;
  */
 public class RecipeScreenHandler implements IGlobalGuiHandler, IGhostIngredientHandler<Screen>, FolderGhostIngredientTarget {
     
-    // Whether screen type on this frame is logged
-    private static Screen lastLoggedScreen = null;
     // Cache the exclusion areas to avoid recalculating them frequently
     private static Collection<Rect2i> cachedAreas = new ArrayList<>();
-    // Time of last diagnostic log to prevent excessive logging
-    private static long lastLogTime = 0;
-    // Log frequency limiter (milliseconds)
-    private static final long LOG_INTERVAL = 1000; // Log at most once per second
     
     /**
      * Creates a new recipe screen handler for managing folder UI on recipe screens.
      */
     public RecipeScreenHandler() {
-        EnoughFolders.LOGGER.debug("RecipeScreenHandler created for JEI recipe exclusion areas");
+        DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "RecipeScreenHandler created for JEI recipe exclusion areas");
     }
 
     @Override
@@ -50,15 +43,9 @@ public class RecipeScreenHandler implements IGlobalGuiHandler, IGhostIngredientH
         
         Screen currentScreen = Minecraft.getInstance().screen;
         
-        // Only log screen type when it changes to reduce spam
-        long currentTime = System.currentTimeMillis();
-        if (lastLoggedScreen != currentScreen && (currentTime - lastLogTime > LOG_INTERVAL)) {
-            lastLoggedScreen = currentScreen;
-            lastLogTime = currentTime;
-            DebugLogger.debugValues(DebugLogger.Category.JEI_INTEGRATION, 
-                "Current screen type for JEI exclusion areas: {}", 
-                currentScreen != null ? currentScreen.getClass().getName() : "null");
-        }
+        DebugLogger.debugValues(DebugLogger.Category.JEI_INTEGRATION, 
+            "Current screen type for JEI exclusion areas: {}", 
+            currentScreen != null ? currentScreen.getClass().getName() : "null");
             
         if (currentScreen instanceof IRecipesGui) {
             Optional<FolderScreen> folderScreenOpt = JEIRecipeGuiHandler.getLastFolderScreen();

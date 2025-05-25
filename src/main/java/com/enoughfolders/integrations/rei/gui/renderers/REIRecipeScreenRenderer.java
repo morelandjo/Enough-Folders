@@ -15,9 +15,6 @@ import net.neoforged.neoforge.client.event.ScreenEvent;
 
 import java.util.Optional;
 
-/**
- * Handles rendering the folder UI on REI recipe screens.
- */
 @EventBusSubscriber(modid = EnoughFolders.MOD_ID, value = Dist.CLIENT)
 /**
  * Handles rendering the folder UI on REI recipe screens.
@@ -64,7 +61,6 @@ public class REIRecipeScreenRenderer {
 
     /**
      * Event handler for post-render events on screens.
-     * Renders the folder navigation UI when applicable.
      *
      * @param event The screen render post event
      */
@@ -141,7 +137,6 @@ public class REIRecipeScreenRenderer {
     
     /**
      * Event handler for mouse click on REI screens.
-     * Handles navigation button clicks in the folder UI overlay.
      *
      * @param event The mouse button pressed event
      */

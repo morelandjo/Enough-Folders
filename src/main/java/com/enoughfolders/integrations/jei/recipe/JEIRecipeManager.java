@@ -2,7 +2,6 @@ package com.enoughfolders.integrations.jei.recipe;
 
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.event.ClientEventHandler;
-import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.client.gui.IngredientSlot;
 import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.integrations.jei.core.JEIRuntimeManager;

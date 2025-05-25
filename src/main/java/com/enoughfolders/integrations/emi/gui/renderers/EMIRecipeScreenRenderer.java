@@ -34,7 +34,7 @@ public class EMIRecipeScreenRenderer {
     private static boolean emiAvailable = false;
     
     /**
-     * Names of EMI recipe GUI classes - these are the main EMI recipe viewing screens
+     * Names of EMI recipe GUI classes
      */
     private static final String[] EMI_SCREEN_CLASSES = {
         "dev.emi.emi.screen.RecipeScreen",
@@ -61,7 +61,6 @@ public class EMIRecipeScreenRenderer {
 
     /**
      * Event handler for post-render events on screens.
-     * Renders the folder navigation UI when applicable.
      *
      * @param event The screen render post event
      */
@@ -127,7 +126,6 @@ public class EMIRecipeScreenRenderer {
     
     /**
      * Event handler for mouse click on EMI screens.
-     * Handles navigation button clicks in the folder UI overlay.
      *
      * @param event The mouse button pressed event
      */

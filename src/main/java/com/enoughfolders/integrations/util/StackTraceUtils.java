@@ -4,8 +4,6 @@ import net.minecraft.client.gui.screens.Screen;
 
 /**
  * Utility class for stack trace analysis used by integration modules.
- * This centralizes the stack trace inspection logic that was previously duplicated
- * across JEI and REI integrations.
  */
 public final class StackTraceUtils {
 
@@ -14,26 +12,12 @@ public final class StackTraceUtils {
     }
     
     /**
-     * Example of how to use this utility in integration classes:
+     * Checks if the current screen is transitioning to a recipe screen.
      * 
-     * <pre>
-     * public boolean isTransitioningToRecipeScreen(Screen screen) {
-     *     if (!isAvailable()) {
-     *         return false;
-     *     }
-     *     
-     *     try {
-     *         // Use utility instead of duplicated code
-     *         return StackTraceUtils.isJEIRecipeTransition();
-     *     } catch (Exception e) {
-     *         return false;
-     *     }
-     * }
-     * </pre>
-     * 
-     * @param screen The current screen
-     * @return true if transitioning to a recipe screen in any supported integration
+     * @param screen the current screen
+     * @return true if transitioning to a recipe screen, false otherwise
      */
+    
     public static boolean isTransitioningToRecipeScreen(Screen screen) {
         return isJEIRecipeTransition() || isREIRecipeTransition() || isEMIRecipeTransition();
     }

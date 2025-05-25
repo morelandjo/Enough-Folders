@@ -11,9 +11,6 @@ import com.enoughfolders.util.DebugLogger;
 import java.util.Optional;
 
 /**
- * Dedicated handler for adding REI ingredients to folders via keyboard shortcuts.
- */
-/**
  * Handles adding ingredients to folders when using REI integration.
  */
 public class REIAddToFolderHandler {
@@ -114,11 +111,9 @@ public class REIAddToFolderHandler {
                 EnoughFolders.LOGGER.debug("No REI ingredient found under mouse cursor");
             }
         } catch (ClassNotFoundException e) {
-            // REI is not available, that's fine
             EnoughFolders.LOGGER.debug("REI classes not found, skipping REI integration");
             System.out.println("REI HANDLER: REI classes not found - SYSTEM PRINT: " + e.getMessage());
         } catch (Exception e) {
-            // Something went wrong with reflection or REI API
             EnoughFolders.LOGGER.error("Error interacting with REI runtime", e);
             System.out.println("REI HANDLER: GENERIC EXCEPTION - SYSTEM PRINT: " + e.getMessage());
             e.printStackTrace();

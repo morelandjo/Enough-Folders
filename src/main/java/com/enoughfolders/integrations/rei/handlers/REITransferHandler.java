@@ -19,9 +19,6 @@ import net.minecraft.network.chat.Component;
 import java.util.Optional;
 
 /**
- * Handles drag and drop operations from REI to EnoughFolders using the TransferHandler API.
- */
-/**
  * Handles transfer operations between REI and folder screens.
  */
 public class REITransferHandler implements TransferHandler {
@@ -35,7 +32,6 @@ public class REITransferHandler implements TransferHandler {
     
     @Override
     public double getPriority() {
-        // Use a high priority to ensure our handler gets called first
         return 100.0;
     }
     

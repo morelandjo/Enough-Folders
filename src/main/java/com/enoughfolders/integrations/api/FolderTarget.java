@@ -3,7 +3,7 @@ package com.enoughfolders.integrations.api;
 import com.enoughfolders.data.Folder;
 
 /**
- * A common interface for representing folder targets across different integrations.
+ * A common interface for representing folder targets.
  */
 public interface FolderTarget {
     /**

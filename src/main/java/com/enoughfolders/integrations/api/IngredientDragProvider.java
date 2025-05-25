@@ -6,7 +6,7 @@ import com.enoughfolders.data.StoredIngredient;
 import java.util.Optional;
 
 /**
- * Interface for drag-and-drop operations between mod integrations (JEI, REI, etc.) and EnoughFolders.
+ * Interface for drag-and-drop operations
  */
 public interface IngredientDragProvider {
     

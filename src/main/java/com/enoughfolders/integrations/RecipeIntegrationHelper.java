@@ -12,9 +12,6 @@ import com.enoughfolders.di.DependencyProvider;
 import java.util.Optional;
 
 /**
- * Utility class for handling integration priorities and operations
- */
-/**
  * Helper utility for common recipe integration operations across different recipe viewer mods.
  */
 public class RecipeIntegrationHelper {

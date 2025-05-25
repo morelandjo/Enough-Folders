@@ -65,12 +65,10 @@ public class JEIIngredientManager {
             // First try direct JEI format lookup
             for (IIngredientType<?> type : runtime.getIngredientManager().getRegisteredIngredientTypes()) {
                 if (type.getIngredientClass().getName().equals(typeName)) {
-                    // Use modern API approach instead of deprecated getTypedIngredientByUid
                     IIngredientHelper<Object> helper = getHelperForType(type);
                     if (helper != null) {
                         try {
                             // Try to find the ingredient by recreating it from the UID
-                            // This is a more complex approach but avoids the deprecated method
                             for (Object ingredient : runtime.getIngredientManager().getAllIngredients(type)) {
                                 String ingredientUid = helper.getUid(ingredient, UidContext.Ingredient).toString();
                                 if (value.equals(ingredientUid)) {
@@ -263,7 +261,6 @@ public class JEIIngredientManager {
     
     /**
      * Attempts to convert ingredients stored by other integrations (EMI, REI) to JEI format.
-     * This provides cross-integration compatibility when switching between integrations.
      *
      * @param storedIngredient The stored ingredient from another integration
      * @param runtime The JEI runtime instance

@@ -16,11 +16,6 @@ import java.util.function.Consumer;
 
 /**
  * EMI Plugin entrypoint for registering exclusion zones.
- * This class is automatically discovered by EMI through the @EmiEntrypoint annotation.
- * <p>
- * This class implements the EMI plugin interface and serves as the main entry point
- * for EMI to interact with EnoughFolders.
- * </p>
  */
 @EmiEntrypoint
 public class EMIPluginEntrypoint implements EmiPlugin {

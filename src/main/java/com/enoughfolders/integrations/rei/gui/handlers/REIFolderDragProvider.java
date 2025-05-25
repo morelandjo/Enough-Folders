@@ -57,7 +57,6 @@ public class REIFolderDragProvider implements REIClientPlugin {
             registry.registerDraggableStackProvider(dragProvider);
             registry.registerDraggableStackVisitor(dragVisitor);
             
-            // Log success using debug logger
             DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
                 "Successfully registered REI folder drag-and-drop handler");
         } catch (Exception e) {
@@ -68,7 +67,7 @@ public class REIFolderDragProvider implements REIClientPlugin {
     }
     
     /**
-     * Implementation of DraggableStackProvider - allows dragging items from folders to REI
+     * Implementation of DraggableStackProvider
      */
     private static class DragProviderImpl implements DraggableStackProvider<Screen> {
         @Override
@@ -82,7 +81,6 @@ public class REIFolderDragProvider implements REIClientPlugin {
             Optional<FolderScreen> folderScreenOpt = com.enoughfolders.client.event.ClientEventHandler.getFolderScreen(containerScreen);
             boolean result = folderScreenOpt.isPresent();
             
-            // Log more detailed info for debugging
             if (result) {
                 DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION,
                     "DragProviderImpl handling screen: {}", screen.getClass().getSimpleName());
@@ -159,7 +157,7 @@ public class REIFolderDragProvider implements REIClientPlugin {
     }
     
     /**
-     * Implementation of DraggableStackVisitor - allows dropping items from REI into folders
+     * Implementation of DraggableStackVisitor
      */
     private static class DragVisitorImpl implements DraggableStackVisitor<Screen> {
         @Override
@@ -295,7 +293,7 @@ public class REIFolderDragProvider implements REIClientPlugin {
                 return DraggedAcceptorResult.CONSUMED;
             }
             
-            // Finally check if over the entire folder area and there's an active folder
+            // Check if over the entire folder area and there's an active folder
             if (inEntireFolderArea) {
                 Optional<Folder> activeFolder = EnoughFolders.getInstance().getFolderManager().getActiveFolder();
                 if (activeFolder.isPresent()) {
@@ -321,7 +319,6 @@ public class REIFolderDragProvider implements REIClientPlugin {
         
         @Override
         public Stream<BoundsProvider> getDraggableAcceptingBounds(DraggingContext<Screen> context, DraggableStack stack) {
-            // REI highlighting disabled due to architectural differences causing GUI rendering conflicts
             return Stream.empty();
         }
     }

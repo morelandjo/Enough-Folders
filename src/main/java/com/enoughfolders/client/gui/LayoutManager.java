@@ -1,11 +1,12 @@
-// Import UIConstants class
 package com.enoughfolders.client.gui;
 
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.di.DependencyProvider;
+import com.enoughfolders.integrations.api.RecipeViewingIntegration;
 import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.util.DebugLogger;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
 
 import java.util.List;
@@ -13,8 +14,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
- * Centralized manager for layout calculations across the EnoughFolders UI.
- * Handles positioning and dimensions for all UI components.
+ * Centralized manager for layout calculations across the UI.
  */
 public class LayoutManager {
     
@@ -91,17 +91,57 @@ public class LayoutManager {
         int standardContainerWidth = 176;
         parentLeftPos = (parentWidth - standardContainerWidth) / 2;
         
-        // Check if JEI recipe GUI is open
-        boolean isJeiRecipeGuiOpen = false;
+        // Check if any recipe GUI is open
+        boolean isRecipeGuiOpen = false;
+        String recipeViewerName = "";
+        
+        // Check JEI recipe GUI
         Optional<JEIIntegration> jeiIntegration = DependencyProvider.get(JEIIntegration.class);
-        if (jeiIntegration.isPresent()) {
-            isJeiRecipeGuiOpen = jeiIntegration.get().isRecipeGuiOpen();
+        if (jeiIntegration.isPresent() && jeiIntegration.get().isRecipeGuiOpen()) {
+            isRecipeGuiOpen = true;
+            recipeViewerName = "JEI";
         }
         
-        // Calculate maximum width based on screen size - moderately increased limit to allow more space for ingredients
+        // Check REI recipe GUI
+        if (!isRecipeGuiOpen) {
+            try {
+                Class<?> reiIntegrationClass = Class.forName("com.enoughfolders.integrations.rei.core.REIIntegration");
+                Optional<?> reiIntegration = DependencyProvider.get(reiIntegrationClass);
+                if (reiIntegration.isPresent() && reiIntegration.get() instanceof RecipeViewingIntegration) {
+                    RecipeViewingIntegration integration = (RecipeViewingIntegration) reiIntegration.get();
+                    Screen currentScreen = net.minecraft.client.Minecraft.getInstance().screen;
+                    if (currentScreen != null && integration.isRecipeScreen(currentScreen)) {
+                        isRecipeGuiOpen = true;
+                        recipeViewerName = "REI";
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+                // REI integration not available, ignore
+            }
+        }
+        
+        // Check EMI recipe GUI
+        if (!isRecipeGuiOpen) {
+            try {
+                Class<?> emiIntegrationClass = Class.forName("com.enoughfolders.integrations.emi.core.EMIIntegration");
+                Optional<?> emiIntegration = DependencyProvider.get(emiIntegrationClass);
+                if (emiIntegration.isPresent() && emiIntegration.get() instanceof RecipeViewingIntegration) {
+                    RecipeViewingIntegration integration = (RecipeViewingIntegration) emiIntegration.get();
+                    Screen currentScreen = net.minecraft.client.Minecraft.getInstance().screen;
+                    if (currentScreen != null && integration.isRecipeScreen(currentScreen)) {
+                        isRecipeGuiOpen = true;
+                        recipeViewerName = "EMI";
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+                // EMI integration not available, ignore
+            }
+        }
+        
+        // Calculate maximum width based on screen size
         int maxWidth = Math.min(parentWidth - 40, 420);
         
-        // Adjust width to avoid parent screen overlap - balanced margin to prevent overlap
+        // Adjust width to avoid parent screen overlap
         if (parentLeftPos > 0) {
             int originalWidth = maxWidth;
             maxWidth = Math.min(maxWidth, parentLeftPos - 15);
@@ -111,13 +151,13 @@ public class LayoutManager {
             }
         }
         
-        // Reduce width if JEI recipe GUI is open
-        if (isJeiRecipeGuiOpen) {
+        // Reduce width if any recipe GUI is open
+        if (isRecipeGuiOpen) {
             int originalWidth = maxWidth;
             maxWidth = Math.max(70, maxWidth - UIConstants.JEI_WIDTH_REDUCTION);
-            DebugLogger.debugValues(DebugLogger.Category.JEI_INTEGRATION, 
-                "Reduced width for JEI recipe GUI by {}, original: {}, new width: {}", 
-                UIConstants.JEI_WIDTH_REDUCTION, originalWidth, maxWidth);
+            DebugLogger.debugValues(DebugLogger.Category.INTEGRATION, 
+                "Reduced width for {} recipe GUI by {}, original: {}, new width: {}", 
+                recipeViewerName, UIConstants.JEI_WIDTH_REDUCTION, originalWidth, maxWidth);
         }
         
         width = maxWidth;
@@ -132,7 +172,6 @@ public class LayoutManager {
     
     /**
      * Checks if FTB Library is loaded and if the sidebar would overlap with folder GUI.
-     * Adjusts the position if necessary.
      */
     private void checkAndAdjustForFTBSidebar() {
         // Check for FTB Library integration
@@ -197,7 +236,7 @@ public class LayoutManager {
      * Recalculates height if necessary based on state changes.
      */
     private void recalculateHeightIfNeeded() {
-        // Basic height calculation that will be refined by component managers
+        // Basic height calculation
         int newHeight = UIConstants.FOLDER_AREA_HEIGHT;
         
         // Add height for folder rows

@@ -1,4 +1,3 @@
-// Import UIConstants class
 package com.enoughfolders.client.gui;
 
 import com.enoughfolders.EnoughFolders;
@@ -11,6 +10,7 @@ import com.enoughfolders.integrations.api.FolderTarget;
 import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
 import com.enoughfolders.integrations.jei.gui.targets.FolderGhostIngredientTarget;
 import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
+import com.enoughfolders.integrations.emi.gui.targets.EMIFolderTarget;
 import com.enoughfolders.util.DebugLogger;
 
 import net.minecraft.client.Minecraft;
@@ -32,7 +32,6 @@ public class FolderScreen implements FolderGhostIngredientTarget {
     
     /**
      * The container screen that this folder screen is overlaying
-     * Used by the IntegrationHandler
      */
     private final AbstractContainerScreen<?> parentScreen;
     
@@ -68,7 +67,6 @@ public class FolderScreen implements FolderGhostIngredientTarget {
     
     /**
      * Position and size of the folder screen
-     * These are now managed by the LayoutManager but kept for backward compatibility
      */
     private int leftPos;
     private int topPos;
@@ -147,8 +145,8 @@ public class FolderScreen implements FolderGhostIngredientTarget {
         height = layoutManager.getHeight();
         
         // Set position and dimensions for component managers that don't use LayoutManager yet
-        renderer.setPositionAndDimensions(leftPos, topPos, width, 0); // Height will be updated later
-        inputHandler.setPositionAndDimensions(leftPos, topPos, width, 0); // Height will be updated later
+        renderer.setPositionAndDimensions(leftPos, topPos, width, 0);
+        inputHandler.setPositionAndDimensions(leftPos, topPos, width, 0);
         
         // Create the add folder button using LayoutManager
         buttonManager.createAddFolderButton(button -> toggleAddFolderMode());
@@ -561,8 +559,16 @@ public class FolderScreen implements FolderGhostIngredientTarget {
     }
     
     /**
+     * Gets EMI-specific folder targets for all folder buttons.
+     *
+     * @return List of EMI folder targets for drag-and-drop
+     */
+    public List<EMIFolderTarget> getEMIFolderTargets() {
+        return buttonManager.getEMIFolderTargets();
+    }
+    
+    /**
      * Gets folder targets for all folder buttons using the available recipe viewing integration.
-     * This implementation overrides the interface method from FolderGhostIngredientTarget.
      *
      * @return List of folder targets for the available recipe viewing integration
      */

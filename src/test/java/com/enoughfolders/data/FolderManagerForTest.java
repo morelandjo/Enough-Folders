@@ -6,7 +6,6 @@ import java.util.Optional;
 
 /**
  * A test-friendly version of FolderManager that doesn't depend on Minecraft classes.
- * This allows us to test the core functionality without requiring a Minecraft environment.
  */
 public class FolderManagerForTest {
     private final List<Folder> folders = new ArrayList<>();

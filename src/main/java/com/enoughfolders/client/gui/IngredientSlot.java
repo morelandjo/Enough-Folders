@@ -1,4 +1,3 @@
-// Import UIConstants class
 package com.enoughfolders.client.gui;
 
 import com.enoughfolders.data.StoredIngredient;
@@ -110,8 +109,6 @@ public class IngredientSlot {
         return ingredient;
     }
     
-    // Required getters for REI integration
-
     /**
      * Gets the x position of this slot.
      * @return The x position

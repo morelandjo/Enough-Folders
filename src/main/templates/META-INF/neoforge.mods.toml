@@ -38,7 +38,7 @@ license="${mod_license}"
     #logoFile="logo.png" #optional
     
     # A text field displayed in the mod UI
-    credits="Thanks to JEI for the inspiration" #optional
+    credits="" #optional
     
     # A text field displayed in the mod UI
     authors="${mod_authors}" #optional

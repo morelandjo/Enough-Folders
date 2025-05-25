@@ -16,15 +16,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * Registry for managing integration providers through dependency injection.
- * <p>
- * This class provides a centralized way to manage mod integrations using the
- * dependency injection system, offering type-safe access to integration instances.
- * </p>
- */
-/**
- * Registry for integration providers that allows for dynamic discovery and
- * initialization of mod integrations.
+ * Registry for integration providers.
  */
 public class IntegrationProviderRegistry {
     
@@ -218,7 +210,6 @@ public class IntegrationProviderRegistry {
     
     /**
      * Check if an integration with the given short ID exists.
-     * Maps short IDs like "rei", "jei" to their corresponding integration types.
      * 
      * @param shortId The short ID of the integration ("rei", "jei", "emi", etc.)
      * @return true if an integration with the given short ID exists, false otherwise

@@ -52,7 +52,7 @@ public class EMIIngredientManager {
         }
         
         try {
-            // Use reflection to access EMI classes to avoid compile-time dependencies
+            //avoid compile-time dependencies
             Class<?> emiStackClass = Class.forName("dev.emi.emi.api.stack.EmiStack");
             
             // Get the value from stored ingredient
@@ -73,7 +73,6 @@ public class EMIIngredientManager {
                 return Optional.empty();
             }
             
-            // Use EMI's EmiStack.of(ItemStack) method
             java.lang.reflect.Method ofMethod = emiStackClass.getMethod("of", ItemStack.class);
             Object emiStack = ofMethod.invoke(null, itemStack);
             
@@ -135,10 +134,8 @@ public class EMIIngredientManager {
                     return Optional.empty();
                 }
                 
-                // No need to get the amount as our StoredIngredient doesn't store amounts
                 
                 // Create StoredIngredient from ItemStack
-                // Use the registry name of the item as the value
                 ResourceLocation registryName = BuiltInRegistries.ITEM.getKey(itemStack.getItem());
                 if (registryName != null) {
                     String type = "minecraft:item";
@@ -250,7 +247,6 @@ public class EMIIngredientManager {
     
     /**
      * Create an ItemStack from a stored value string.
-     * Expected format is typically a ResourceLocation (mod:item) optionally with NBT data.
      */
     private static ItemStack createItemStackFromValue(String value) {
         try {

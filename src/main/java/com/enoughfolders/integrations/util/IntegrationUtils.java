@@ -5,8 +5,6 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 
 /**
  * Utility class for common geometric operations used in integration handlers.
- * This centralizes point-in-rectangle checks and other geometric utility methods
- * that were previously duplicated across JEI and REI integrations.
  */
 public final class IntegrationUtils {
 
@@ -43,7 +41,6 @@ public final class IntegrationUtils {
 
     /**
      * Checks if a point is within the bounds of a GUI event listener.
-     * This is useful for components that implement GuiEventListener but not AbstractWidget.
      * 
      * @param x the X coordinate of the point to check
      * @param y the Y coordinate of the point to check

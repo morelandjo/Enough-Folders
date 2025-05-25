@@ -15,11 +15,6 @@ import java.util.Optional;
 
 /**
  * Factory for creating JEI targets for folder UI elements.
- * <p>
- * This utility class provides methods to create target objects that JEI can use
- * to determine where ingredients can be dropped in the EnoughFolders UI.
- * The factory creates targets for both folder buttons and the content area.
- * </p>
  */
 public class FolderTargetFactory {
     

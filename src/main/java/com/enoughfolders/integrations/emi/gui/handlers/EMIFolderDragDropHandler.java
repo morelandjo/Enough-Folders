@@ -24,8 +24,6 @@ public class EMIFolderDragDropHandler {
     
     private static boolean initialized = false;
     
-    // Legacy compatibility methods removed - proper registration happens via EMI API
-    
     /**
      * Register EMI drag and drop handlers.
      */

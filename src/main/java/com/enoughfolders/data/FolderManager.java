@@ -129,7 +129,6 @@ public class FolderManager {
      * Reloads folders from disk based on the current world.
      */
     public void reloadFolders() {
-        //bugfix
         com.enoughfolders.util.DebugLogger.debug(
             com.enoughfolders.util.DebugLogger.Category.FOLDER_MANAGER,
             "Explicitly reloading folders from disk"

@@ -18,7 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 import javax.annotation.Nonnull;
 
 /**
- * JEI Plugin for Enough Folders.
+ * JEI Plugin
  */
 @JeiPlugin
 public class JEIPlugin implements IModPlugin {

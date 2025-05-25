@@ -9,7 +9,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Test class for FolderManager, demonstrating code coverage with JaCoCo.
+ * Test class for FolderManager
  */
 public class FolderManagerTest {
 

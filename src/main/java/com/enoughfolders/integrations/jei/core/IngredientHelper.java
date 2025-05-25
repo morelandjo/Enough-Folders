@@ -18,9 +18,6 @@ import net.minecraft.world.item.ItemStack;
 import java.util.Optional;
 
 /**
- * Helper class for working with JEI ingredients.
- */
-/**
  * Helper utility for working with JEI ingredients.
  */
 public class IngredientHelper {

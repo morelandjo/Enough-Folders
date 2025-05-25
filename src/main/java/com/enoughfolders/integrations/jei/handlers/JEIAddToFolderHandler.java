@@ -13,9 +13,6 @@ import java.util.Optional;
 /**
  * Dedicated handler for adding JEI ingredients to folders via keyboard shortcuts.
  */
-/**
- * Handles adding ingredients to folders through JEI integration.
- */
 public class JEIAddToFolderHandler {
     
     /**
@@ -118,7 +115,6 @@ public class JEIAddToFolderHandler {
                     // Add the ingredient to the active folder
                     EnoughFolders.getInstance().getFolderManager().addIngredient(activeFolder, (StoredIngredient)storedIngredient);
                     
-                    // Log the action but don't display a message to the player
                     DebugLogger.debugValue(DebugLogger.Category.INPUT, 
                         "Added ingredient to folder '{}'", activeFolder.getName());
                 } else {

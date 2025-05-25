@@ -157,11 +157,22 @@ public class ClientEventHandler {
             // REI integration not available, ignore
         }
         
+        // Add EMI integration if available
+        try {
+            Class<?> emiIntegrationClass = Class.forName("com.enoughfolders.integrations.emi.core.EMIIntegration");
+            Optional<?> emiIntegration = DependencyProvider.get(emiIntegrationClass);
+            if (emiIntegration.isPresent() && emiIntegration.get() instanceof RecipeViewingIntegration) {
+                integrations.add((RecipeViewingIntegration) emiIntegration.get());
+            }
+        } catch (ClassNotFoundException e) {
+            // EMI integration not available, ignore
+        }
+        
         return integrations;
     }
     
     /**
-     * Event handler for screen rendering (post).
+     * Event handler for screen rendering.
      * 
      * @param event The screen render post event
      */
@@ -254,7 +265,7 @@ public class ClientEventHandler {
                     }
                 }
             } catch (ClassNotFoundException e) {
-                // JEI is not installed, ignore silently
+                // JEI is not installed
             } catch (Exception e) {
                 DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, 
                     "Error handling JEI recipe manager click: {}", e.getMessage());
@@ -372,6 +383,9 @@ public class ClientEventHandler {
         
         // Connect to JEI if available
         connectToRecipeViewer("jei", folderScreen, containerScreen);
+        
+        // Connect to EMI if available
+        connectToRecipeViewer("emi", folderScreen, containerScreen);
     }
     
     /**
@@ -401,6 +415,17 @@ public class ClientEventHandler {
                         }
                     } catch (ClassNotFoundException e) {
                         // REI integration not available, ignore
+                    }
+                } else if ("emi".equals(integrationId)) {
+                    try {
+                        Class<?> emiIntegrationClass = Class.forName("com.enoughfolders.integrations.emi.core.EMIIntegration");
+                        Optional<?> emiIntegration = DependencyProvider.get(emiIntegrationClass);
+                        if (emiIntegration.isPresent() && emiIntegration.get() instanceof RecipeViewingIntegration) {
+                            ((RecipeViewingIntegration) emiIntegration.get()).connectToFolderScreen(folderScreen, containerScreen);
+                            EnoughFolders.LOGGER.debug("Connected folder screen to {} recipe viewer", integrationId);
+                        }
+                    } catch (ClassNotFoundException e) {
+                        // EMI integration not available, ignore
                     }
                 }
             }

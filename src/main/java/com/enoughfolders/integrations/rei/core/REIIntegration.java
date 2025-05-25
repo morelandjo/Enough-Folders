@@ -21,9 +21,6 @@ import java.util.Optional;
 
 /**
  * Integration with Roughly Enough Items (REI) mod.
- * <p>
- * This class provides functionality for integrating EnoughFolders with the REI recipe and item browser.
- * </p>
  */
 public class REIIntegration implements ModIntegration, IngredientDragProvider, RecipeViewingIntegration {
     
@@ -55,7 +52,6 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
             
             available = true;
             
-            // REI plugin system will handle registration automatically through annotations
             DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
                 "REI integration initialized successfully");
             
@@ -365,7 +361,6 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
     
     /**
      * Gets the ingredient currently under the mouse cursor in the REI UI.
-     * This method is specifically designed for keyboard shortcuts like Shift+A.
      * 
      * @return Optional containing the ingredient, or empty if none is found
      */
@@ -457,7 +452,6 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
                 // ---- APPROACH 3: Try to access REI's internal state for keyboard interactions ----
                 try {
                     // For keyboard interactions, try to check if there's a selected entry in the search field context
-                    // This approach works when users navigate with keyboard and then press Shift+A
                     if (runtime.isOverlayVisible()) {
                         Optional<me.shedaniel.rei.api.client.overlay.ScreenOverlay> overlayOpt = runtime.getOverlay();
                         if (overlayOpt.isPresent()) {
@@ -735,7 +729,6 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
 
     /**
      * Processes a drop of the currently dragged ingredient onto a folder.
-     * Converts the REI ingredient to a StoredIngredient and adds it to the folder.
      * 
      * @param folder The folder to add the ingredient to
      * @return True if the drop was successful, false otherwise
@@ -868,7 +861,6 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
         
         try {
             // Check the stack trace for REI-specific calls that indicate a recipe screen transition
-            // Using centralized stack trace utility
             return com.enoughfolders.integrations.util.StackTraceUtils.isREIRecipeTransition();
         } catch (Exception e) {
             EnoughFolders.LOGGER.debug("Error checking for REI recipe transition: {}", e.getMessage());
@@ -899,7 +891,6 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
     
     /**
      * Attempts to convert ingredients stored by other integrations (EMI, JEI) to REI format.
-     * This provides cross-integration compatibility when switching between integrations.
      *
      * @param storedIngredient The stored ingredient from another integration
      * @return Optional containing the converted ingredient, or empty if conversion failed
@@ -920,7 +911,6 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
                 return convertJEIItemToREI(value);
             }
             
-            // Add more integration formats as needed
             
             EnoughFolders.LOGGER.debug("No cross-integration conversion available for type: {}", typeName);
             
@@ -970,14 +960,12 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
     
     /**
      * Converts a JEI-format item UID to a REI EntryStack.
-     * This handles the case where JEI items might be stored in a different format.
      *
      * @param itemUid The JEI item UID string
      * @return Optional containing the converted EntryStack, or empty if conversion failed
      */
     private Optional<?> convertJEIItemToREI(String itemUid) {
         try {
-            // JEI UID format might be different, but for ItemStacks it's often the ResourceLocation
             // Extract registry name from the item ID (handle @ and other separators)
             String itemId = itemUid;
             if (itemId.contains("@")) {

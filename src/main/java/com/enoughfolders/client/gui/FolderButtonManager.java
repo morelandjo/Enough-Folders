@@ -1,4 +1,3 @@
-// Import UIConstants class
 package com.enoughfolders.client.gui;
 
 import com.enoughfolders.EnoughFolders;
@@ -9,6 +8,7 @@ import com.enoughfolders.integrations.api.FolderTarget;
 import com.enoughfolders.integrations.api.RecipeViewingIntegration;
 import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
 import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
+import com.enoughfolders.integrations.emi.gui.targets.EMIFolderTarget;
 import com.enoughfolders.util.DebugLogger;
 import net.minecraft.client.gui.components.Button;
 
@@ -214,6 +214,16 @@ public class FolderButtonManager implements LayoutManager.LayoutChangeListener {
     public List<REIFolderTarget> getREIFolderTargets() {
         EnoughFolders.LOGGER.debug("Building REI folder targets - Number of folder buttons available: {}", folderButtons.size());
         return getFolderTargets("com.enoughfolders.integrations.rei.core.REIIntegration", REIFolderTarget.class);
+    }
+    
+    /**
+     * Gets EMI-specific folder targets for all folder buttons.
+     *
+     * @return List of EMI folder targets for drag-and-drop
+     */
+    public List<EMIFolderTarget> getEMIFolderTargets() {
+        EnoughFolders.LOGGER.debug("Building EMI folder targets - Number of folder buttons available: {}", folderButtons.size());
+        return getFolderTargets("com.enoughfolders.integrations.emi.core.EMIIntegration", EMIFolderTarget.class);
     }
     
     /**

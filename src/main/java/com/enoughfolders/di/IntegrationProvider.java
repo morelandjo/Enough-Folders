@@ -4,13 +4,6 @@ import com.enoughfolders.integrations.ModIntegration;
 import java.util.function.Supplier;
 
 /**
- * Interface for providing mod integrations.
- * <p>
- * This interface allows for delayed or conditional creation of mod integrations,
- * which enables better dependency management and testing.
- * </p>
- */
-/**
  * Provider interface for creating integration instances.
  * 
  * @param <T> The type of integration this provider creates

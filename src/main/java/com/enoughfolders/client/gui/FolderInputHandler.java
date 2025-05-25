@@ -1,4 +1,3 @@
-// Import UIConstants class
 package com.enoughfolders.client.gui;
 
 import com.enoughfolders.util.DebugLogger;
@@ -72,12 +71,9 @@ public class FolderInputHandler {
         return mouseX >= leftPos && mouseX < leftPos + width &&
                mouseY >= topPos && mouseY < topPos + height;
     }
-    
-    // Deprecated mouseClicked method removed - use mouseClicked(double, double, int, FolderContentState, NavigationControls, boolean) instead
-    
+        
     /**
-     * Handles mouse click events on the folder screen using data objects.
-     * This is the preferred method to use for new code.
+     * Handles mouse click events on the folder screen
      *
      * @param mouseX The mouse x position
      * @param mouseY The mouse y position
@@ -157,12 +153,9 @@ public class FolderInputHandler {
         
         return false;
     }
-    
-    // Deprecated mouseReleased method removed - use mouseReleased(double, double, int, FolderContentState, Runnable, FolderScreen) instead
-    
+        
     /**
-     * Handles mouse release events on the folder screen using data objects.
-     * This is the preferred method to use for new code.
+     * Handles mouse release events on the folder screen.
      *
      * @param mouseX The mouse x position
      * @param mouseY The mouse y position
@@ -200,12 +193,9 @@ public class FolderInputHandler {
         
         return false;
     }
-    
-    // Deprecated keyPressed method removed - use keyPressed(int, int, int, FolderContentState, NavigationControls) instead
-    
+        
     /**
-     * Handles keyboard key press events using data objects.
-     * This is the preferred method to use for new code.
+     * Handles keyboard key press events.
      *
      * @param keyCode The key code
      * @param scanCode The scan code
@@ -236,12 +226,9 @@ public class FolderInputHandler {
         
         return false;
     }
-    
-    // Deprecated charTyped method removed - use charTyped(char, int, FolderContentState, NavigationControls) instead
-    
+        
     /**
-     * Handles character input events using data objects.
-     * This is the preferred method to use for new code.
+     * Handles character input events.
      *
      * @param codePoint The character code point
      * @param modifiers The modifier keys

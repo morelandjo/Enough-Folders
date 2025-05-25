@@ -8,7 +8,6 @@ import com.enoughfolders.integrations.jei.ingredient.JEIIngredientManager;
 import com.enoughfolders.util.DebugLogger;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

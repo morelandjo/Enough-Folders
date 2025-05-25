@@ -11,8 +11,6 @@ import java.util.function.Predicate;
 
 /**
  * Utility class for reflection operations used in integration modules.
- * This centralizes reflection code that was previously duplicated across
- * JEI and REI integrations.
  */
 public final class ReflectionUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReflectionUtils.class);

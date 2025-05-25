@@ -54,7 +54,6 @@ public class JEIRecipeScreenRenderer {
 
     /**
      * Event handler for post-render events on screens.
-     * Renders the folder navigation UI when applicable.
      *
      * @param event The screen render post event
      */
@@ -68,7 +67,7 @@ public class JEIRecipeScreenRenderer {
         Screen screen = event.getScreen();
         
         try {
-            // Check if the screen is an instance of IRecipesGui using reflection
+            // Check if the screen is an instance of IRecipesGui
             Class<?> recipesGuiClass = Class.forName(JEI_RECIPES_GUI_CLASS);
             if (!recipesGuiClass.isInstance(screen)) {
                 return; // Not a JEI recipes screen

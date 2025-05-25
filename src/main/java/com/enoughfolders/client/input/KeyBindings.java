@@ -13,9 +13,6 @@ import org.lwjgl.glfw.GLFW;
 /**
  * Manages keybindings.
  */
-/**
- * Manages key bindings for the EnoughFolders mod.
- */
 public class KeyBindings {
     
     /**
@@ -60,9 +57,6 @@ public class KeyBindings {
         event.register(ADD_TO_FOLDER);
     }
     
-    /**
-     * Separate class for handling keyboard input events.
-     */
     /**
      * Handler for key input events.
      */

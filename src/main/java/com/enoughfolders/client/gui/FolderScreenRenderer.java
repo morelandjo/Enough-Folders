@@ -1,4 +1,3 @@
-// Import UIConstants class
 package com.enoughfolders.client.gui;
 
 import com.enoughfolders.client.data.FolderContentState;
@@ -15,12 +14,11 @@ import java.util.List;
 
 /**
  * Handles rendering of the folder screen components.
- * Uses a RenderContext for direct access to all necessary components.
  */
 public class FolderScreenRenderer {
     private static final ResourceLocation TEXTURE = UIConstants.FOLDER_TEXTURE;
     
-    // Complete render context containing all necessary components
+    // Complete render context
     private final RenderContext context;
     
     /**
@@ -52,12 +50,9 @@ public class FolderScreenRenderer {
     public void updateHeight(int height) {
         context.updateHeight(height);
     }
-    
-    // Deprecated render method removed - use render(RenderState, FolderContentState, NavigationControls) instead
-    
+        
     /**
      * Renders the folder screen using data objects for parameter organization.
-     * This is the preferred method to use for new code.
      *
      * @param renderState The current rendering state
      * @param contentState The current folder content state
@@ -247,8 +242,6 @@ public class FolderScreenRenderer {
 
     /**
      * Renders the folder screen using only the RenderContext.
-     * This method creates the necessary state objects internally and delegates to the
-     * render method that accepts individual state objects.
      *
      * @param graphics The graphics context to render with
      * @param mouseX The mouse x position

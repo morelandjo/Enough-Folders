@@ -227,7 +227,6 @@ public class JEIDragDropManager {
                                                double mouseX, double mouseY, 
                                                FolderScreen folderScreen) {
         for (FolderButton button : folderScreen.getFolderButtons()) {
-            // Delegate to FolderButton.tryHandleDrop for consistent handling
             if (button.tryHandleDrop((int)mouseX, (int)mouseY)) {
                 folderScreen.onIngredientAdded();
                 event.setCanceled(true);
@@ -266,7 +265,4 @@ public class JEIDragDropManager {
         }
         return false;
     }
-    
-    // Helper method to check if point is in rectangle
-
 }

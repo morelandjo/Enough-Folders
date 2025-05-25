@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Interface for recipe viewing operations between mod integrations (JEI, REI) and EnoughFolders.
+ * Interface for recipe viewing operations
  */
 public interface RecipeViewingIntegration {
     

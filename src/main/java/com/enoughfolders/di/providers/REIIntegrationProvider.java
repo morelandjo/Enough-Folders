@@ -7,9 +7,6 @@ import net.neoforged.fml.ModList;
 /**
  * Provider for REI integration.
  */
-/**
- * Provider for REI integration.
- */
 public class REIIntegrationProvider implements IntegrationProvider<REIIntegration> {
     
     /**

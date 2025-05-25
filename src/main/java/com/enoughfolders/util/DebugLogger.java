@@ -25,31 +25,22 @@ public class DebugLogger {
      * Logging categories for organizing debug messages into functional areas.
      */
     public enum Category {
-        /** Initialization and startup related logs */
         INITIALIZATION("init"),
         
-        /** Rendering and visual element related logs */
         RENDERING("render"),
         
-        /** Keyboard and mouse input related logs */
         INPUT("input"),
         
-        /** Folder data management related logs */
         FOLDER_MANAGER("folderManager"),
         
-        /** Mod integration related logs */
         INTEGRATION("integration"),
         
-        /** GUI state tracking related logs */
         GUI_STATE("guiState"),
         
-        /** Mouse position and interaction related logs */
         MOUSE("mouse"),
         
-        /** JEI-specific integration related logs */
         JEI_INTEGRATION("jeiIntegration"),
         
-        /** REI-specific integration related logs */
         REI_INTEGRATION("reiIntegration");
         
         private final String id;

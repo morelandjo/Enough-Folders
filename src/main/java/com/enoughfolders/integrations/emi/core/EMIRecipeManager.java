@@ -151,7 +151,6 @@ public class EMIRecipeManager {
                 return;
             }
             
-            // Call EmiApi.displayRecipes(EmiIngredient)
             java.lang.reflect.Method displayRecipesMethod = emiApiClass.getMethod("displayRecipes", emiIngredientClass);
             displayRecipesMethod.invoke(null, emiIngredient);
             
@@ -188,7 +187,6 @@ public class EMIRecipeManager {
                 return;
             }
             
-            // Call EmiApi.displayUses(EmiIngredient)
             java.lang.reflect.Method displayUsesMethod = emiApiClass.getMethod("displayUses", emiIngredientClass);
             displayUsesMethod.invoke(null, emiIngredient);
             
@@ -258,7 +256,6 @@ public class EMIRecipeManager {
         try {
             Class<?> emiApiClass = Class.forName("dev.emi.emi.api.EmiApi");
             
-            // Call EmiApi.getHoveredStack(boolean includeStandard)
             java.lang.reflect.Method getHoveredStackMethod = emiApiClass.getMethod("getHoveredStack", boolean.class);
             Object stackInteraction = getHoveredStackMethod.invoke(null, true);
             

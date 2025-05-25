@@ -15,6 +15,7 @@ import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
 import com.enoughfolders.integrations.rei.core.REIIntegration;
 import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
 import com.enoughfolders.integrations.emi.core.EMIIntegration;
+import com.enoughfolders.integrations.emi.gui.targets.EMIFolderTarget;
 import com.enoughfolders.util.DebugLogger;
 
 import net.minecraft.client.gui.screens.Screen;
@@ -25,8 +26,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * A centralized handler for recipe viewing mod integrations (JEI, REI, etc.).
- * Provides a unified API for managing different recipe viewing integrations.
+ * A centralized handler for recipe viewing mod integrations.
  */
 public class IntegrationHandler {
 
@@ -354,16 +354,20 @@ public class IntegrationHandler {
      */
     @SuppressWarnings("unchecked")
     public <T extends FolderTarget> List<T> getTypedFolderTargets(List<FolderButton> folderButtons) {
-        // Try REI first
-        if (isIntegrationAvailable("rei")) {
-            DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using REI folder targets");
-            return (List<T>) getREIFolderTargets(folderButtons);
-        }
-        
-        // Try JEI
-        if (isIntegrationAvailable("jei")) {
-            DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using JEI folder targets");
-            return (List<T>) getJEIFolderTargets(folderButtons);
+        // Try integrations in the defined priority order (rei, jei, emi)
+        for (String integrationId : PRIORITY_ORDER) {
+            if (isIntegrationAvailable(integrationId)) {
+                if ("rei".equals(integrationId)) {
+                    DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using REI folder targets");
+                    return (List<T>) getREIFolderTargets(folderButtons);
+                } else if ("jei".equals(integrationId)) {
+                    DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using JEI folder targets");
+                    return (List<T>) getJEIFolderTargets(folderButtons);
+                } else if ("emi".equals(integrationId)) {
+                    DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using EMI folder targets");
+                    return (List<T>) getEMIFolderTargets(folderButtons);
+                }
+            }
         }
         
         // No recipe viewing integration available
@@ -392,6 +396,17 @@ public class IntegrationHandler {
         EnoughFolders.LOGGER.debug("Building REI folder targets - Number of folder buttons available: {}", folderButtons.size());
         return getFolderTargets("rei", folderButtons);
     }
+    
+    /**
+     * Gets EMI-specific folder targets for the given folder buttons.
+     *
+     * @param folderButtons The folder buttons to get targets for
+     * @return List of EMI folder targets
+     */
+    public List<EMIFolderTarget> getEMIFolderTargets(List<FolderButton> folderButtons) {
+        EnoughFolders.LOGGER.debug("Building EMI folder targets - Number of folder buttons available: {}", folderButtons.size());
+        return getFolderTargets("emi", folderButtons);
+    }
 
     /**
      * Gets folder targets for a specific integration.
@@ -419,8 +434,6 @@ public class IntegrationHandler {
         return new ArrayList<>();
     }
 
-    // Deprecated handleIngredientDrop method removed - use handleIngredientDrop(double, double, List<FolderButton>) instead
-
     /**
      * Attempts to handle an ingredient drop using a specific integration.
      *
@@ -445,7 +458,6 @@ public class IntegrationHandler {
 
     /**
      * Process an ingredient drop at the given mouse position.
-     * Determines if the mouse is hovering over any folder and handles the drop.
      *
      * @param mouseX The mouse x position
      * @param mouseY The mouse y position

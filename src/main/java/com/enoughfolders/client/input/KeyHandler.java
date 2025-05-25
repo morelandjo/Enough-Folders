@@ -10,14 +10,8 @@ import net.neoforged.neoforge.common.NeoForge;
 /**
  * Handles keyboard input events.
  */
-/**
- * Handles custom key input processing for the EnoughFolders mod.
- */
 public class KeyHandler {
     
-    /**
-     * Private constructor to prevent instantiation of this utility class.
-     */
     private KeyHandler() {
         // Utility class should not be instantiated
     }
@@ -45,26 +39,6 @@ public class KeyHandler {
 
         if (KeyBindings.ADD_TO_FOLDER.isDown() || KeyBindings.ADD_TO_FOLDER.consumeClick()) {
             EnoughFolders.LOGGER.info("ADD_TO_FOLDER keybind activated");
-            
-            RecipeIntegrationHandler.handleAddToFolderKeyPress();
-        }
-    }
-    
-    /**
-     * Fallback handler for keyboard events using the raw input system.
-     *
-     * @param event The raw keyboard input event
-     */
-    @SubscribeEvent
-    public static void onKeyboardInput(InputEvent.Key event) {
-        // Only handle the event if we're in a GUI
-        if (Minecraft.getInstance().screen == null) return;
-        
-        EnoughFolders.LOGGER.debug("InputEvent.Key: keyCode={}, scanCode={}, action={}, modifiers={}",
-            event.getKey(), event.getScanCode(), event.getAction(), event.getModifiers());
-            
-        if (KeyBindings.ADD_TO_FOLDER.isDown() || KeyBindings.ADD_TO_FOLDER.consumeClick()) {
-            EnoughFolders.LOGGER.info("ADD_TO_FOLDER keybind activated (raw input)");
             
             RecipeIntegrationHandler.handleAddToFolderKeyPress();
         }

@@ -10,7 +10,7 @@ import java.util.UUID;
  */
 public class Folder {
     /**
-     * Unique identifier for this folder, used for serialization and equality checks.
+     * Unique identifier for this folder
      */
     private final String id;
     

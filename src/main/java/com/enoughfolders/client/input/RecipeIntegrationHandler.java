@@ -6,14 +6,8 @@ import com.enoughfolders.util.DebugLogger;
 /**
  * A central handler for recipe mod integration keyboard events.
  */
-/**
- * Handles integration with recipe viewing mods for key bindings and interactions.
- */
 public class RecipeIntegrationHandler {
     
-    /**
-     * Private constructor to prevent instantiation of this utility class.
-     */
     private RecipeIntegrationHandler() {
         // Utility class should not be instantiated
     }
@@ -36,7 +30,7 @@ public class RecipeIntegrationHandler {
      * Initializes the handler and checks which integrations are available.
      */
     public static void init() {
-        // Check if JEI and REI are available without directly importing their classes
+        // Check which integrstions are available without directly importing
         try {
             Class.forName("mezz.jei.api.runtime.IJeiRuntime");
             jeiAvailable = true;
@@ -73,7 +67,6 @@ public class RecipeIntegrationHandler {
     public static void handleAddToFolderKeyPress() {
         EnoughFolders.LOGGER.debug("Add to folder key press detected");
         
-        // Try both integrations, they will safely no-op if not applicable
         if (jeiAvailable) {
             tryJeiAddToFolder();
         }

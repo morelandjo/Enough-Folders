@@ -7,11 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Utility class for FTB integration
- * 
- */
-/**
- * Integration with FTB mods for EnoughFolders.
+ * Integration with FTB mods.
  */
 public class FTBIntegration {
     

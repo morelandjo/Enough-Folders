@@ -198,10 +198,7 @@ public class EMIIntegration implements ModIntegration, IngredientDragProvider, R
                 DebugLogger.Category.INTEGRATION,
                 "Registering EMI drag and drop support", ""
             );
-            
-            // EMI drag and drop is now handled through the official EMI API
-            // via EMIFolderDragDropHandler registered in EMIPluginEntrypoint
-            
+                        
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
                 "EMI drag and drop support registered", ""
@@ -226,7 +223,6 @@ public class EMIIntegration implements ModIntegration, IngredientDragProvider, R
         
         try {
             // EMI doesn't have a traditional drag state like JEI/REI
-            // Instead, we use the ingredient under mouse cursor
             return getIngredientUnderMouse();
         } catch (Exception e) {
             DebugLogger.debugValue(
@@ -238,10 +234,6 @@ public class EMIIntegration implements ModIntegration, IngredientDragProvider, R
         }
     }
     
-    /**
-     * Get the ingredient currently under the mouse cursor.
-     * EMI uses hovered ingredients instead of dragged ingredients.
-     */
     /**
      * Gets the ingredient currently under the mouse cursor.
      * 
@@ -488,9 +480,6 @@ public class EMIIntegration implements ModIntegration, IngredientDragProvider, R
     }
     
     /**
-     * Check if EMI mod is loaded
-     */
-    /**
      * Checks if EMI mod is loaded and available.
      * 
      * @return true if EMI is loaded, false otherwise
@@ -505,9 +494,6 @@ public class EMIIntegration implements ModIntegration, IngredientDragProvider, R
     }
     
     /**
-     * Get EMI version if available
-     */
-    /**
      * Gets the installed version of EMI.
      * 
      * @return the EMI version string, or "unknown" if EMI is not loaded
@@ -516,8 +502,6 @@ public class EMIIntegration implements ModIntegration, IngredientDragProvider, R
         if (!isEMILoaded()) {
             return "Not loaded";
         }
-        
-        // EMI doesn't seem to have a direct version API, so we'll return a generic string
-        return "Available";
+            return "Available";
     }
 }

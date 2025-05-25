@@ -7,18 +7,10 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
- * A simple dependency provider that serves as the central registry for 
- * injected dependencies in the EnoughFolders mod.
- * <p>
- * This class follows the service locator pattern to allow components to
- * request their dependencies at runtime without having to directly create them.
- * </p>
+ * Dependency provider central registry
  */
 public class DependencyProvider {
     
-    /**
-     * Private constructor to prevent instantiation of this utility class.
-     */
     private DependencyProvider() {
         // Utility class should not be instantiated
     }
@@ -51,8 +43,6 @@ public class DependencyProvider {
 
     /**
      * Get a dependency instance by its type.
-     * If the dependency is registered as a singleton, the same instance is always returned.
-     * Otherwise, a new instance is created using the factory function.
      *
      * @param <T> The type of the dependency
      * @param type The class object representing the dependency type
@@ -83,7 +73,6 @@ public class DependencyProvider {
 
     /**
      * Get a required dependency instance by its type.
-     * This method will throw an exception if the dependency is not registered.
      *
      * @param <T> The type of the dependency
      * @param type The class object representing the dependency type
@@ -108,16 +97,12 @@ public class DependencyProvider {
     
     /**
      * Clear all registered dependencies.
-     * This is primarily useful for testing.
      */
     public static void clear() {
         dependencies.clear();
         singletons.clear();
     }
     
-    /**
-     * Exception thrown when a required dependency is not found.
-     */
     /**
      * Exception thrown when a requested dependency is not found in the registry.
      */

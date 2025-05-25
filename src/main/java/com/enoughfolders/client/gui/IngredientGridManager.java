@@ -1,4 +1,3 @@
-// Import UIConstants class
 package com.enoughfolders.client.gui;
 
 import com.enoughfolders.data.Folder;
@@ -62,7 +61,7 @@ public class IngredientGridManager implements LayoutManager.LayoutChangeListener
      * Calculates the number of ingredient columns based on available width.
      */
     private void calculateIngredientColumns() {
-        int availableWidth = layoutManager.getWidth() - 6; // Reduced padding from 10 to 6 pixels
+        int availableWidth = layoutManager.getWidth() - 6;
         int ingredientWidth = UIConstants.INGREDIENT_SLOT_SIZE + UIConstants.INGREDIENT_SPACING;
         int maxColumns = Math.max(1, availableWidth / ingredientWidth);
         this.ingredientColumns = maxColumns;
@@ -101,7 +100,7 @@ public class IngredientGridManager implements LayoutManager.LayoutChangeListener
      * Updates the pagination button positions.
      */
     private void updatePaginationButtonPositions() {
-        boolean isAddingFolder = false; // This will be passed from FolderScreen
+        boolean isAddingFolder = false;
         int[] paginationPositions = layoutManager.getPaginationButtonPositions(isAddingFolder);
         
         prevPageButton.setPosition(paginationPositions[0], paginationPositions[1]);
@@ -149,10 +148,6 @@ public class IngredientGridManager implements LayoutManager.LayoutChangeListener
             layoutManager.updateHeight(newTotalHeight);
             
             DebugLogger.debugValues(DebugLogger.Category.GUI_STATE, 
-                              "Ingredients grid layout: {} columns x {} rows (including 1 extra row), totalItems: {}",
-                              ingredientColumns, rowsNeeded, endIndex - startIndex);
-            
-            DebugLogger.debugValues(DebugLogger.Category.GUI_STATE, 
                 "Resizing folder screen to fit {} rows (including 1 extra row), new height: {}, vertical offset: {}", 
                 rowsNeeded, layoutManager.getHeight(), contentArea[3]);
             
@@ -169,7 +164,7 @@ public class IngredientGridManager implements LayoutManager.LayoutChangeListener
             
             updatePagination();
             return layoutManager.getHeight();
-        }).orElse(UIConstants.FOLDER_AREA_HEIGHT + 10); // Default height when no active folder
+        }).orElse(UIConstants.FOLDER_AREA_HEIGHT + 10);
     }
     
     /**

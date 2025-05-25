@@ -20,7 +20,6 @@ public interface FolderGhostIngredientTarget {
     
     /**
      * Get the entire folder UI area which can be used as a drop target.
-     * This matches EMI's behavior of highlighting the entire folder area.
      * 
      * @return The entire folder area
      */
