@@ -19,6 +19,7 @@ public class EMIFolderTarget implements FolderTarget {
     
     /**
      * Creates a new EMI folder target from a folder screen.
+     * @param folderScreen The folder screen to create a target for
      */
     public EMIFolderTarget(FolderScreen folderScreen) {
         net.minecraft.client.renderer.Rect2i screenArea = folderScreen.getScreenArea();
@@ -57,6 +58,7 @@ public class EMIFolderTarget implements FolderTarget {
     
     /**
      * Handle a drop operation on this folder target.
+     * @return true if the drop was handled successfully, false otherwise
      */
     public boolean handleDrop() {
         try {
@@ -79,6 +81,7 @@ public class EMIFolderTarget implements FolderTarget {
     
     /**
      * Check if this target can accept the current drag.
+     * @return true if this target can accept the current drag operation, false otherwise
      */
     public boolean canAcceptDrag() {
         try {

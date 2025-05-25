@@ -17,9 +17,19 @@ import java.util.Optional;
  */
 public class EMIRecipeManager {
     
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private EMIRecipeManager() {
+        // Utility class should not be instantiated
+    }
+    
     private static boolean initialized = false;
     private static FolderScreen lastFolderScreen = null;
     
+    /**
+     * Initialize the EMI recipe manager.
+     */
     public static void initialize() {
         if (initialized) {
             return;
@@ -48,6 +58,7 @@ public class EMIRecipeManager {
 
     /**
      * Save the last folder screen for recipe viewing integration.
+     * @param folderScreen The folder screen to save
      */
     public static void saveLastFolderScreen(FolderScreen folderScreen) {
         lastFolderScreen = folderScreen;
@@ -70,6 +81,7 @@ public class EMIRecipeManager {
 
     /**
      * Get the last saved folder screen.
+     * @return An optional containing the last folder screen, or empty if none saved
      */
     public static Optional<FolderScreen> getLastFolderScreen() {
         return Optional.ofNullable(lastFolderScreen);
@@ -77,6 +89,8 @@ public class EMIRecipeManager {
 
     /**
      * Check if the given screen is an EMI recipe screen.
+     * @param screen The screen to check
+     * @return true if the screen is an EMI recipe screen, false otherwise
      */
     public static boolean isRecipeScreen(Screen screen) {
         if (screen == null) {
@@ -100,6 +114,8 @@ public class EMIRecipeManager {
 
     /**
      * Create folder targets for the given folder buttons.
+     * @param folderButtons The folder buttons to create targets for
+     * @return A list of folder targets
      */
     public static List<? extends FolderTarget> createFolderTargets(List<FolderButton> folderButtons) {
         List<FolderTarget> targets = new ArrayList<>();
@@ -134,6 +150,7 @@ public class EMIRecipeManager {
     
     /**
      * Show recipes that produce the given ingredient.
+     * @param ingredient The ingredient to show recipes for
      */
     public static void showRecipes(Object ingredient) {
         if (!initialized || ingredient == null) {
@@ -170,6 +187,7 @@ public class EMIRecipeManager {
     
     /**
      * Show uses/usages of the given ingredient.
+     * @param ingredient The ingredient to show uses for
      */
     public static void showUses(Object ingredient) {
         if (!initialized || ingredient == null) {
@@ -247,6 +265,7 @@ public class EMIRecipeManager {
     
     /**
      * Get the current hovered ingredient from EMI.
+     * @return The currently hovered ingredient, or null if none
      */
     public static Object getHoveredIngredient() {
         if (!initialized) {

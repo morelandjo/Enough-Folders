@@ -16,8 +16,18 @@ import java.util.Optional;
  */
 public class EMIIngredientManager {
     
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private EMIIngredientManager() {
+        // Utility class should not be instantiated
+    }
+    
     private static boolean initialized = false;
     
+    /**
+     * Initialize the EMI ingredient manager.
+     */
     public static void initialize() {
         if (initialized) {
             return;
@@ -45,6 +55,8 @@ public class EMIIngredientManager {
     
     /**
      * Convert a StoredIngredient to an EMI ingredient object.
+     * @param storedIngredient The stored ingredient to convert
+     * @return An optional EMI ingredient object, empty if conversion fails
      */
     public static Optional<?> getIngredientFromStored(StoredIngredient storedIngredient) {
         if (!initialized || storedIngredient == null) {
@@ -89,6 +101,8 @@ public class EMIIngredientManager {
     
     /**
      * Convert an EMI ingredient object to a StoredIngredient.
+     * @param ingredient The EMI ingredient to convert
+     * @return An optional StoredIngredient, empty if conversion fails
      */
     public static Optional<StoredIngredient> storeIngredient(Object ingredient) {
         if (!initialized || ingredient == null) {
@@ -164,6 +178,8 @@ public class EMIIngredientManager {
     
     /**
      * Get an ItemStack representation of an EMI ingredient for display purposes.
+     * @param ingredient The EMI ingredient to get ItemStack for
+     * @return An optional ItemStack for display, empty if not available
      */
     public static Optional<ItemStack> getItemStackForDisplay(Object ingredient) {
         if (!initialized || ingredient == null) {
@@ -229,6 +245,8 @@ public class EMIIngredientManager {
     
     /**
      * Check if an object is a valid EMI ingredient.
+     * @param obj The object to check
+     * @return true if the object is a valid EMI ingredient, false otherwise
      */
     public static boolean isEMIIngredient(Object obj) {
         if (obj == null) {

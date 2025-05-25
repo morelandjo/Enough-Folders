@@ -40,13 +40,13 @@ public class JEIDragDropManager {
     private static Object currentDraggedIngredient = null;
     private static boolean isDragging = false;
     
-    // Called when a mouse button is pressed (start of potential drag)
-    @SubscribeEvent
     /**
      * Handles mouse press events for JEI drag and drop operations.
+     * Called when a mouse button is pressed (start of potential drag).
      * 
      * @param event The mouse button pressed event
      */
+    @SubscribeEvent
     public static void onMousePressed(ScreenEvent.MouseButtonPressed.Pre event) {
         currentDraggedIngredient = null;
         isDragging = false;
@@ -126,18 +126,13 @@ public class JEIDragDropManager {
         }
     }
     
-    // Called when the mouse is released (end of potential drag)
+    /**
+     * Handles mouse release events for JEI drag and drop operations.
+     * Called when the mouse is released (end of potential drag).
+     * 
+     * @param event The mouse button released event
+     */
     @SubscribeEvent
-    /**
-     * Handles mouse release events for JEI drag and drop operations.
-     * 
-     * @param event The mouse button released event
-     */
-    /**
-     * Handles mouse release events for JEI drag and drop operations.
-     * 
-     * @param event The mouse button released event
-     */
     public static void onMouseReleased(ScreenEvent.MouseButtonReleased.Pre event) {
         if (isDragging && currentDraggedIngredient != null) {
             // Get the coordinates

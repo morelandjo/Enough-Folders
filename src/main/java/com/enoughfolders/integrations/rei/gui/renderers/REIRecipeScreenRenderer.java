@@ -15,10 +15,10 @@ import net.neoforged.neoforge.client.event.ScreenEvent;
 
 import java.util.Optional;
 
-@EventBusSubscriber(modid = EnoughFolders.MOD_ID, value = Dist.CLIENT)
 /**
  * Handles rendering the folder UI on REI recipe screens.
  */
+@EventBusSubscriber(modid = EnoughFolders.MOD_ID, value = Dist.CLIENT)
 public class REIRecipeScreenRenderer {
     
     /**

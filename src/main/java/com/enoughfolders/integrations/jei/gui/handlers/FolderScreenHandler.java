@@ -32,6 +32,13 @@ public class FolderScreenHandler implements
     // Reference to the current container screen being handled
     private AbstractContainerScreen<?> currentScreen;
 
+    /**
+     * Creates a new folder screen handler for JEI integration.
+     */
+    public FolderScreenHandler() {
+        // Default constructor
+    }
+
     @Override
     @Nonnull
     public List<Rect2i> getGuiExtraAreas(@Nonnull AbstractContainerScreen<?> screen) {

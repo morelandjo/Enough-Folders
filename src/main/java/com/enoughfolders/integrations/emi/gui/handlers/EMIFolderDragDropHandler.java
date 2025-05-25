@@ -22,10 +22,18 @@ import java.util.function.Consumer;
  */
 public class EMIFolderDragDropHandler {
     
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private EMIFolderDragDropHandler() {
+        // Utility class should not be instantiated
+    }
+    
     private static boolean initialized = false;
     
     /**
      * Register EMI drag and drop handlers.
+     * @param registry The EMI registry to register handlers with
      */
     public static void register(EmiRegistry registry) {
         if (initialized) {
@@ -211,6 +219,7 @@ public class EMIFolderDragDropHandler {
     
     /**
      * Check if the handler is initialized.
+     * @return true if the handler has been initialized, false otherwise
      */
     public static boolean isInitialized() {
         return initialized;

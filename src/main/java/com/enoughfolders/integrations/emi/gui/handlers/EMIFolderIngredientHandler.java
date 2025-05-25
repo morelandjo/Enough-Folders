@@ -15,6 +15,11 @@ public class EMIFolderIngredientHandler {
     private final FolderScreen folderScreen;
     private final AbstractContainerScreen<?> containerScreen;
     
+    /**
+     * Creates a new EMI folder ingredient handler.
+     * @param folderScreen The folder screen to handle
+     * @param containerScreen The container screen associated with the folder
+     */
     public EMIFolderIngredientHandler(FolderScreen folderScreen, AbstractContainerScreen<?> containerScreen) {
         this.folderScreen = folderScreen;
         this.containerScreen = containerScreen;
@@ -27,6 +32,7 @@ public class EMIFolderIngredientHandler {
     
     /**
      * Handle recipe viewing for an ingredient in the folder.
+     * @param ingredient The ingredient to show recipes for
      */
     public void showRecipes(Object ingredient) {
         try {
@@ -41,6 +47,7 @@ public class EMIFolderIngredientHandler {
     
     /**
      * Handle usage viewing for an ingredient in the folder.
+     * @param ingredient The ingredient to show uses for
      */
     public void showUses(Object ingredient) {
         try {
@@ -55,6 +62,8 @@ public class EMIFolderIngredientHandler {
     
     /**
      * Check if an object is a valid EMI ingredient.
+     * @param ingredient The object to check
+     * @return true if the object is a valid EMI ingredient, false otherwise
      */
     public boolean isValidIngredient(Object ingredient) {
         return EMIIngredientManager.isEMIIngredient(ingredient);
@@ -62,6 +71,7 @@ public class EMIFolderIngredientHandler {
     
     /**
      * Get the folder screen.
+     * @return The folder screen being handled
      */
     public FolderScreen getFolderScreen() {
         return folderScreen;
@@ -69,6 +79,7 @@ public class EMIFolderIngredientHandler {
     
     /**
      * Get the container screen.
+     * @return The container screen associated with the folder
      */
     public AbstractContainerScreen<?> getContainerScreen() {
         return containerScreen;
