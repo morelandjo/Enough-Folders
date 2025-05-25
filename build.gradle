@@ -3,7 +3,7 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.78'
-    id 'jacoco'  // Add JaCoCo plugin
+    id 'jacoco'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -14,7 +14,7 @@ version = mod_version
 group = mod_group_id 
 
 repositories {
-    // Maven Central should be first to find standard Java libraries
+    // Maven Central
     mavenCentral()
     mavenLocal()
     
@@ -73,12 +73,6 @@ repositories {
         name = "TerraformersMC"
         url = "https://maven.terraformersmc.com/"
     }
-    
-    // EMI Maven Repository
-    maven {
-        name = "EMI Maven"
-        url = "https://maven.terraformersmc.com/"
-    }
 }
 
 base {
@@ -91,42 +85,23 @@ java {
     withSourcesJar()
 }
 
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+    api
+    implementation.extendsFrom(api)
+    
+    // Create separate configurations for different recipe viewers
+    jeiRuntime
+    reiRuntime  
+    emiRuntime
+}
+
 neoForge {
     version = neo_version
 
     parchment {
         mappingsVersion = parchment_mappings_version
         minecraftVersion = parchment_minecraft_version
-    }
-
-    runs {
-        client {
-            client()
-            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
-            systemProperty 'enoughfolders.debug', 'true'
-        }
-        
-       
-        server {
-            server()
-            programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
-        }
-
-        gameTestServer {
-            type = "gameTestServer"
-            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
-        }
-
-        data {
-            data()
-            programArguments.addAll '--mod', mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-        }
-
-        configureEach {
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
-            logLevel = org.slf4j.event.Level.DEBUG
-        }
     }
 
     mods {
@@ -150,14 +125,40 @@ sourceSets {
             srcDirs = ['src/test/resources']
         }
     }
-}
-
-configurations {
-    runtimeClasspath.extendsFrom localRuntime
-    api
-    implementation.extendsFrom(api)
     
+    // Create separate source sets for different recipe viewer integrations
+    jeiClient {
+        java {
+            srcDirs = ['src/main/java']
+        }
+        resources {
+            srcDirs = ['src/main/resources', 'src/generated/resources']
+        }
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
     
+    reiClient {
+        java {
+            srcDirs = ['src/main/java']
+        }
+        resources {
+            srcDirs = ['src/main/resources', 'src/generated/resources']
+        }
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
+    
+    emiClient {
+        java {
+            srcDirs = ['src/main/java']
+        }
+        resources {
+            srcDirs = ['src/main/resources', 'src/generated/resources']
+        }
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
 }
 
 dependencies {
@@ -169,14 +170,14 @@ dependencies {
         exclude group: 'net.minecraftforge'
     }
     
-    // JEI implementation as runtimeOnly for development, not required at compile time
-    runtimeOnly("mezz.jei:jei-${mc_version}-neoforge:${jei_version}") {
+    // JEI implementation for specific JEI runtime
+    jeiRuntime("mezz.jei:jei-${mc_version}-neoforge:${jei_version}") {
         exclude group: 'net.minecraftforge'
     }
     
    
     
-    // REI dependencies - marked as compileOnly to make them optional at runtime
+    // REI dependencies
     compileOnly("me.shedaniel:RoughlyEnoughItems-api-neoforge:16.0.797") {
         exclude group: 'net.minecraftforge'
     }
@@ -190,14 +191,39 @@ dependencies {
         exclude group: 'net.minecraftforge'
     }
     
-    // REI runtime only dependencies for development environment
-    runtimeOnly("me.shedaniel:RoughlyEnoughItems-neoforge:16.0.797") {
+    // REI runtime dependencies for specific REI runtime and development
+    reiRuntime("me.shedaniel:RoughlyEnoughItems-neoforge:16.0.797") {
+        exclude group: 'net.minecraftforge'
+    }
+    reiRuntime("dev.architectury:architectury-neoforge:13.0.8") {
+        exclude group: 'net.minecraftforge'
+    }
+    reiRuntime("me.shedaniel.cloth:cloth-config-neoforge:15.0.140") {
         exclude group: 'net.minecraftforge'
     }
     
-    // EMI dependencies - marked as compileOnly to make them optional at runtime
+    // EMI dependencies
     compileOnly "dev.emi:emi-neoforge:1.1.22+1.21.1:api"
-    runtimeOnly "dev.emi:emi-neoforge:1.1.22+1.21.1"
+    
+    // EMI runtime for specific EMI runtime and development
+    emiRuntime "dev.emi:emi-neoforge:1.1.22+1.21.1"
+    
+    // Source set specific dependencies
+    jeiClientRuntimeOnly("mezz.jei:jei-${mc_version}-neoforge:${jei_version}") {
+        exclude group: 'net.minecraftforge'
+    }
+    
+    reiClientRuntimeOnly("me.shedaniel:RoughlyEnoughItems-neoforge:16.0.797") {
+        exclude group: 'net.minecraftforge'
+    }
+    reiClientRuntimeOnly("dev.architectury:architectury-neoforge:13.0.8") {
+        exclude group: 'net.minecraftforge'
+    }
+    reiClientRuntimeOnly("me.shedaniel.cloth:cloth-config-neoforge:15.0.140") {
+        exclude group: 'net.minecraftforge'
+    }
+    
+    emiClientRuntimeOnly "dev.emi:emi-neoforge:1.1.22+1.21.1"
     
    
     
@@ -211,8 +237,104 @@ dependencies {
     testImplementation 'org.mockito:mockito-junit-jupiter:4.11.0'
     testImplementation 'com.google.code.gson:gson:2.10.1'  // For JSON serialization in tests
     
-    // Make Minecraft classes available in test - needed for proper mocking
+    // Make Minecraft classes available in test
     testImplementation sourceSets.main.output
+    
+}
+
+// Configure NeoForge run configurations after source sets are defined
+neoForge {
+    runs {
+        client {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+            systemProperty 'enoughfolders.debug', 'true'
+        }
+        
+        // Client with only JEI
+        clientJEI {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+            systemProperty 'enoughfolders.debug', 'true'
+            gameDirectory = project.file('run/jei')
+        }
+        
+        // Client with only REI
+        clientREI {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+            systemProperty 'enoughfolders.debug', 'true'
+            gameDirectory = project.file('run/rei')
+        }
+        
+        // Client with only EMI
+        clientEMI {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+            systemProperty 'enoughfolders.debug', 'true'
+            gameDirectory = project.file('run/emi')
+        }
+       
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+        }
+
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+        }
+
+        data {
+            data()
+            programArguments.addAll '--mod', mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+}
+
+// Configure run tasks to use specific runtime dependencies
+afterEvaluate {
+    // Get the actual run task configurations and modify their classpaths
+    def clientJEITask = tasks.findByName('runClientJEI')
+    if (clientJEITask) {
+        clientJEITask.classpath = clientJEITask.classpath + configurations.jeiRuntime
+    }
+    
+    def clientREITask = tasks.findByName('runClientREI')
+    if (clientREITask) {
+        clientREITask.classpath = clientREITask.classpath + configurations.reiRuntime
+    }
+    
+    def clientEMITask = tasks.findByName('runClientEMI')
+    if (clientEMITask) {
+        clientEMITask.classpath = clientEMITask.classpath + configurations.emiRuntime
+    }
+}
+
+// Debug task to check what dependencies are included in each run configuration
+tasks.register('debugRunDependencies') {
+    doLast {
+        println "=== JEI Runtime Dependencies ==="
+        configurations.jeiRuntime.files.each { file ->
+            println "  ${file.name}"
+        }
+        
+        println "\n=== REI Runtime Dependencies ==="
+        configurations.reiRuntime.files.each { file ->
+            println "  ${file.name}"
+        }
+        
+        println "\n=== EMI Runtime Dependencies ==="
+        configurations.emiRuntime.files.each { file ->
+            println "  ${file.name}"
+        }
+    }
 }
 
 // JaCoCo configuration
@@ -222,8 +344,8 @@ jacoco {
 
 jacocoTestReport {
     reports {
-        xml.required = true  // For integration with other tools like SonarQube
-        html.required = true // For human-readable reports
+        xml.required = true  
+        html.required = true
     }
     
     afterEvaluate {
