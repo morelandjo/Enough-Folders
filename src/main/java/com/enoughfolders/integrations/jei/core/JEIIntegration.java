@@ -4,19 +4,16 @@ import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.gui.FolderButton;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.client.gui.IngredientSlot;
-import com.enoughfolders.data.Folder;
+
 import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.integrations.ModIntegration;
-import com.enoughfolders.integrations.api.IngredientDragProvider;
+import com.enoughfolders.integrations.api.FolderTarget;
 import com.enoughfolders.integrations.api.RecipeViewingIntegration;
-import com.enoughfolders.integrations.jei.drag.JEIDragManager;
+
 import com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler;
-import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
-import com.enoughfolders.integrations.jei.gui.targets.JEIFolderTargetFactory;
 import com.enoughfolders.integrations.jei.ingredient.JEIIngredientManager;
 import com.enoughfolders.integrations.jei.recipe.JEIRecipeManager;
 import com.enoughfolders.integrations.util.StackTraceUtils;
-import com.enoughfolders.util.DebugLogger;
 
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.gui.GuiGraphics;
@@ -31,7 +28,7 @@ import java.util.Optional;
 /**
  * Integration with JEI mod.
  */
-public class JEIIntegration implements ModIntegration, IngredientDragProvider, RecipeViewingIntegration {
+public class JEIIntegration implements ModIntegration, RecipeViewingIntegration {
     
     /**
      * JEI mod identifier
@@ -49,11 +46,6 @@ public class JEIIntegration implements ModIntegration, IngredientDragProvider, R
     private final JEIIngredientManager ingredientManager;
     
     /**
-     * Manager for JEI drag operations
-     */
-    private final JEIDragManager dragManager;
-    
-    /**
      * Manager for JEI recipe operations
      */
     private final JEIRecipeManager recipeManager;
@@ -64,7 +56,6 @@ public class JEIIntegration implements ModIntegration, IngredientDragProvider, R
     public JEIIntegration() {
         this.runtimeManager = new JEIRuntimeManager();
         this.ingredientManager = new JEIIngredientManager(this.runtimeManager);
-        this.dragManager = new JEIDragManager(this.runtimeManager, this.ingredientManager);
         this.recipeManager = new JEIRecipeManager(this.runtimeManager, this.ingredientManager);
         
         EnoughFolders.LOGGER.info("JEI Integration initialized");
@@ -204,42 +195,6 @@ public class JEIIntegration implements ModIntegration, IngredientDragProvider, R
     }
     
     /**
-     * Gets the ingredient currently being dragged in JEI, if any.
-     *
-     * @return Optional containing the dragged ingredient, or empty if none is being dragged
-     */
-    public Optional<Object> getDraggedIngredient() {
-        return dragManager.getDraggedIngredient();
-    }
-    
-    /**
-     * Sets the current dragged object.
-     *
-     * @param ingredient The ingredient being dragged
-     */
-    public void setCurrentDraggedObject(Object ingredient) {
-        dragManager.setCurrentDraggedObject(ingredient);
-    }
-    
-    /**
-     * Clears the current dragged object.
-     */
-    public void clearCurrentDraggedObject() {
-        dragManager.clearCurrentDraggedObject();
-    }
-    
-    /**
-     * Processes a drop of the currently dragged ingredient onto a folder.
-     * 
-     * @param folder The folder to add the ingredient to
-     * @return True if the drop was successful, false otherwise
-     */
-    @Override
-    public boolean handleIngredientDrop(Folder folder) {
-        return dragManager.handleIngredientDrop(folder);
-    }
-    
-    /**
      * Gets the display name of the integration.
      * 
      * @return The display name
@@ -336,22 +291,16 @@ public class JEIIntegration implements ModIntegration, IngredientDragProvider, R
     }
     
     /**
-     * Creates folder targets that can be used for ingredient drops from JEI.
+     * Creates folder targets for drag and drop operations.
+     * Returns empty list as drag and drop functionality has been removed.
      * 
-     * @param folderButtons The list of folder buttons to create targets for
-     * @return A list of folder targets compatible with JEI
+     * @param folderButtons The list of folder buttons
+     * @return Empty list - drag and drop is disabled
      */
     @Override
-    public List<FolderButtonTarget> createFolderTargets(List<FolderButton> folderButtons) {
-        EnoughFolders.LOGGER.debug("Creating JEI folder targets - Number of folder buttons available: {}", 
-            folderButtons.size());
-        DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "Getting JEI folder targets");
-        
-        List<FolderButtonTarget> targets = JEIFolderTargetFactory
-            .getInstance()
-            .createTargets(folderButtons);
-        
-        DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, "Created {} JEI folder targets", targets.size());
-        return targets;
+    public List<? extends FolderTarget> createFolderTargets(List<FolderButton> folderButtons) {
+        // Return empty list as drag and drop functionality has been removed
+        return List.of();
     }
+
 }

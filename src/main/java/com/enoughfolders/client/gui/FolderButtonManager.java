@@ -1,14 +1,7 @@
 package com.enoughfolders.client.gui;
 
-import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.FolderManager;
-import com.enoughfolders.di.IntegrationProviderRegistry;
-import com.enoughfolders.integrations.api.FolderTarget;
-import com.enoughfolders.integrations.api.RecipeViewingIntegration;
-import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
-import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
-import com.enoughfolders.integrations.emi.gui.targets.EMIFolderTarget;
 import com.enoughfolders.util.DebugLogger;
 import net.minecraft.client.gui.components.Button;
 
@@ -172,72 +165,5 @@ public class FolderButtonManager implements LayoutManager.LayoutChangeListener {
         if (!folderButtons.isEmpty()) {
             initFolderButtons(isAddingFolder);
         }
-    }
-    
-    /**
-     * Gets folder targets for all folder buttons from a specific integration.
-     *
-     * @param <T> The type of folder targets to return
-     * @param integrationClassName The fully qualified class name of the integration to use
-     * @param targetClass The class of the target type to cast to
-     * @return List of folder targets for drag-and-drop, or an empty list if the integration is not available
-     */
-    @SuppressWarnings("unchecked")
-    private <T extends FolderTarget> List<T> getFolderTargets(String integrationClassName, Class<T> targetClass) {
-        return IntegrationProviderRegistry.getIntegrationByClassName(integrationClassName)
-            .filter(integration -> integration instanceof RecipeViewingIntegration)
-            .map(integration -> (RecipeViewingIntegration) integration)
-            .filter(RecipeViewingIntegration::isAvailable)
-            .map(integration -> {
-                List<?> targets = integration.createFolderTargets(folderButtons);
-                // Cast the targets to the requested type
-                return (List<T>) targets;
-            })
-            .orElse(new ArrayList<>());
-    }
-    
-    /**
-     * Gets JEI-specific folder targets for all folder buttons.
-     *
-     * @return List of JEI folder button targets for drag-and-drop
-     */
-    public List<FolderButtonTarget> getJEIFolderTargets() {
-        EnoughFolders.LOGGER.debug("Building JEI folder targets - Number of folder buttons available: {}", folderButtons.size());
-        return getFolderTargets("com.enoughfolders.integrations.jei.core.JEIIntegration", FolderButtonTarget.class);
-    }
-    
-    /**
-     * Gets REI-specific folder targets for all folder buttons.
-     *
-     * @return List of REI folder button targets for drag-and-drop
-     */
-    public List<REIFolderTarget> getREIFolderTargets() {
-        EnoughFolders.LOGGER.debug("Building REI folder targets - Number of folder buttons available: {}", folderButtons.size());
-        return getFolderTargets("com.enoughfolders.integrations.rei.core.REIIntegration", REIFolderTarget.class);
-    }
-    
-    /**
-     * Gets EMI-specific folder targets for all folder buttons.
-     *
-     * @return List of EMI folder targets for drag-and-drop
-     */
-    public List<EMIFolderTarget> getEMIFolderTargets() {
-        EnoughFolders.LOGGER.debug("Building EMI folder targets - Number of folder buttons available: {}", folderButtons.size());
-        return getFolderTargets("com.enoughfolders.integrations.emi.core.EMIIntegration", EMIFolderTarget.class);
-    }
-    
-    /**
-     * Gets folder targets for all folder buttons
-     *
-     * @param integrationClassName The class name of the integration to use
-     * @return List of folder targets for drag-and-drop
-     */
-    public List<? extends FolderTarget> getFolderTargetsForIntegration(String integrationClassName) {
-        return IntegrationProviderRegistry.getIntegrationByClassName(integrationClassName)
-            .filter(integration -> integration instanceof RecipeViewingIntegration)
-            .map(integration -> (RecipeViewingIntegration) integration)
-            .filter(RecipeViewingIntegration::isAvailable)
-            .map(integration -> integration.createFolderTargets(folderButtons))
-            .orElse(new ArrayList<>());
     }
 }

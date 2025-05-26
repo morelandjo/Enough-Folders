@@ -250,26 +250,8 @@ public class ClientEventHandler {
                 }
             }
             
-            // Special case for JEI recipe screen click handling with additional functionality
-            try {
-                Optional<JEIIntegration> jeiIntegration = DependencyProvider.get(JEIIntegration.class);
-                if (jeiIntegration.isPresent() && jeiIntegration.get().isRecipeScreen(currentScreen) && 
-                    jeiIntegration.get().getLastFolderScreen().isPresent()) {
-                    Class<?> recipesGuiClass = Class.forName("mezz.jei.api.runtime.IRecipesGui");
-                    if (recipesGuiClass.isInstance(currentScreen)) {
-                        boolean handled = com.enoughfolders.integrations.jei.drag.managers.RecipeGuiManager.handleMouseClick(
-                            currentScreen, event.getMouseX(), event.getMouseY(), event.getButton());
-                        if (handled) {
-                            event.setCanceled(true);
-                        }
-                    }
-                }
-            } catch (ClassNotFoundException e) {
-                // JEI is not installed
-            } catch (Exception e) {
-                DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, 
-                    "Error handling JEI recipe manager click: {}", e.getMessage());
-            }
+            // JEI recipe screen drag handling has been removed
+            // All recipe interactions are now handled through standard integration click handlers
         }
     }
     

@@ -5,11 +5,11 @@ import com.enoughfolders.di.providers.EMIIntegrationProvider;
 import com.enoughfolders.di.providers.JEIIntegrationProvider;
 import com.enoughfolders.di.providers.REIIntegrationProvider;
 import com.enoughfolders.integrations.ModIntegration;
-import com.enoughfolders.integrations.api.IngredientDragProvider;
 import com.enoughfolders.integrations.api.RecipeViewingIntegration;
 import com.enoughfolders.integrations.ftb.core.FTBLibraryIntegration;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -73,7 +73,7 @@ public class IntegrationProviderRegistry {
         // Initialize all registered integrations
         instances.forEach(integration -> {
             integration.initialize();
-            integration.registerDragAndDrop();
+            integration.registerDragAndDrop(); // Note: Drag and drop functionality has been removed
         });
         
         initialized = true;
@@ -175,14 +175,13 @@ public class IntegrationProviderRegistry {
     
     /**
      * Find ingredient drag providers.
+     * NOTE: Drag and drop functionality has been removed - this method returns empty list.
      * 
-     * @return List of ingredient drag providers
+     * @return Empty list as drag functionality has been removed
      */
-    public static List<IngredientDragProvider> findIngredientDragProviders() {
-        return instances.stream()
-                .filter(integration -> integration instanceof IngredientDragProvider)
-                .map(integration -> (IngredientDragProvider) integration)
-                .collect(Collectors.toList());
+    @Deprecated
+    public static List<Object> findIngredientDragProviders() {
+        return Collections.emptyList();
     }
     
     /**

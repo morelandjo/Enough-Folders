@@ -1,13 +1,8 @@
 package com.enoughfolders.integrations.jei.gui.handlers;
 
 import com.enoughfolders.client.gui.FolderScreen;
-import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
-import com.enoughfolders.integrations.jei.gui.targets.FolderGhostIngredientTarget;
-import com.enoughfolders.integrations.jei.gui.targets.FolderTargetFactory;
 import com.enoughfolders.util.DebugLogger;
-import mezz.jei.api.gui.handlers.IGhostIngredientHandler;
 import mezz.jei.api.gui.handlers.IGlobalGuiHandler;
-import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.runtime.IClickableIngredient;
 import mezz.jei.api.runtime.IRecipesGui;
 import net.minecraft.client.Minecraft;
@@ -17,14 +12,13 @@ import net.minecraft.client.renderer.Rect2i;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 /**
  * Global handler for JEI recipe screens.
+ * Handles GUI area exclusions to prevent JEI overlay conflicts.
  */
-public class RecipeScreenHandler implements IGlobalGuiHandler, IGhostIngredientHandler<Screen>, FolderGhostIngredientTarget {
+public class RecipeScreenHandler implements IGlobalGuiHandler {
     
     // Cache the exclusion areas to avoid recalculating them frequently
     private static Collection<Rect2i> cachedAreas = new ArrayList<>();
@@ -75,90 +69,5 @@ public class RecipeScreenHandler implements IGlobalGuiHandler, IGhostIngredientH
     public Optional<IClickableIngredient<?>> getClickableIngredientUnderMouse(double mouseX, double mouseY) {
         //no clickable ingredients
         return Optional.empty();
-    }
-    
-    /**
-     * Implementation of IGhostIngredientHandler methods
-     */
-    @Override
-    @Nonnull
-    public <I> List<Target<I>> getTargetsTyped(@Nonnull Screen gui, @Nonnull ITypedIngredient<I> ingredient, boolean doStart) {
-        List<Target<I>> targets = new ArrayList<>();
-        
-        if (!(gui instanceof IRecipesGui)) {
-            return targets;
-        }
-        
-        DebugLogger.debugValues(DebugLogger.Category.JEI_INTEGRATION,
-            "RecipeScreenHandler getting targets for GUI: {}, ingredient type: {}, doStart: {}", 
-            gui.getClass().getSimpleName(), 
-            ingredient.getIngredient().getClass().getSimpleName(), 
-            doStart);
-        
-        // Get the folder screen
-        Optional<FolderScreen> folderScreenOpt = JEIRecipeGuiHandler.getLastFolderScreen();
-        if (folderScreenOpt.isEmpty()) {
-            return targets;
-        }
-        
-        FolderScreen folderScreen = folderScreenOpt.get();
-        
-        // Use the factory to create all targets for this folder screen
-        targets.addAll(FolderTargetFactory.createAllTargets(folderScreen, this));
-        
-        DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, 
-            "Total targets returned: {}", targets.size());
-        return targets;
-    }
-    
-    @Override
-    public void onComplete() {
-        DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "RecipeScreenHandler.onComplete called");
-    }
-    
-    @Override
-    public boolean shouldHighlightTargets() {
-        return true;
-    }
-    
-    // Implementation of FolderGhostIngredientTarget interface
-    @Override
-    public Rect2i getContentDropArea() {
-        Optional<FolderScreen> folderScreenOpt = JEIRecipeGuiHandler.getLastFolderScreen();
-        if (folderScreenOpt.isPresent()) {
-            FolderScreen folderScreen = folderScreenOpt.get();
-            return folderScreen.getContentDropArea();
-        }
-        return new Rect2i(0, 0, 0, 0); // Empty area if no folder screen
-    }
-    
-    @Override
-    public Rect2i getEntireFolderArea() {
-        Optional<FolderScreen> folderScreenOpt = JEIRecipeGuiHandler.getLastFolderScreen();
-        if (folderScreenOpt.isPresent()) {
-            FolderScreen folderScreen = folderScreenOpt.get();
-            return folderScreen.getEntireFolderArea();
-        }
-        return new Rect2i(0, 0, 0, 0); // Empty area if no folder screen
-    }
-    
-    @Override
-    public List<FolderButtonTarget> getFolderTargets() {
-        Optional<FolderScreen> folderScreenOpt = JEIRecipeGuiHandler.getLastFolderScreen();
-        if (folderScreenOpt.isPresent()) {
-            FolderScreen folderScreen = folderScreenOpt.get();
-            List<FolderButtonTarget> targets = folderScreen.getFolderTargets();
-            DebugLogger.debugValue(DebugLogger.Category.JEI_INTEGRATION, 
-                "RecipeScreenHandler returning {} folder targets", targets.size());
-            return targets;
-        }
-        return Collections.emptyList();
-    }
-    
-    @Override
-    public void onIngredientAdded() {
-        // Notify the folder screen that an ingredient was added
-        Optional<FolderScreen> folderScreenOpt = JEIRecipeGuiHandler.getLastFolderScreen();
-        folderScreenOpt.ifPresent(FolderScreen::onIngredientAdded);
     }
 }

@@ -4,18 +4,13 @@ import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.gui.FolderButton;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.client.gui.IngredientSlot;
-import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.di.DependencyProvider;
 import com.enoughfolders.integrations.api.FolderTarget;
-import com.enoughfolders.integrations.api.IngredientDragProvider;
 import com.enoughfolders.integrations.api.RecipeViewingIntegration;
 import com.enoughfolders.integrations.jei.core.JEIIntegration;
-import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
 import com.enoughfolders.integrations.rei.core.REIIntegration;
-import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
 import com.enoughfolders.integrations.emi.core.EMIIntegration;
-import com.enoughfolders.integrations.emi.gui.targets.EMIFolderTarget;
 import com.enoughfolders.util.DebugLogger;
 
 import net.minecraft.client.gui.screens.Screen;
@@ -320,52 +315,21 @@ public class IntegrationHandler {
 
     /**
      * Gets folder targets for all folder buttons, using the available recipe viewing integration.
+     * Since drag and drop functionality has been removed, this returns stub targets.
      *
      * @param folderButtons The folder buttons to get targets for
      * @return List of folder targets for the available recipe viewing integration
-     */
-    public List<FolderButtonTarget> getFolderTargets(List<FolderButton> folderButtons) {
-        // This method returns JEI targets to match the interface required by FolderGhostIngredientTarget
-        
-        // Try REI first
-        if (isIntegrationAvailable("rei")) {
-            DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using REI folder targets");
-            // When REI is present, still return JEI targets since the interface requires FolderButtonTarget
-            return getJEIFolderTargets(folderButtons);
-        }
-        
-        // Try JEI
-        if (isIntegrationAvailable("jei")) {
-            DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using JEI folder targets");
-            return getJEIFolderTargets(folderButtons);
-        }
-        
-        // No recipe viewing integration available
-        DebugLogger.debug(DebugLogger.Category.INTEGRATION, "No recipe viewing integration available");
-        return new ArrayList<>();
-    }
-
-    /**
-     * Gets folder targets with the specified target type, using available recipe viewing integrations.
-     *
-     * @param <T> The type of folder targets to return
-     * @param folderButtons The folder buttons to get targets for
-     * @return List of typed folder targets for the available recipe viewing integration
      */
     @SuppressWarnings("unchecked")
     public <T extends FolderTarget> List<T> getTypedFolderTargets(List<FolderButton> folderButtons) {
         // Try integrations in the defined priority order (rei, jei, emi)
         for (String integrationId : PRIORITY_ORDER) {
             if (isIntegrationAvailable(integrationId)) {
-                if ("rei".equals(integrationId)) {
-                    DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using REI folder targets");
-                    return (List<T>) getREIFolderTargets(folderButtons);
-                } else if ("jei".equals(integrationId)) {
-                    DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using JEI folder targets");
-                    return (List<T>) getJEIFolderTargets(folderButtons);
-                } else if ("emi".equals(integrationId)) {
-                    DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Using EMI folder targets");
-                    return (List<T>) getEMIFolderTargets(folderButtons);
+                Optional<RecipeViewingIntegration> integration = getRecipeViewingIntegration(integrationId);
+                if (integration.isPresent()) {
+                    DebugLogger.debugValue(DebugLogger.Category.INTEGRATION, 
+                        "Using {} folder targets (stub)", integrationId.toUpperCase());
+                    return (List<T>) integration.get().createFolderTargets(folderButtons);
                 }
             }
         }
@@ -375,111 +339,7 @@ public class IntegrationHandler {
         return new ArrayList<>();
     }
 
-    /**
-     * Gets JEI-specific folder targets for the given folder buttons.
-     *
-     * @param folderButtons The folder buttons to get targets for
-     * @return List of JEI folder button targets
-     */
-    public List<FolderButtonTarget> getJEIFolderTargets(List<FolderButton> folderButtons) {
-        EnoughFolders.LOGGER.debug("Building JEI folder targets - Number of folder buttons available: {}", folderButtons.size());
-        return getFolderTargets("jei", folderButtons);
-    }
 
-    /**
-     * Gets REI-specific folder targets for the given folder buttons.
-     *
-     * @param folderButtons The folder buttons to get targets for
-     * @return List of REI folder targets
-     */
-    public List<REIFolderTarget> getREIFolderTargets(List<FolderButton> folderButtons) {
-        EnoughFolders.LOGGER.debug("Building REI folder targets - Number of folder buttons available: {}", folderButtons.size());
-        return getFolderTargets("rei", folderButtons);
-    }
-    
-    /**
-     * Gets EMI-specific folder targets for the given folder buttons.
-     *
-     * @param folderButtons The folder buttons to get targets for
-     * @return List of EMI folder targets
-     */
-    public List<EMIFolderTarget> getEMIFolderTargets(List<FolderButton> folderButtons) {
-        EnoughFolders.LOGGER.debug("Building EMI folder targets - Number of folder buttons available: {}", folderButtons.size());
-        return getFolderTargets("emi", folderButtons);
-    }
-
-    /**
-     * Gets folder targets for a specific integration.
-     *
-     * @param <T> The type of folder targets to return
-     * @param integrationId The ID of the integration to use
-     * @param folderButtons The folder buttons to get targets for
-     * @return List of folder targets, or an empty list if the integration is not available
-     */
-    @SuppressWarnings("unchecked")
-    private <T extends FolderTarget> List<T> getFolderTargets(String integrationId, List<FolderButton> folderButtons) {
-        Optional<RecipeViewingIntegration> integration = getRecipeViewingIntegration(integrationId);
-        
-        if (integration.isPresent()) {
-            RecipeViewingIntegration recipeViewer = integration.get();
-            List<? extends FolderTarget> targets = recipeViewer.createFolderTargets(folderButtons);
-            
-            DebugLogger.debugValues(DebugLogger.Category.INTEGRATION, 
-                "Created {} folder targets for {} integration", 
-                targets.size(), recipeViewer.getDisplayName());
-            
-            return (List<T>) targets;
-        }
-        
-        return new ArrayList<>();
-    }
-
-    /**
-     * Attempts to handle an ingredient drop using a specific integration.
-     *
-     * @param integrationId The ID of the integration to use
-     * @param folder The folder to drop the ingredient onto
-     * @return true if the drop was handled, false otherwise
-     */
-    private boolean tryHandleIngredientDrop(String integrationId, Folder folder) {
-        try {
-            Optional<IngredientDragProvider> provider = getIngredientDragProvider(integrationId);
-            
-            return provider
-                .filter(IngredientDragProvider::isAvailable)
-                .filter(IngredientDragProvider::isIngredientBeingDragged)
-                .map(dragProvider -> dragProvider.handleIngredientDrop(folder))
-                .orElse(false);
-        } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Error handling ingredient drop for " + integrationId, e);
-            return false;
-        }
-    }
-
-    /**
-     * Process an ingredient drop at the given mouse position.
-     *
-     * @param mouseX The mouse x position
-     * @param mouseY The mouse y position
-     * @param folderButtons The list of folder buttons to check
-     * @return true if the drop was handled, false otherwise
-     */
-    public boolean handleIngredientDrop(double mouseX, double mouseY, List<FolderButton> folderButtons) {
-        // Try to find a folder button at the given coordinates
-        for (FolderButton button : folderButtons) {
-            if (button.isHovered()) {
-                // Try to handle the drop with each integration
-                for (String integrationId : PRIORITY_ORDER) {
-                    if (tryHandleIngredientDrop(integrationId, button.getFolder())) {
-                        return true;
-                    }
-                }
-                break; // Stop after first matching button
-            }
-        }
-        
-        return false;
-    }
 
     /**
      * Gets a RecipeViewingIntegration for the given integration ID.
@@ -500,30 +360,6 @@ public class IntegrationHandler {
             return DependencyProvider.get(EMIIntegration.class)
                 .map(emi -> (RecipeViewingIntegration) emi)
                 .filter(RecipeViewingIntegration::isAvailable);
-        }
-        
-        return Optional.empty();
-    }
-
-    /**
-     * Gets an IngredientDragProvider for the given integration ID.
-     *
-     * @param integrationId The ID of the integration to get
-     * @return Optional containing the provider, or empty if not available
-     */
-    private Optional<IngredientDragProvider> getIngredientDragProvider(String integrationId) {
-        if ("jei".equals(integrationId)) {
-            return DependencyProvider.get(JEIIntegration.class)
-                .map(jei -> (IngredientDragProvider) jei)
-                .filter(IngredientDragProvider::isAvailable);
-        } else if ("rei".equals(integrationId)) {
-            return DependencyProvider.get(REIIntegration.class)
-                .map(rei -> (IngredientDragProvider) rei)
-                .filter(IngredientDragProvider::isAvailable);
-        } else if ("emi".equals(integrationId)) {
-            return DependencyProvider.get(EMIIntegration.class)
-                .map(emi -> (IngredientDragProvider) emi)
-                .filter(IngredientDragProvider::isAvailable);
         }
         
         return Optional.empty();

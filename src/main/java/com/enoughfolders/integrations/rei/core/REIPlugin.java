@@ -181,19 +181,6 @@ public class REIPlugin implements REIClientPlugin {
     @Override
     public void registerTransferHandlers(TransferHandlerRegistry registry) {
         DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
-            "Registering transfer handlers for REI integration");
-        
-        // Register our transfer handler for drag and drop
-        try {
-            Class<?> handlerClass = Class.forName("com.enoughfolders.integrations.rei.handlers.REITransferHandler");
-            Object handler = handlerClass.getDeclaredConstructor().newInstance();
-            registry.register((me.shedaniel.rei.api.client.registry.transfer.TransferHandler) handler);
-            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
-                "Successfully registered REI transfer handler");
-        } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Failed to register REITransferHandler: " + e.getMessage());
-            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                "Failed to register REI transfer handler: {}", e.getMessage());
-        }
+            "Drag and drop functionality has been removed - not registering transfer handlers");
     }
 }

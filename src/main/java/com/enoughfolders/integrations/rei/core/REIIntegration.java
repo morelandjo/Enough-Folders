@@ -6,10 +6,9 @@ import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.integrations.ModIntegration;
-import com.enoughfolders.integrations.api.IngredientDragProvider;
+import com.enoughfolders.integrations.api.FolderTargetStub;
 import com.enoughfolders.integrations.api.RecipeViewingIntegration;
 import com.enoughfolders.integrations.rei.gui.handlers.REIFolderIngredientHandler;
-import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
 import com.enoughfolders.util.DebugLogger;
 
 import net.minecraft.client.gui.screens.Screen;
@@ -22,7 +21,7 @@ import java.util.Optional;
 /**
  * Integration with Roughly Enough Items (REI) mod.
  */
-public class REIIntegration implements ModIntegration, IngredientDragProvider, RecipeViewingIntegration {
+public class REIIntegration implements ModIntegration, RecipeViewingIntegration {
     
     /**
      * Creates a new REI integration instance.
@@ -284,80 +283,7 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
         return Optional.empty();
     }
     
-    /**
-     * Gets the ingredient currently under the mouse in the REI UI.
-     * 
-     * @return Optional containing the ingredient, or empty if none is found
-     */
-    public Optional<Object> getDraggedIngredient() {
-        try {
-            if (!isAvailable()) {
-                EnoughFolders.LOGGER.debug("REI integration not available, can't get dragged ingredient");
-                return Optional.empty();
-            }
-            
-            // Check if REI is fully initialized
-            try {
-                // Get REI runtime
-                me.shedaniel.rei.api.client.REIRuntime runtime = me.shedaniel.rei.api.client.REIRuntime.getInstance();
-                if (runtime == null) {
-                    EnoughFolders.LOGGER.debug("REI runtime is null, can't get dragged ingredient");
-                    return Optional.empty();
-                }
-                
-                // Check if REI is visible
-                if (!runtime.isOverlayVisible()) {
-                    EnoughFolders.LOGGER.debug("REI overlay is not visible");
-                    return Optional.empty();
-                }
-                
-                // Get the REI overlay
-                Optional<me.shedaniel.rei.api.client.overlay.ScreenOverlay> overlayOpt = runtime.getOverlay();
-                if (overlayOpt.isEmpty()) {
-                    EnoughFolders.LOGGER.debug("REI overlay is not available");
-                    return Optional.empty();
-                }
-                
-                me.shedaniel.rei.api.client.overlay.ScreenOverlay overlay = overlayOpt.get();
-                
-                // Try to get focused entry from the main entry list
-                me.shedaniel.rei.api.client.overlay.OverlayListWidget entryList = overlay.getEntryList();
-                if (entryList != null) {
-                    me.shedaniel.rei.api.common.entry.EntryStack<?> focusedStack = getSafelyFocusedStack(entryList);
-                    if (focusedStack != null && !focusedStack.isEmpty()) {
-                        EnoughFolders.LOGGER.debug("Found focused entry in main entry list");
-                        return Optional.of(focusedStack);
-                    }
-                }
-                
-                // If not found in main list, try favorites list
-                Optional<me.shedaniel.rei.api.client.overlay.OverlayListWidget> favoritesListOpt = overlay.getFavoritesList();
-                if (favoritesListOpt.isPresent()) {
-                    me.shedaniel.rei.api.client.overlay.OverlayListWidget favoritesList = favoritesListOpt.get();
-                    if (favoritesList != null) {
-                        me.shedaniel.rei.api.common.entry.EntryStack<?> focusedStack = getSafelyFocusedStack(favoritesList);
-                        if (focusedStack != null && !focusedStack.isEmpty()) {
-                            EnoughFolders.LOGGER.debug("Found focused entry in favorites list");
-                            return Optional.of(focusedStack);
-                        }
-                    }
-                }
-                
-                EnoughFolders.LOGGER.debug("No focused entry found in any REI list");
-            } catch (AssertionError e) {
-                // This is expected if REI is not fully initialized
-                EnoughFolders.LOGGER.debug("REI internals not initialized yet: {}", e.getMessage());
-                return Optional.empty();
-            }
-            
-        } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Error getting dragged ingredient: {}", e.getMessage());
-            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                "Exception details: {}", e);
-        }
-        
-        return Optional.empty();
-    }
+
     
     /**
      * Gets the ingredient currently under the mouse cursor in the REI UI.
@@ -728,36 +654,16 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
     }
 
     /**
-     * Processes a drop of the currently dragged ingredient onto a folder.
+     * Stub for ingredient drop on folder - no longer supports drag-and-drop.
      * 
-     * @param folder The folder to add the ingredient to
-     * @return True if the drop was successful, false otherwise
+     * @param folder The folder that would receive the ingredient
+     * @return Always returns false as drag functionality is disabled
      */
-    @Override
     public boolean handleIngredientDrop(Folder folder) {
-        Optional<Object> draggedIngredient = getDraggedIngredient();
-        if (draggedIngredient.isEmpty()) {
-            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "No ingredient is being dragged");
-            return false;
-        }
-        
-        Object ingredient = draggedIngredient.get();
-        DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
-            "Processing REI dragged ingredient drop for folder: {}", folder.getName());
-        
-        // Convert ingredient to StoredIngredient
-        Optional<StoredIngredient> storedIngredient = storeIngredient(ingredient);
-        if (storedIngredient.isEmpty()) {
-            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "Failed to convert ingredient to StoredIngredient");
-            return false;
-        }
-        
-        // Add ingredient to folder
-        EnoughFolders.getInstance().getFolderManager().addIngredient(folder, storedIngredient.get());
-        
-        DebugLogger.debugValues(DebugLogger.Category.REI_INTEGRATION,
-            "Successfully added REI ingredient to folder: {}", folder.getName());
-        return true;
+        // Drag functionality has been removed
+        DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
+            "Drag and drop functionality has been removed");
+        return false;
     }
     
     /**
@@ -870,23 +776,22 @@ public class REIIntegration implements ModIntegration, IngredientDragProvider, R
     }
     
     /**
-     * Creates folder targets that can be used for ingredient drops from REI.
+     * Creates stub folder targets that replace the drag-and-drop functionality.
      * 
-     * @param folderButtons The list of folder buttons to create targets for
-     * @return A list of folder targets compatible with REI
+     * @param folderButtons The list of folder buttons
+     * @return List of stub targets as drag-and-drop functionality has been removed
      */
     @Override
-    public List<REIFolderTarget> createFolderTargets(List<FolderButton> folderButtons) {
-        EnoughFolders.LOGGER.debug("Creating REI folder targets - Number of folder buttons available: {}", 
-            folderButtons.size());
-        DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, "Getting REI folder targets");
+    public List<FolderTargetStub> createFolderTargets(List<FolderButton> folderButtons) {
+        // Drag functionality has been removed, so we return stub targets
+        DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
+            "Drag and drop functionality has been removed - creating stub folder targets");
         
-        List<REIFolderTarget> targets = com.enoughfolders.integrations.rei.gui.targets.REIFolderTargetFactory
-            .getInstance()
-            .createTargets(folderButtons);
-        
-        DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, "Created {} REI folder targets", targets.size());
-        return targets;
+        List<FolderTargetStub> stubTargets = new java.util.ArrayList<>();
+        for (FolderButton button : folderButtons) {
+            stubTargets.add(new FolderTargetStub(button.getFolder()));
+        }
+        return stubTargets;
     }
     
     /**

@@ -55,9 +55,10 @@ public interface ModIntegration {
     
     /**
      * Register drag and drop support with the integrated mod.
+     * NOTE: Drag and drop functionality has been removed - this method is kept for compatibility.
      */
     default void registerDragAndDrop() {
-        // Default implementation does nothing
+        // Drag and drop functionality has been removed - method kept for compatibility
     }
     
     /**

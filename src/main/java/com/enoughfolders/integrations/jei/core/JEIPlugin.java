@@ -2,7 +2,6 @@ package com.enoughfolders.integrations.jei.core;
 
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.di.DependencyProvider;
-import com.enoughfolders.integrations.jei.gui.handlers.DragDropHandler;
 import com.enoughfolders.integrations.jei.gui.handlers.FolderScreenHandler;
 import com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler;
 import com.enoughfolders.integrations.jei.gui.handlers.RecipeScreenHandler;
@@ -11,7 +10,6 @@ import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.resources.ResourceLocation;
 
@@ -73,9 +71,6 @@ public class JEIPlugin implements IModPlugin {
             // Register container screen handler to provide exclusion zones for folders
             FolderScreenHandler containerHandler = new FolderScreenHandler();
             registration.addGuiContainerHandler((Class) AbstractContainerScreen.class, containerHandler);
-            
-            // Register ghost ingredient handler for regular container screens
-            registration.addGhostIngredientHandler((Class) AbstractContainerScreen.class, containerHandler);
             EnoughFolders.LOGGER.info("Registered FolderScreenHandler for AbstractContainerScreen");
             
             // Register JEI recipe GUI handler for tracking folder screens
@@ -88,41 +83,6 @@ public class JEIPlugin implements IModPlugin {
             registration.addGlobalGuiHandler(globalHandler);
             EnoughFolders.LOGGER.info("Registered RecipeScreenHandler as global GUI handler");
             
-            // Create drag-drop handler for folder targets
-            DragDropHandler dragDropHandler = new DragDropHandler();
-            
-            // Register for RecipesGui specifically
-            try {
-                // Try to get JEI's RecipesGui class
-                Class<?> recipesGuiClass = Class.forName("mezz.jei.gui.recipes.RecipesGui");
-                if (Screen.class.isAssignableFrom(recipesGuiClass)) {
-                    // Register for the RecipesGui class
-                    EnoughFolders.LOGGER.info("Registering DragDropHandler for JEI RecipesGui");
-                    registration.addGhostIngredientHandler((Class) recipesGuiClass, dragDropHandler);
-                }
-            } catch (ClassNotFoundException e) {
-                EnoughFolders.LOGGER.warn("Could not find JEI's RecipesGui class", e);
-            }
-            
-            // Register the handler for any ScreenWithFolderUI subclasses if present
-            try {
-                // Get any screens that implement FolderGhostIngredientTarget interface
-                Class<?>[] screenClasses = {
-                    Class.forName("com.enoughfolders.client.gui.screens.FolderConfigScreen"),
-                    Class.forName("mezz.jei.gui.recipes.RecipesGui")
-                };
-                
-                for (Class<?> screenClass : screenClasses) {
-                    if (Screen.class.isAssignableFrom(screenClass)) {
-                        EnoughFolders.LOGGER.info("Registering DragDropHandler for screen: {}", screenClass.getSimpleName());
-                        registration.addGhostIngredientHandler((Class) screenClass, dragDropHandler);
-                    }
-                }
-            } catch (ClassNotFoundException e) {
-                EnoughFolders.LOGGER.debug("Some folder UI screen classes not found", e);
-            }
-            
-            EnoughFolders.LOGGER.info("Registered DragDropHandler for folder targets");
         } catch (Exception e) {
             EnoughFolders.LOGGER.error("Error registering JEI handlers", e);
         }

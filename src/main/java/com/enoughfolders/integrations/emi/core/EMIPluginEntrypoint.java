@@ -1,7 +1,6 @@
 package com.enoughfolders.integrations.emi.core;
 
 import com.enoughfolders.client.event.ClientEventHandler;
-import com.enoughfolders.integrations.emi.gui.handlers.EMIFolderDragDropHandler;
 import com.enoughfolders.util.DebugLogger;
 import dev.emi.emi.api.EmiExclusionArea;
 import dev.emi.emi.api.EmiPlugin;
@@ -38,8 +37,11 @@ public class EMIPluginEntrypoint implements EmiPlugin {
             // Register exclusion zones for container screens where folder screens might appear
             registerExclusionZones(registry);
             
-            // Register drag and drop handlers for EMI ingredients
-            EMIFolderDragDropHandler.register(registry);
+            // Drag and drop functionality has been removed from EnoughFolders
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "EMI drag handling skipped - functionality removed", ""
+            );
             
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,

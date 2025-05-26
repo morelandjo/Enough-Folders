@@ -182,14 +182,9 @@ public class FolderInputHandler {
             return false;
         }
         
-        // Handle ingredient drag and drop via integrations
-        if (folderScreen != null) {
-            if (folderScreen.getIntegrationHandler().handleIngredientDrop(
-                    mouseX, mouseY, contentState.getFolderButtons())) {
-                onIngredientAdded.run();
-                return true;
-            }
-        }
+        // Drag and drop functionality has been removed
+        // Mouse release events are now only used for click completion, not drag handling
+        DebugLogger.debug(DebugLogger.Category.MOUSE, "Mouse release processed (drag functionality disabled)");
         
         return false;
     }

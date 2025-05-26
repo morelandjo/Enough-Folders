@@ -1,8 +1,6 @@
 package com.enoughfolders.client.gui;
 
-import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.Folder;
-import com.enoughfolders.di.IntegrationProviderRegistry;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -75,34 +73,6 @@ public class FolderButton extends Button {
                 0xFFFFFF
         );
         
-        // Highlight if an ingredient is being dragged over
-        highlightForDrag(guiGraphics, mouseX, mouseY);
-    }
-    
-    /**
-     * Highlights the folder button if an ingredient is being dragged over it.
-     *
-     * @param graphics The graphics context to render with
-     * @param mouseX The mouse x position
-     * @param mouseY The mouse y position
-     */
-    private void highlightForDrag(GuiGraphics graphics, int mouseX, int mouseY) {
-        if (!isPointInButton(mouseX, mouseY)) {
-            return;
-        }
-        
-        // Check all drag providers for any dragged ingredients
-        for (var provider : IntegrationProviderRegistry.findIngredientDragProviders()) {
-            if (provider.isAvailable() && provider.isIngredientBeingDragged()) {
-                EnoughFolders.LOGGER.debug("Folder button '{}' highlighting for {} drag at {},{}", 
-                    folder.getName(), provider.getDisplayName(), mouseX, mouseY);
-                
-                int highlightColor = 0x80FFFFFF;
-                graphics.fill(getX() - 1, getY() - 1, getX() + width + 1, getY() + height + 1, highlightColor);
-                
-                break;
-            }
-        }
     }
     
     /**
@@ -141,37 +111,5 @@ public class FolderButton extends Button {
      */
     public void onClick() {
         onPress.onPress(this);
-    }
-    
-    /**
-     * Tries to handle an ingredient drop on this folder button.
-     *
-     * @param mouseX The mouse X coordinate
-     * @param mouseY The mouse Y coordinate
-     * @return True if a drop was handled, false otherwise
-     */
-    public boolean tryHandleDrop(int mouseX, int mouseY) {
-        if (!isPointInButton(mouseX, mouseY)) {
-            return false;
-        }
-        
-        EnoughFolders.LOGGER.debug("Attempting drop on folder button: {}", folder.getName());
-        
-        // Check for any available integration with drag and drop capability
-        for (var integration : IntegrationProviderRegistry.findIngredientDragProviders()) {
-            if (integration.isAvailable() && integration.isIngredientBeingDragged()) {
-                EnoughFolders.LOGGER.info("Handling drop from {} on folder button: {}", 
-                    integration.getDisplayName(), folder.getName());
-                
-                boolean success = integration.handleIngredientDrop(folder);
-                if (success) {
-                    EnoughFolders.LOGGER.info("Successfully added ingredient from {} to folder: {}", 
-                        integration.getDisplayName(), folder.getName());
-                    return true;
-                }
-            }
-        }
-        
-        return false;
     }
 }

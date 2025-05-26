@@ -3,11 +3,10 @@ package com.enoughfolders.integrations.emi.core;
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.gui.FolderButton;
 import com.enoughfolders.client.gui.FolderScreen;
-import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.integrations.ModIntegration;
 import com.enoughfolders.integrations.api.FolderTarget;
-import com.enoughfolders.integrations.api.IngredientDragProvider;
+import com.enoughfolders.integrations.api.FolderTargetStub;
 import com.enoughfolders.integrations.api.RecipeViewingIntegration;
 import com.enoughfolders.integrations.emi.gui.handlers.EMIFolderIngredientHandler;
 import com.enoughfolders.integrations.util.StackTraceUtils;
@@ -24,7 +23,7 @@ import java.util.Optional;
 /**
  * Integration for EMI (Enough Modding Interface) mod.
  */
-public class EMIIntegration implements ModIntegration, IngredientDragProvider, RecipeViewingIntegration {
+public class EMIIntegration implements ModIntegration, RecipeViewingIntegration {
     
     private boolean initialized = false;
     private boolean available = false;
@@ -118,6 +117,30 @@ public class EMIIntegration implements ModIntegration, IngredientDragProvider, R
         }
     }
     
+    /**
+     * Gets the ingredient currently under the mouse cursor in EMI.
+     * This method is used by keybind handlers to detect which ingredient to add to folders.
+     * 
+     * @return Optional containing the ingredient under mouse, or empty if none
+     */
+    public Optional<Object> getIngredientUnderMouse() {
+        if (!available || !initialized) {
+            return Optional.empty();
+        }
+        
+        try {
+            Object hoveredIngredient = EMIRecipeManager.getHoveredIngredient();
+            return Optional.ofNullable(hoveredIngredient);
+        } catch (Exception e) {
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "Error getting ingredient under mouse: {}", 
+                e.getMessage()
+            );
+            return Optional.empty();
+        }
+    }
+    
     @Override
     public void initialize() {
         if (!available || initialized) {
@@ -196,15 +219,9 @@ public class EMIIntegration implements ModIntegration, IngredientDragProvider, R
         try {
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
-                "Registering EMI drag and drop support", ""
-            );
-                        
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "EMI drag and drop support registered", ""
+                "EMI drag and drop registration skipped (functionality removed)", ""
             );
         } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Failed to register EMI drag and drop", e);
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
                 "EMI drag and drop registration failed: {}", 
@@ -213,87 +230,8 @@ public class EMIIntegration implements ModIntegration, IngredientDragProvider, R
         }
     }
     
-    // IngredientDragProvider implementation
-    
-    @Override
-    public Optional<?> getDraggedIngredient() {
-        if (!available) {
-            return Optional.empty();
-        }
-        
-        try {
-            // EMI doesn't have a traditional drag state like JEI/REI
-            return getIngredientUnderMouse();
-        } catch (Exception e) {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Error getting EMI dragged ingredient: {}", 
-                e.getMessage()
-            );
-            return Optional.empty();
-        }
-    }
-    
-    /**
-     * Gets the ingredient currently under the mouse cursor.
-     * 
-     * @return Optional containing the ingredient if found, empty otherwise
-     */
-    public Optional<?> getIngredientUnderMouse() {
-        if (!available) {
-            return Optional.empty();
-        }
-        
-        try {
-            Object hoveredIngredient = EMIRecipeManager.getHoveredIngredient();
-            return Optional.ofNullable(hoveredIngredient);
-        } catch (Exception e) {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Error getting EMI ingredient under mouse: {}", 
-                e.getMessage()
-            );
-            return Optional.empty();
-        }
-    }
-    
-    @Override
-    public boolean handleIngredientDrop(Folder folder) {
-        if (!available) {
-            return false;
-        }
-        
-        try {
-            // Handle ingredient drop by getting the ingredient under mouse and converting it
-            Optional<?> ingredientOpt = getIngredientUnderMouse();
-            if (ingredientOpt.isEmpty()) {
-                return false;
-            }
-            
-            Object ingredient = ingredientOpt.get();
-            Optional<StoredIngredient> storedOpt = storeIngredient(ingredient);
-            if (storedOpt.isEmpty()) {
-                return false;
-            }
-            
-            StoredIngredient storedIngredient = storedOpt.get();
-            folder.addIngredient(storedIngredient);
-            
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Successfully dropped EMI ingredient into folder: {}", storedIngredient.getValue()
-            );
-            
-            return true;
-        } catch (Exception e) {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Error handling EMI ingredient drop: {}", 
-                e.getMessage()
-            );
-            return false;
-        }
-    }
+    // Drag and drop functionality has been removed
+    // Recipe viewing and integration functionality preserved
     
     @Override
     public String getDisplayName() {
@@ -464,11 +402,16 @@ public class EMIIntegration implements ModIntegration, IngredientDragProvider, R
         try {
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
-                "Creating EMI folder targets for {} buttons", 
+                "Creating EMI folder target stubs for {} buttons (drag functionality disabled)", 
                 folderButtons.size()
             );
             
-            return EMIRecipeManager.createFolderTargets(folderButtons);
+            // Return stub targets that disable drag functionality
+            List<FolderTargetStub> targets = new ArrayList<>();
+            for (FolderButton button : folderButtons) {
+                targets.add(new FolderTargetStub(button.getFolder()));
+            }
+            return targets;
         } catch (Exception e) {
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,

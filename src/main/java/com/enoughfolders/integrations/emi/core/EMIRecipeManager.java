@@ -3,7 +3,7 @@ package com.enoughfolders.integrations.emi.core;
 import com.enoughfolders.client.gui.FolderButton;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.integrations.api.FolderTarget;
-import com.enoughfolders.integrations.emi.gui.targets.EMIFolderTargetFactory;
+import com.enoughfolders.integrations.api.FolderTargetStub;
 import com.enoughfolders.util.DebugLogger;
 
 import net.minecraft.client.gui.screens.Screen;
@@ -130,12 +130,10 @@ public class EMIRecipeManager {
                 "Creating EMI folder targets: {}", folderButtons.size()
             );
             
-            // Use the factory to create folder targets
+            // Use stub folder targets (drag functionality removed)
             for (FolderButton button : folderButtons) {
-                FolderTarget target = EMIFolderTargetFactory.getInstance().createTarget(button);
-                if (target != null) {
-                    targets.add(target);
-                }
+                FolderTarget target = new FolderTargetStub(button.getFolder());
+                targets.add(target);
             }
             
         } catch (Exception e) {

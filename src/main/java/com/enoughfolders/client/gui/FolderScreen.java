@@ -7,10 +7,6 @@ import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.FolderManager;
 import com.enoughfolders.client.integration.IntegrationHandler;
 import com.enoughfolders.integrations.api.FolderTarget;
-import com.enoughfolders.integrations.jei.gui.targets.FolderButtonTarget;
-import com.enoughfolders.integrations.jei.gui.targets.FolderGhostIngredientTarget;
-import com.enoughfolders.integrations.rei.gui.targets.REIFolderTarget;
-import com.enoughfolders.integrations.emi.gui.targets.EMIFolderTarget;
 import com.enoughfolders.util.DebugLogger;
 
 import net.minecraft.client.Minecraft;
@@ -28,7 +24,7 @@ import java.util.List;
  * The main folder screen overlay that displays folders and their contents.
  * 
  */
-public class FolderScreen implements FolderGhostIngredientTarget {
+public class FolderScreen {
     
     /**
      * The container screen that this folder screen is overlaying
@@ -505,19 +501,17 @@ public class FolderScreen implements FolderGhostIngredientTarget {
     }
     
     /**
-     * Gets the area where ingredients can be dropped in the active folder.
+     * Gets the area where ingredients can be displayed in the active folder.
      *
-     * @return A rectangle representing the drop area
+     * @return A rectangle representing the content area
      */
-    @Override
     public Rect2i getContentDropArea() {
         return layoutManager.getContentDropArea(isAddingFolder, gridManager.getIngredientColumns());
     }
     
     /**
-     * Called when an ingredient is added to a folder via drag-and-drop.
+     * Refreshes the ingredient grid after ingredients have been added or removed.
      */
-    @Override
     public void onIngredientAdded() {
         refreshIngredientSlots();
     }
@@ -539,44 +533,7 @@ public class FolderScreen implements FolderGhostIngredientTarget {
     public List<FolderButton> getFolderButtons() {
         return buttonManager.getFolderButtons();
     }
-    
-    /**
-     * Gets JEI-specific folder targets for all folder buttons.
-     *
-     * @return List of JEI folder button targets for drag-and-drop
-     */
-    public List<FolderButtonTarget> getJEIFolderTargets() {
-        return buttonManager.getJEIFolderTargets();
-    }
 
-    /**
-     * Gets REI-specific folder targets for all folder buttons.
-     *
-     * @return List of REI folder targets for drag-and-drop
-     */
-    public List<REIFolderTarget> getREIFolderTargets() {
-        return buttonManager.getREIFolderTargets();
-    }
-    
-    /**
-     * Gets EMI-specific folder targets for all folder buttons.
-     *
-     * @return List of EMI folder targets for drag-and-drop
-     */
-    public List<EMIFolderTarget> getEMIFolderTargets() {
-        return buttonManager.getEMIFolderTargets();
-    }
-    
-    /**
-     * Gets folder targets for all folder buttons using the available recipe viewing integration.
-     *
-     * @return List of folder targets for the available recipe viewing integration
-     */
-    @Override
-    public List<FolderButtonTarget> getFolderTargets() {
-        return integrationHandler.getFolderTargets(buttonManager.getFolderButtons());
-    }
-    
     /**
      * Gets folder targets for all folder buttons with the specified target type.
      *
