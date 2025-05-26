@@ -174,15 +174,19 @@ public class LayoutManager {
      * Checks if FTB Library is loaded and if the sidebar would overlap with folder GUI.
      */
     private void checkAndAdjustForFTBSidebar() {
+        // get FTB Library integration
+        Optional<com.enoughfolders.integrations.ftb.core.FTBLibraryIntegration> ftbIntegration = 
+            DependencyProvider.get(com.enoughfolders.integrations.ftb.core.FTBLibraryIntegration.class);
+            
         // Check for FTB Library integration
-        if (com.enoughfolders.integrations.ftb.FTBIntegration.isFTBLibraryLoaded()) {
+        if (ftbIntegration.isPresent() && ftbIntegration.get().isAvailable()) {
             DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Checking for FTB sidebar overlap");
             
             // Create a rectangle representing our current folder GUI position
             Rect2i folderRect = new Rect2i(leftPos, topPos, width, 100);
             
             // Ask FTB integration to adjust the position if needed
-            Rect2i adjustedRect = com.enoughfolders.integrations.ftb.FTBIntegration.avoidExclusionAreas(folderRect);
+            Rect2i adjustedRect = ftbIntegration.get().avoidExclusionAreas(folderRect);
             
             // If position was adjusted, update our position
             if (adjustedRect.getY() != topPos) {
@@ -369,41 +373,6 @@ public class LayoutManager {
         int rowsNeeded = rowsUsed < UIConstants.INGREDIENT_ROWS ? Math.max(rowsUsed + 1, 1) : rowsUsed;
         
         return new int[] { contentStartX, contentStartY, rowsNeeded, verticalOffset };
-    }
-    
-    /**
-     * Gets the content drop area for ingredient dropping.
-     *
-     * @param isAddingFolder Whether we're currently in add folder mode
-     * @param ingredientColumns Number of ingredient columns
-     * @return Rectangle representing the drop area
-     */
-    public Rect2i getContentDropArea(boolean isAddingFolder, int ingredientColumns) {
-        // Only calculate if there is an active folder
-        if (!activeFolderSupplier.get().isPresent()) {
-            return new Rect2i(leftPos + 5, topPos + UIConstants.FOLDER_AREA_HEIGHT + 55, 0, 0);
-        }
-        
-        List<StoredIngredient> ingredients = activeFolderSupplier.get().get().getIngredients();
-        
-        int verticalOffset = isAddingFolder ? UIConstants.INPUT_FIELD_HEIGHT : 0;
-        
-        if (folderRowsCount > 1) {
-            verticalOffset += (folderRowsCount - 1) * UIConstants.FOLDER_ROW_HEIGHT;
-        }
-        
-        // Always ensure at least 3 rows of drop area are available
-        int rowsNeeded = Math.max(3, 1);
-        
-        int gridWidth = ingredientColumns * UIConstants.INGREDIENT_SLOT_SIZE;
-        int gridHeight = rowsNeeded * UIConstants.INGREDIENT_SLOT_SIZE;
-        
-        return new Rect2i(
-                leftPos + 5,
-                topPos + UIConstants.FOLDER_AREA_HEIGHT + 55 + verticalOffset,
-                gridWidth,
-                gridHeight
-        );
     }
     
     /**

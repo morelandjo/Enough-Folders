@@ -1,166 +1,86 @@
 package com.enoughfolders.integrations.emi.core;
 
 import com.enoughfolders.EnoughFolders;
-import com.enoughfolders.client.gui.FolderButton;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.data.StoredIngredient;
-import com.enoughfolders.integrations.ModIntegration;
-import com.enoughfolders.integrations.api.FolderTarget;
-import com.enoughfolders.integrations.api.FolderTargetStub;
-import com.enoughfolders.integrations.api.RecipeViewingIntegration;
+import com.enoughfolders.integrations.base.AbstractIntegration;
 import com.enoughfolders.integrations.emi.gui.handlers.EMIFolderIngredientHandler;
+import com.enoughfolders.integrations.factory.HandlerFactory;
+import com.enoughfolders.integrations.factory.IntegrationFactory;
 import com.enoughfolders.integrations.util.StackTraceUtils;
 import com.enoughfolders.util.DebugLogger;
 
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.fml.ModList;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 /**
  * Integration for EMI (Enough Modding Interface) mod.
  */
-public class EMIIntegration implements ModIntegration, RecipeViewingIntegration {
+public class EMIIntegration extends AbstractIntegration {
     
-    private boolean initialized = false;
-    private boolean available = false;
+    /**
+     * EMI mod identifier
+     */
+    private static final String MOD_ID = "emi";
+    
+    /**
+     * EMI ingredient manager instance
+     */
+    private EMIIngredientManager ingredientManager;
+    
+    /**
+     * EMI recipe manager instance
+     */
+    private EMIRecipeManager recipeManager;
     
     /**
      * Creates a new EMI integration instance.
      */
     public EMIIntegration() {
+        super(MOD_ID, "EMI");
+        this.ingredientManager = new EMIIngredientManager();
+        this.recipeManager = new EMIRecipeManager();
+        EnoughFolders.LOGGER.info("EMI Integration initialized");
+    }
+    
+    /**
+     * Checks if the required EMI classes are available.
+     *
+     * @return true if EMI classes are available, false otherwise
+     */
+    @Override
+    protected boolean checkClassAvailability() {
         try {
-            // Check if EMI classes are available
             Class.forName("dev.emi.emi.api.EmiApi");
             Class.forName("dev.emi.emi.api.stack.EmiStack");
             Class.forName("dev.emi.emi.api.stack.EmiIngredient");
-            available = true;
-            
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "EMI integration initialized successfully", ""
-            );
+            return ModList.get().isLoaded(MOD_ID);
         } catch (ClassNotFoundException e) {
-            available = false;
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "EMI classes not found, integration disabled: {}", 
-                e.getMessage()
-            );
-        }
-    }
-    
-    @Override
-    public String getModName() {
-        return "EMI";
-    }
-    
-    @Override
-    public boolean isAvailable() {
-        return available;
-    }
-    
-    @Override
-    public Optional<?> getIngredientFromStored(StoredIngredient storedIngredient) {
-        if (!available) {
-            return Optional.empty();
-        }
-        
-        try {
-            return EMIIngredientManager.getIngredientFromStored(storedIngredient);
-        } catch (Exception e) {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Error converting StoredIngredient to EMI ingredient: {}", 
-                e.getMessage()
-            );
-            return Optional.empty();
-        }
-    }
-    
-    @Override
-    public Optional<StoredIngredient> storeIngredient(Object ingredient) {
-        if (!available) {
-            return Optional.empty();
-        }
-        
-        try {
-            return EMIIngredientManager.storeIngredient(ingredient);
-        } catch (Exception e) {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Error converting EMI ingredient to StoredIngredient: {}", 
-                e.getMessage()
-            );
-            return Optional.empty();
-        }
-    }
-    
-    @Override
-    public Optional<ItemStack> getItemStackForDisplay(Object ingredient) {
-        if (!available) {
-            return Optional.empty();
-        }
-        
-        try {
-            return EMIIngredientManager.getItemStackForDisplay(ingredient);
-        } catch (Exception e) {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Error getting ItemStack for EMI ingredient: {}", 
-                e.getMessage()
-            );
-            return Optional.empty();
+            return false;
         }
     }
     
     /**
-     * Gets the ingredient currently under the mouse cursor in EMI.
-     * This method is used by keybind handlers to detect which ingredient to add to folders.
-     * 
-     * @return Optional containing the ingredient under mouse, or empty if none
+     * Performs EMI-specific initialization.
      */
-    public Optional<Object> getIngredientUnderMouse() {
-        if (!available || !initialized) {
-            return Optional.empty();
-        }
-        
-        try {
-            Object hoveredIngredient = EMIRecipeManager.getHoveredIngredient();
-            return Optional.ofNullable(hoveredIngredient);
-        } catch (Exception e) {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Error getting ingredient under mouse: {}", 
-                e.getMessage()
-            );
-            return Optional.empty();
-        }
-    }
-    
     @Override
-    public void initialize() {
-        if (!available || initialized) {
-            return;
-        }
-        
+    protected void doInitialize() {
         try {
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
                 "Initializing EMI integration", ""
             );
             
-            // Initialize EMI-specific components
-            EMIIngredientManager.initialize();
-            EMIRecipeManager.initialize();
+            // Register handler factories for all integrations
+            com.enoughfolders.integrations.factory.HandlerFactory.registerDefaultFactories();
             
             // Register EMI plugin
             EMIPlugin.register();
-            
-            initialized = true;
             
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
@@ -173,15 +93,114 @@ public class EMIIntegration implements ModIntegration, RecipeViewingIntegration 
                 "EMI integration initialization failed: {}", 
                 e.getMessage()
             );
+            throw e;
         }
     }
     
+    /**
+     * Gets the display name of this mod integration.
+     *
+     * @return The display name of the integration
+     */
     @Override
-    public void renderIngredient(net.minecraft.client.gui.GuiGraphics graphics, StoredIngredient ingredient, int x, int y, int width, int height) {
-        if (!available) {
-            return;
+    public String getModName() {
+        return "EMI";
+    }
+    
+    /**
+     * Converts a StoredIngredient back to its original EMI ingredient object.
+     *
+     * @param storedIngredient The stored ingredient to convert
+     * @return Optional containing the original ingredient object, or empty if conversion failed
+     */
+    @Override
+    public Optional<?> getIngredientFromStored(StoredIngredient storedIngredient) {
+        try {
+            return ingredientManager.getIngredientFromStored(storedIngredient);
+        } catch (Exception e) {
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "Error converting StoredIngredient to EMI ingredient: {}", 
+                e.getMessage()
+            );
+            return Optional.empty();
         }
-
+    }
+    
+    /**
+     * Converts an EMI ingredient object into a StoredIngredient for persistence.
+     *
+     * @param ingredient The EMI ingredient object to convert
+     * @return Optional containing the StoredIngredient, or empty if conversion failed
+     */
+    @Override
+    public Optional<StoredIngredient> storeIngredient(Object ingredient) {
+        try {
+            return ingredientManager.storeIngredient(ingredient);
+        } catch (Exception e) {
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "Error converting EMI ingredient to StoredIngredient: {}", 
+                e.getMessage()
+            );
+            return Optional.empty();
+        }
+    }
+    
+    /**
+     * Gets an ItemStack that can be used to visually represent the ingredient.
+     *
+     * @param ingredient The ingredient to get an ItemStack for
+     * @return Optional containing the ItemStack, or empty if conversion failed
+     */
+    @Override
+    public Optional<ItemStack> getItemStackForDisplay(Object ingredient) {
+        try {
+            return ingredientManager.getItemStackForDisplay(ingredient);
+        } catch (Exception e) {
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "Error getting ItemStack for EMI ingredient: {}", 
+                e.getMessage()
+            );
+            return Optional.empty();
+        }
+    }
+     /**
+     * Gets the ingredient currently under the mouse cursor in EMI.
+     * 
+     * @return Optional containing the ingredient under mouse, or empty if none
+     */
+    public Optional<Object> getIngredientUnderMouse() {
+        if (!isAvailable()) {
+            return Optional.empty();
+        }
+        
+        try {
+            Object hoveredIngredient = recipeManager.getHoveredIngredient();
+            return Optional.ofNullable(hoveredIngredient);
+        } catch (Exception e) {
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "Error getting ingredient under mouse: {}",
+                e.getMessage()
+            );
+            return Optional.empty();
+        }
+    }
+    
+    /**
+     * Renders a stored ingredient in the GUI.
+     *
+     * @param graphics The graphics context to render with
+     * @param ingredient The stored ingredient to render
+     * @param x The x position to render at
+     * @param y The y position to render at
+     * @param width The width of the rendering area
+     * @param height The height of the rendering area
+     */
+    @Override
+    public void renderIngredient(GuiGraphics graphics, StoredIngredient ingredient, int x, int y, int width, int height) {
         try {
             // Try to convert the stored ingredient back to an EMI ingredient
             Optional<?> ingredientOpt = getIngredientFromStored(ingredient);
@@ -210,44 +229,14 @@ public class EMIIntegration implements ModIntegration, RecipeViewingIntegration 
         }
     }
     
-    @Override
-    public void registerDragAndDrop() {
-        if (!available || !initialized) {
-            return;
-        }
-        
-        try {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "EMI drag and drop registration skipped (functionality removed)", ""
-            );
-        } catch (Exception e) {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "EMI drag and drop registration failed: {}", 
-                e.getMessage()
-            );
-        }
-    }
-    
-    // Drag and drop functionality has been removed
-    // Recipe viewing and integration functionality preserved
-    
-    @Override
-    public String getDisplayName() {
-        return "EMI";
-    }
-    
-    // RecipeViewingIntegration implementation
-    
-    @Override
+    /**
+     * Shows recipes for the provided ingredient in the EMI recipe GUI.
+     *
+     * @param ingredient The ingredient to show recipes for
+     */
     public void showRecipes(Object ingredient) {
-        if (!available) {
-            return;
-        }
-        
         try {
-            EMIRecipeManager.showRecipes(ingredient);
+            recipeManager.showRecipes(ingredient);
         } catch (Exception e) {
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
@@ -257,14 +246,14 @@ public class EMIIntegration implements ModIntegration, RecipeViewingIntegration 
         }
     }
     
-    @Override
+    /**
+     * Shows usages for the provided ingredient in the EMI recipe GUI.
+     *
+     * @param ingredient The ingredient to show usages for
+     */
     public void showUses(Object ingredient) {
-        if (!available) {
-            return;
-        }
-        
         try {
-            EMIRecipeManager.showUses(ingredient);
+            recipeManager.showUses(ingredient);
         } catch (Exception e) {
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
@@ -274,20 +263,35 @@ public class EMIIntegration implements ModIntegration, RecipeViewingIntegration 
         }
     }
     
+    /**
+     * Connect a folder screen to EMI for recipe viewing.
+     * 
+     * @param folderScreen The folder screen to connect
+     * @param containerScreen The container screen
+     */
     @Override
     public void connectToFolderScreen(FolderScreen folderScreen, AbstractContainerScreen<?> containerScreen) {
-        if (!available) {
-            return;
-        }
-        
         try {
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
                 "Connecting EMI to folder screen", ""
             );
             
-            // Create handlers for this folder screen
-            new EMIFolderIngredientHandler(folderScreen, containerScreen);
+            // Create handlers for this folder screen using factory
+            try {
+                Object folderHandler = HandlerFactory.createHandler(
+                    IntegrationFactory.IntegrationType.EMI,
+                    HandlerFactory.HandlerType.FOLDER_SCREEN,
+                    Object.class
+                );
+                DebugLogger.debugValue(DebugLogger.Category.INTEGRATION, 
+                    "EMI folder screen handler created via factory: {}", folderHandler.getClass().getSimpleName());
+            } catch (Exception factoryException) {
+                DebugLogger.debugValue(DebugLogger.Category.INTEGRATION,
+                    "Factory creation failed, falling back to direct instantiation: {}", factoryException.getMessage());
+                // Fallback to direct instantiation
+                new EMIFolderIngredientHandler(folderScreen, containerScreen);
+            }
             
             // Store the folder screen for later use
             saveLastFolderScreen(folderScreen);
@@ -305,14 +309,15 @@ public class EMIIntegration implements ModIntegration, RecipeViewingIntegration 
         }
     }
     
+    /**
+     * Save a folder screen to be used during recipe GUI navigation.
+     * 
+     * @param folderScreen The folder screen to save
+     */
     @Override
     public void saveLastFolderScreen(FolderScreen folderScreen) {
-        if (!available) {
-            return;
-        }
-        
         try {
-            EMIRecipeManager.saveLastFolderScreen(folderScreen);
+            recipeManager.saveLastFolderScreen(folderScreen);
         } catch (Exception e) {
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
@@ -322,14 +327,13 @@ public class EMIIntegration implements ModIntegration, RecipeViewingIntegration 
         }
     }
     
+    /**
+     * Clear the saved folder screen when no longer needed.
+     */
     @Override
     public void clearLastFolderScreen() {
-        if (!available) {
-            return;
-        }
-        
         try {
-            EMIRecipeManager.clearLastFolderScreen();
+            recipeManager.clearLastFolderScreen();
         } catch (Exception e) {
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
@@ -339,14 +343,15 @@ public class EMIIntegration implements ModIntegration, RecipeViewingIntegration 
         }
     }
     
+    /**
+     * Get the last folder screen saved for recipe GUI navigation.
+     * 
+     * @return Optional containing the folder screen if available
+     */
     @Override
     public Optional<FolderScreen> getLastFolderScreen() {
-        if (!available) {
-            return Optional.empty();
-        }
-        
         try {
-            return EMIRecipeManager.getLastFolderScreen();
+            return recipeManager.getLastFolderScreen();
         } catch (Exception e) {
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
@@ -357,12 +362,14 @@ public class EMIIntegration implements ModIntegration, RecipeViewingIntegration 
         }
     }
     
+    /**
+     * Check if the given screen is a recipe screen for this integration.
+     * 
+     * @param screen The screen to check
+     * @return True if it's a recipe screen for this integration, false otherwise
+     */
     @Override
     public boolean isRecipeScreen(Screen screen) {
-        if (!available) {
-            return false;
-        }
-        
         try {
             return EMIRecipeManager.isRecipeScreen(screen);
         } catch (Exception e) {
@@ -375,9 +382,15 @@ public class EMIIntegration implements ModIntegration, RecipeViewingIntegration 
         }
     }
     
+    /**
+     * Check if the screen being closed is transitioning to a recipe screen for this integration.
+     * 
+     * @param screen The screen that's being closed
+     * @return True if we're transitioning to a recipe screen, false otherwise
+     */
     @Override
     public boolean isTransitioningToRecipeScreen(Screen screen) {
-        if (!available) {
+        if (!isAvailable()) {
             return false;
         }
         
@@ -390,35 +403,6 @@ public class EMIIntegration implements ModIntegration, RecipeViewingIntegration 
                 e.getMessage()
             );
             return false;
-        }
-    }
-    
-    @Override
-    public List<? extends FolderTarget> createFolderTargets(List<FolderButton> folderButtons) {
-        if (!available) {
-            return new ArrayList<>();
-        }
-        
-        try {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Creating EMI folder target stubs for {} buttons (drag functionality disabled)", 
-                folderButtons.size()
-            );
-            
-            // Return stub targets that disable drag functionality
-            List<FolderTargetStub> targets = new ArrayList<>();
-            for (FolderButton button : folderButtons) {
-                targets.add(new FolderTargetStub(button.getFolder()));
-            }
-            return targets;
-        } catch (Exception e) {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Error creating EMI folder targets: {}", 
-                e.getMessage()
-            );
-            return new ArrayList<>();
         }
     }
     
@@ -446,5 +430,23 @@ public class EMIIntegration implements ModIntegration, RecipeViewingIntegration 
             return "Not loaded";
         }
             return "Available";
+    }
+    
+    /**
+     * Gets the EMI ingredient manager instance.
+     *
+     * @return The EMI ingredient manager
+     */
+    public EMIIngredientManager getIngredientManager() {
+        return ingredientManager;
+    }
+    
+    /**
+     * Gets the EMI recipe manager instance.
+     *
+     * @return The EMI recipe manager
+     */
+    public EMIRecipeManager getRecipeManager() {
+        return recipeManager;
     }
 }

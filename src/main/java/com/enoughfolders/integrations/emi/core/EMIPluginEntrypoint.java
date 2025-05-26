@@ -37,12 +37,6 @@ public class EMIPluginEntrypoint implements EmiPlugin {
             // Register exclusion zones for container screens where folder screens might appear
             registerExclusionZones(registry);
             
-            // Drag and drop functionality has been removed from EnoughFolders
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "EMI drag handling skipped - functionality removed", ""
-            );
-            
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
                 "EMI plugin registration completed successfully", ""
@@ -114,7 +108,7 @@ public class EMIPluginEntrypoint implements EmiPlugin {
                                 if (folderScreenOpt.isPresent()) {
                                     Object folderScreen = folderScreenOpt.get();
                                     
-                                    // Get the screen area using reflection
+                                    // Get the screen area
                                     java.lang.reflect.Method getScreenAreaMethod = folderScreen.getClass().getMethod("getScreenArea");
                                     Rect2i screenArea = (Rect2i) getScreenAreaMethod.invoke(folderScreen);
                                     

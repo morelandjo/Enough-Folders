@@ -248,10 +248,7 @@ public class ClientEventHandler {
                         "Error handling recipe screen mouse click: {}", 
                         e.getMessage());
                 }
-            }
-            
-            // JEI recipe screen drag handling has been removed
-            // All recipe interactions are now handled through standard integration click handlers
+            }            
         }
     }
     

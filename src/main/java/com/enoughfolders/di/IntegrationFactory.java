@@ -50,8 +50,6 @@ public class IntegrationFactory {
 
         // Initialize the integration
         instance.initialize();
-        // Note: Drag and drop functionality has been removed
-        instance.registerDragAndDrop();
 
         // Register the instance with the dependency provider
         DependencyProvider.registerSingleton(type, instance);

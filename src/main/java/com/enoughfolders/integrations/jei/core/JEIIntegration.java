@@ -1,16 +1,13 @@
 package com.enoughfolders.integrations.jei.core;
 
 import com.enoughfolders.EnoughFolders;
-import com.enoughfolders.client.gui.FolderButton;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.client.gui.IngredientSlot;
 
 import com.enoughfolders.data.StoredIngredient;
-import com.enoughfolders.integrations.ModIntegration;
-import com.enoughfolders.integrations.api.FolderTarget;
-import com.enoughfolders.integrations.api.RecipeViewingIntegration;
+import com.enoughfolders.integrations.base.AbstractIntegration;
 
-import com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler;
+import com.enoughfolders.integrations.common.handlers.BaseRecipeGuiHandler;
 import com.enoughfolders.integrations.jei.ingredient.JEIIngredientManager;
 import com.enoughfolders.integrations.jei.recipe.JEIRecipeManager;
 import com.enoughfolders.integrations.util.StackTraceUtils;
@@ -22,13 +19,12 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.ModList;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
  * Integration with JEI mod.
  */
-public class JEIIntegration implements ModIntegration, RecipeViewingIntegration {
+public class JEIIntegration extends AbstractIntegration {
     
     /**
      * JEI mod identifier
@@ -54,11 +50,43 @@ public class JEIIntegration implements ModIntegration, RecipeViewingIntegration 
      * Creates a new JEI integration.
      */
     public JEIIntegration() {
+        super(MOD_ID, "JEI");
         this.runtimeManager = new JEIRuntimeManager();
         this.ingredientManager = new JEIIngredientManager(this.runtimeManager);
         this.recipeManager = new JEIRecipeManager(this.runtimeManager, this.ingredientManager);
         
         EnoughFolders.LOGGER.info("JEI Integration initialized");
+    }
+    
+    /**
+     * Checks if the required JEI classes are available.
+     *
+     * @return true if JEI classes are available, false otherwise
+     */
+    @Override
+    protected boolean checkClassAvailability() {
+        try {
+            Class.forName("mezz.jei.api.runtime.IJeiRuntime");
+            return ModList.get().isLoaded(MOD_ID);
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+    
+    /**
+     * Performs JEI-specific initialization.
+     */
+    @Override
+    protected void doInitialize() {
+        try {
+            // Register handler factories for all integrations
+            com.enoughfolders.integrations.factory.HandlerFactory.registerDefaultFactories();
+            
+            EnoughFolders.LOGGER.info("JEI-specific initialization completed");
+        } catch (Exception e) {
+            EnoughFolders.LOGGER.error("Failed to initialize JEI integration", e);
+            throw e;
+        }
     }
     
     /**
@@ -69,16 +97,6 @@ public class JEIIntegration implements ModIntegration, RecipeViewingIntegration 
     @Override
     public String getModName() {
         return "JEI";
-    }
-    
-    /**
-     * Checks if JEI is available in the current environment.
-     *
-     * @return true if JEI mod is loaded, false otherwise
-     */
-    @Override
-    public boolean isAvailable() {
-        return ModList.get().isLoaded(MOD_ID);
     }
     
     /**
@@ -167,14 +185,6 @@ public class JEIIntegration implements ModIntegration, RecipeViewingIntegration 
     }
     
     /**
-     * Initializes the JEI integration.
-     */
-    @Override
-    public void initialize() {
-        EnoughFolders.LOGGER.info("Initializing JEI integration");
-    }
-
-    /**
      * Checks if the JEI recipe GUI is currently open.
      *
      * @return true if the JEI recipe GUI is the current screen
@@ -192,16 +202,6 @@ public class JEIIntegration implements ModIntegration, RecipeViewingIntegration 
     @Override
     public boolean isRecipeScreen(Screen screen) {
         return recipeManager.isRecipeScreen(screen);
-    }
-    
-    /**
-     * Gets the display name of the integration.
-     * 
-     * @return The display name
-     */
-    @Override
-    public String getDisplayName() {
-        return "JEI";
     }
     
     /**
@@ -233,7 +233,7 @@ public class JEIIntegration implements ModIntegration, RecipeViewingIntegration 
      */
     @Override
     public void saveLastFolderScreen(FolderScreen folderScreen) {
-        JEIRecipeGuiHandler.saveLastFolderScreen(folderScreen);
+        BaseRecipeGuiHandler.saveLastFolderScreen(folderScreen);
     }
     
     /**
@@ -241,7 +241,7 @@ public class JEIIntegration implements ModIntegration, RecipeViewingIntegration 
      */
     @Override
     public void clearLastFolderScreen() {
-        JEIRecipeGuiHandler.clearLastFolderScreen();
+        BaseRecipeGuiHandler.clearLastFolderScreen();
     }
     
     /**
@@ -251,7 +251,7 @@ public class JEIIntegration implements ModIntegration, RecipeViewingIntegration 
      */
     @Override
     public Optional<FolderScreen> getLastFolderScreen() {
-        return JEIRecipeGuiHandler.getLastFolderScreen();
+        return BaseRecipeGuiHandler.getLastFolderScreen();
     }
     
     /**
@@ -288,19 +288,6 @@ public class JEIIntegration implements ModIntegration, RecipeViewingIntegration 
     public boolean handleIngredientClick(IngredientSlot slot, int button, 
                                           boolean shift, boolean ctrl) {
         return recipeManager.handleIngredientClick(slot, button, shift, ctrl);
-    }
-    
-    /**
-     * Creates folder targets for drag and drop operations.
-     * Returns empty list as drag and drop functionality has been removed.
-     * 
-     * @param folderButtons The list of folder buttons
-     * @return Empty list - drag and drop is disabled
-     */
-    @Override
-    public List<? extends FolderTarget> createFolderTargets(List<FolderButton> folderButtons) {
-        // Return empty list as drag and drop functionality has been removed
-        return List.of();
     }
 
 }

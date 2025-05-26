@@ -71,7 +71,7 @@ public class REIPlugin implements REIClientPlugin {
         DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
             "Registering screens for REI integration");
         
-        // Create a proper exclusion zone provider for folder UI using REI's interface
+        // Create a proper exclusion zone provider
         me.shedaniel.rei.api.client.registry.screen.ExclusionZonesProvider<net.minecraft.client.gui.screens.Screen> folderExclusionZoneProvider = 
             new me.shedaniel.rei.api.client.registry.screen.ExclusionZonesProvider<net.minecraft.client.gui.screens.Screen>() {
                 @Override

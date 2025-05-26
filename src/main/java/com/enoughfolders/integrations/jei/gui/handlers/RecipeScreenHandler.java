@@ -1,6 +1,7 @@
 package com.enoughfolders.integrations.jei.gui.handlers;
 
 import com.enoughfolders.client.gui.FolderScreen;
+import com.enoughfolders.integrations.common.handlers.BaseRecipeGuiHandler;
 import com.enoughfolders.util.DebugLogger;
 import mezz.jei.api.gui.handlers.IGlobalGuiHandler;
 import mezz.jei.api.runtime.IClickableIngredient;
@@ -16,9 +17,8 @@ import java.util.Optional;
 
 /**
  * Global handler for JEI recipe screens.
- * Handles GUI area exclusions to prevent JEI overlay conflicts.
  */
-public class RecipeScreenHandler implements IGlobalGuiHandler {
+public class RecipeScreenHandler extends BaseRecipeGuiHandler<Screen> implements IGlobalGuiHandler {
     
     // Cache the exclusion areas to avoid recalculating them frequently
     private static Collection<Rect2i> cachedAreas = new ArrayList<>();
@@ -29,6 +29,34 @@ public class RecipeScreenHandler implements IGlobalGuiHandler {
     public RecipeScreenHandler() {
         DebugLogger.debug(DebugLogger.Category.JEI_INTEGRATION, "RecipeScreenHandler created for JEI recipe exclusion areas");
     }
+    
+    /**
+     * Check if the given screen is a valid JEI recipe screen.
+     * 
+     * @param screen The screen to check
+     * @return true if it's a JEI recipe screen
+     */
+    protected static boolean isValidRecipeScreen(Screen screen) {
+        return screen instanceof IRecipesGui;
+    }
+    
+    /**
+     * Get the integration name for JEI.
+     * 
+     * @return The integration name
+     */
+    protected static String getIntegrationName() {
+        return "JEI";
+    }
+    
+    /**
+     * Get the debug category for JEI logging.
+     * 
+     * @return The debug category
+     */
+    protected static DebugLogger.Category getDebugCategory() {
+        return DebugLogger.Category.JEI_INTEGRATION;
+    }
 
     @Override
     @Nonnull
@@ -37,12 +65,13 @@ public class RecipeScreenHandler implements IGlobalGuiHandler {
         
         Screen currentScreen = Minecraft.getInstance().screen;
         
-        DebugLogger.debugValues(DebugLogger.Category.JEI_INTEGRATION, 
-            "Current screen type for JEI exclusion areas: {}", 
+        DebugLogger.debugValues(getDebugCategory(), 
+            "Current screen type for {} exclusion areas: {}", 
+            getIntegrationName(),
             currentScreen != null ? currentScreen.getClass().getName() : "null");
             
-        if (currentScreen instanceof IRecipesGui) {
-            Optional<FolderScreen> folderScreenOpt = JEIRecipeGuiHandler.getLastFolderScreen();
+        if (isValidRecipeScreen(currentScreen)) {
+            Optional<FolderScreen> folderScreenOpt = getLastFolderScreen();
             if (folderScreenOpt.isPresent()) {
                 FolderScreen folderScreen = folderScreenOpt.get();
                 Rect2i screenArea = folderScreen.getScreenArea();

@@ -1,115 +1,90 @@
 package com.enoughfolders.integrations.emi.handlers;
 
 import com.enoughfolders.EnoughFolders;
-import com.enoughfolders.data.Folder;
-import com.enoughfolders.data.FolderManager;
 import com.enoughfolders.data.StoredIngredient;
-import com.enoughfolders.integrations.ModIntegration;
-import com.enoughfolders.util.DebugLogger;
+import com.enoughfolders.integrations.common.handlers.BaseAddToFolderHandler;
+import com.enoughfolders.integrations.emi.core.EMIIntegration;
 import com.enoughfolders.di.IntegrationProviderRegistry;
+import com.enoughfolders.util.DebugLogger;
 
-import java.lang.reflect.Method;
 import java.util.Optional;
 
 /**
- * Handles adding ingredients to folders through EMI integration.
+ * EMI-specific handler for adding ingredients to folders via keyboard shortcuts.
  */
-public class EMIAddToFolderHandler {
+public class EMIAddToFolderHandler extends BaseAddToFolderHandler {
     
     /**
      * Private constructor to prevent instantiation of this utility class.
      */
     private EMIAddToFolderHandler() {
-        // Utility class should not be instantiated
+        super();
     }
 
     /**
-     * Adds the currently hovered EMI ingredient to the active folder.
+     * Handles the key press to add an EMI ingredient to the active folder.
      */
     public static void handleAddToFolderKeyPress() {
-        EnoughFolders.LOGGER.info("EMI Add to Folder handler activated");
-        
-        try {
-            // Check if EMI classes exist before doing anything
-            Class.forName("dev.emi.emi.api.EmiApi");
-            
-            // Check if EMI integration is available via registry
-            if (!IntegrationProviderRegistry.hasIntegrationWithShortId("emi")) {
-                EnoughFolders.LOGGER.debug("EMI integration not available via registry");
-                return;
+        // Check if EMI classes are available
+        if (!checkIntegrationClasses("dev.emi.emi.api.EmiApi")) {
+            DebugLogger.debug(DebugLogger.Category.INTEGRATION, "EMI classes not found, skipping EMI integration");
+            return;
+        }
+
+        // Get the EMI integration
+        Optional<EMIIntegration> emiIntegration = getEMIIntegration();
+        if (emiIntegration.isEmpty()) {
+            DebugLogger.debug(DebugLogger.Category.INTEGRATION, "EMI integration not available");
+            return;
+        }
+
+        // Use the base handler with EMI-specific ingredient retriever
+        BaseAddToFolderHandler.handleAddToFolderKeyPress("EMI", new EMIIngredientRetriever(emiIntegration.get()));
+    }
+
+    /**
+     * Gets the EMI integration instance.
+     */
+    private static Optional<EMIIntegration> getEMIIntegration() {
+        return IntegrationProviderRegistry.getIntegrationByClassName("com.enoughfolders.integrations.emi.core.EMIIntegration")
+            .filter(EMIIntegration.class::isInstance)
+            .map(EMIIntegration.class::cast);
+    }
+
+    /**
+     * EMI-specific implementation of ingredient retrieval operations.
+     */
+    private static class EMIIngredientRetriever implements IngredientRetriever {
+        private final EMIIntegration emiIntegration;
+
+        public EMIIngredientRetriever(EMIIntegration emiIntegration) {
+            this.emiIntegration = emiIntegration;
+        }
+
+        @Override
+        public Optional<Object> getIngredientUnderCursor() {
+            try {
+                return emiIntegration.getIngredientUnderMouse();
+            } catch (Exception e) {
+                EnoughFolders.LOGGER.error("Error getting EMI ingredient under cursor", e);
+                return Optional.empty();
             }
-            
-            // Make sure we have an active folder
-            FolderManager folderManager = EnoughFolders.getInstance().getFolderManager();
-            Optional<Folder> activeFolder = folderManager.getActiveFolder();
-            if (activeFolder.isEmpty()) {
-                // No active folder, show message to user
-                EnoughFolders.LOGGER.info("No active folder available for adding ingredient - need to create a folder first");
-                DebugLogger.debug(DebugLogger.Category.INTEGRATION, 
-                    "No active folder available for adding ingredient");
-                return;
+        }
+
+        @Override
+        public Optional<StoredIngredient> convertToStoredIngredient(Object ingredient) {
+            return emiIntegration.storeIngredient(ingredient);
+        }
+
+        @Override
+        public boolean isOverlayVisible() {
+            try {
+                // For EMI, we check if we can get an ingredient under mouse to determine if overlay is visible
+                return true; // EMI is generally always available when the integration is loaded
+            } catch (Exception e) {
+                EnoughFolders.LOGGER.error("Error checking EMI overlay visibility", e);
+                return false;
             }
-            
-            EnoughFolders.LOGGER.info("Active folder found: {}", activeFolder.get().getName());
-            
-            String emiIntegrationClassName = "com.enoughfolders.integrations.emi.core.EMIIntegration";
-            Optional<ModIntegration> emiIntegrationOpt = IntegrationProviderRegistry.getIntegrationByClassName(emiIntegrationClassName);
-            
-            if (emiIntegrationOpt.isEmpty()) {
-                EnoughFolders.LOGGER.debug("EMI integration not found in registry by class name");
-                return;
-            }
-            
-            // Get the ingredient under mouse
-            ModIntegration emiIntegration = emiIntegrationOpt.get();
-            
-            Method getIngredientUnderMouseMethod = emiIntegration.getClass().getMethod("getIngredientUnderMouse");
-            Optional<?> ingredientOpt = (Optional<?>) getIngredientUnderMouseMethod.invoke(emiIntegration);
-            
-            EnoughFolders.LOGGER.debug("EMI integration found, checking for ingredients under mouse");
-            
-            // Now process the ingredient if found
-            if (ingredientOpt.isPresent()) {
-                Object ingredient = ingredientOpt.get();
-                EnoughFolders.LOGGER.info("Found EMI ingredient under mouse: {}", 
-                    ingredient != null ? ingredient.getClass().getName() : "null");
-                
-                EnoughFolders.LOGGER.info("About to call storeIngredient method...");
-                
-                // Store the ingredient
-                Method storeIngredientMethod = emiIntegration.getClass().getMethod("storeIngredient", Object.class);
-                @SuppressWarnings("unchecked")
-                Optional<StoredIngredient> storedIngredientOpt = 
-                    (Optional<StoredIngredient>) storeIngredientMethod.invoke(emiIntegration, ingredient);
-                
-                EnoughFolders.LOGGER.info("storeIngredient method returned, checking result...");
-                
-                if (storedIngredientOpt.isPresent()) {
-                    StoredIngredient storedIngredient = storedIngredientOpt.get();
-                    EnoughFolders.LOGGER.info("Successfully converted to StoredIngredient: {}", storedIngredient);
-                    
-                    // Add the ingredient to the active folder
-                    Folder folder = activeFolder.get();
-                    EnoughFolders.LOGGER.info("About to add ingredient to folder: {}", folder.getName());
-                    
-                    folderManager.addIngredient(folder, storedIngredient);
-                    
-                    EnoughFolders.LOGGER.info("Successfully added ingredient to folder!");
-                    
-                    // Log the action
-                    DebugLogger.debugValue(DebugLogger.Category.INTEGRATION, 
-                        "Added ingredient to folder '{}'", folder.getName());
-                } else {
-                    EnoughFolders.LOGGER.error("Failed to convert EMI ingredient to StoredIngredient - storeIngredient returned empty Optional");
-                }
-            } else {
-                EnoughFolders.LOGGER.debug("No EMI ingredient found under mouse cursor");
-            }
-        } catch (ClassNotFoundException e) {
-            // EMI is not available, that's fine
-            EnoughFolders.LOGGER.debug("EMI classes not found, skipping EMI integration");
-        } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Error interacting with EMI runtime", e);
         }
     }
 }

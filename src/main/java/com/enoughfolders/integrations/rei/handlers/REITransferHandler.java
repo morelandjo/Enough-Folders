@@ -4,7 +4,6 @@ import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.event.ClientEventHandler;
 import com.enoughfolders.client.gui.FolderButton;
 import com.enoughfolders.client.gui.FolderScreen;
-import com.enoughfolders.data.Folder;
 import com.enoughfolders.di.DependencyProvider;
 import com.enoughfolders.integrations.rei.core.REIIntegration;
 import com.enoughfolders.util.DebugLogger;
@@ -117,29 +116,6 @@ public class REITransferHandler implements TransferHandler {
                 return Result.createSuccessful()
                     .tooltip(Component.translatable("enoughfolders.message.ingredient_added_to_folder", 
                         button.getFolder().getName()));
-            }
-        }
-        
-        // Check if drop is in the content area
-        if (IntegrationUtils.isPointInRect(mouseX, mouseY, 
-                folderScreen.getContentDropArea().getX(), 
-                folderScreen.getContentDropArea().getY(), 
-                folderScreen.getContentDropArea().getWidth(), 
-                folderScreen.getContentDropArea().getHeight())) {
-            
-            // Get the active folder
-            Optional<Folder> activeFolder = EnoughFolders.getInstance().getFolderManager().getActiveFolder();
-            if (activeFolder.isPresent()) {
-                DependencyProvider.get(REIIntegration.class).ifPresent(integration -> {
-                    integration.storeIngredient(entryStack).ifPresent(ingredient -> {
-                        EnoughFolders.getInstance().getFolderManager().addIngredient(activeFolder.get(), ingredient);
-                        folderScreen.onIngredientAdded();
-                    });
-                });
-                
-                return Result.createSuccessful()
-                    .tooltip(Component.translatable("enoughfolders.message.ingredient_added_to_folder", 
-                        activeFolder.get().getName()));
             }
         }
         

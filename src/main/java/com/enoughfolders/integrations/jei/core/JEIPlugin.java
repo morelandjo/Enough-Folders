@@ -65,18 +65,38 @@ public class JEIPlugin implements IModPlugin {
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public void registerGuiHandlers(@Nonnull IGuiHandlerRegistration registration) {
-        EnoughFolders.LOGGER.info("DIAGNOSIS: JEIPlugin.registerGuiHandlers called - registering handlers");
+        EnoughFolders.LOGGER.info("DIAGNOSIS: JEIPlugin.registerGuiHandlers called - registering factory-created handlers");
         
         try {
-            // Register container screen handler to provide exclusion zones for folders
-            FolderScreenHandler containerHandler = new FolderScreenHandler();
-            registration.addGuiContainerHandler((Class) AbstractContainerScreen.class, containerHandler);
-            EnoughFolders.LOGGER.info("Registered FolderScreenHandler for AbstractContainerScreen");
+            // Use factory to create folder screen handler
+            try {
+                mezz.jei.api.gui.handlers.IGuiContainerHandler folderHandler = 
+                    com.enoughfolders.integrations.factory.HandlerFactory.createHandler(
+                        com.enoughfolders.integrations.factory.IntegrationFactory.IntegrationType.JEI,
+                        com.enoughfolders.integrations.factory.HandlerFactory.HandlerType.FOLDER_SCREEN,
+                        mezz.jei.api.gui.handlers.IGuiContainerHandler.class
+                    );
+                registration.addGuiContainerHandler((Class) AbstractContainerScreen.class, folderHandler);
+                EnoughFolders.LOGGER.info("Registered factory-created FolderScreenHandler for AbstractContainerScreen");
+            } catch (Exception e) {
+                EnoughFolders.LOGGER.warn("Failed to create factory-based folder screen handler, falling back to direct instantiation: " + e.getMessage());
+                registration.addGuiContainerHandler((Class) AbstractContainerScreen.class, new FolderScreenHandler());
+            }
             
-            // Register JEI recipe GUI handler for tracking folder screens
-            JEIRecipeGuiHandler<?> recipeGuiHandler = new JEIRecipeGuiHandler<>();
-            registration.addGuiContainerHandler((Class) AbstractContainerScreen.class, recipeGuiHandler);
-            EnoughFolders.LOGGER.info("Registered JEIRecipeGuiHandler for recipe GUI tracking");
+            // Use factory to create recipe GUI handler
+            try {
+                mezz.jei.api.gui.handlers.IGuiContainerHandler recipeHandler = 
+                    com.enoughfolders.integrations.factory.HandlerFactory.createHandler(
+                        com.enoughfolders.integrations.factory.IntegrationFactory.IntegrationType.JEI,
+                        com.enoughfolders.integrations.factory.HandlerFactory.HandlerType.RECIPE_GUI,
+                        mezz.jei.api.gui.handlers.IGuiContainerHandler.class
+                    );
+                registration.addGuiContainerHandler((Class) AbstractContainerScreen.class, recipeHandler);
+                EnoughFolders.LOGGER.info("Registered factory-created JEIRecipeGuiHandler for recipe GUI tracking");
+            } catch (Exception e) {
+                EnoughFolders.LOGGER.warn("Failed to create factory-based recipe GUI handler, falling back to direct instantiation: " + e.getMessage());
+                registration.addGuiContainerHandler((Class) AbstractContainerScreen.class, new JEIRecipeGuiHandler<>());
+            }
             
             // Register global handler for recipe screens and folder UI rendering
             RecipeScreenHandler globalHandler = new RecipeScreenHandler();

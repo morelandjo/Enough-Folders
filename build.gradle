@@ -3,7 +3,6 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.78'
-    id 'jacoco'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -230,16 +229,6 @@ dependencies {
     // FTB Library as an optional dependency from CurseMaven
     compileOnly "curse.maven:ftb-library-forge-404465:6466106"
     
-    // Test dependencies
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
-    testImplementation 'org.mockito:mockito-core:4.11.0'
-    testImplementation 'org.mockito:mockito-junit-jupiter:4.11.0'
-    testImplementation 'com.google.code.gson:gson:2.10.1'  // For JSON serialization in tests
-    
-    // Make Minecraft classes available in test
-    testImplementation sourceSets.main.output
-    
 }
 
 // Configure NeoForge run configurations after source sets are defined
@@ -247,14 +236,12 @@ neoForge {
     runs {
         client {
             client()
-            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
             systemProperty 'enoughfolders.debug', 'true'
         }
         
         // Client with only JEI
         clientJEI {
             client()
-            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
             systemProperty 'enoughfolders.debug', 'true'
             gameDirectory = project.file('run/jei')
         }
@@ -262,7 +249,6 @@ neoForge {
         // Client with only REI
         clientREI {
             client()
-            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
             systemProperty 'enoughfolders.debug', 'true'
             gameDirectory = project.file('run/rei')
         }
@@ -270,7 +256,6 @@ neoForge {
         // Client with only EMI
         clientEMI {
             client()
-            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
             systemProperty 'enoughfolders.debug', 'true'
             gameDirectory = project.file('run/emi')
         }
@@ -278,12 +263,6 @@ neoForge {
         server {
             server()
             programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
-        }
-
-        gameTestServer {
-            type = "gameTestServer"
-            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
         }
 
         data {
@@ -336,57 +315,6 @@ tasks.register('debugRunDependencies') {
         }
     }
 }
-
-// JaCoCo configuration
-jacoco {
-    toolVersion = "0.8.10" // Latest version compatible with Java 21
-}
-
-jacocoTestReport {
-    reports {
-        xml.required = true  
-        html.required = true
-    }
-    
-    afterEvaluate {
-        classDirectories.setFrom(files(classDirectories.files.collect {
-            fileTree(dir: it, exclude: [
-                // Exclude generated code
-                "**/*_Factory.*",
-                "**/*_MemberInjector.*",
-                "**/build/generated/**",
-                // Exclude data files that aren't relevant for coverage
-                "**/data/**",
-                // Exclude specific packages if needed
-                "**/com/enoughfolders/api/**"
-            ])
-        }))
-    }
-    
-    // Add dependencies for better reports
-    dependencies {
-        jacocoAgent 'org.jacoco:org.jacoco.agent:0.8.10'
-        jacocoAnt 'org.jacoco:org.jacoco.ant:0.8.10'
-    }
-}
-
-// Hook JaCoCo reporting to test task
-test {
-    useJUnitPlatform()
-    testLogging {
-        events "passed", "skipped", "failed"
-        showStandardStreams = true
-    }
-    // Exclude the WorldStorageTest that depends on Minecraft classes
-    exclude "**/WorldStorageTest.class"
-    finalizedBy jacocoTestReport
-    jacoco {
-        includes = ['com.enoughfolders.*']
-    }
-}
-
-
-
 
 // Process templates for mod metadata
 def generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

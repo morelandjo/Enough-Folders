@@ -182,9 +182,7 @@ public class FolderInputHandler {
             return false;
         }
         
-        // Drag and drop functionality has been removed
-        // Mouse release events are now only used for click completion, not drag handling
-        DebugLogger.debug(DebugLogger.Category.MOUSE, "Mouse release processed (drag functionality disabled)");
+        DebugLogger.debug(DebugLogger.Category.MOUSE, "Mouse release processed");
         
         return false;
     }

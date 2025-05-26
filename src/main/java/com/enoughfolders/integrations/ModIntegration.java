@@ -54,14 +54,6 @@ public interface ModIntegration {
     void initialize();
     
     /**
-     * Register drag and drop support with the integrated mod.
-     * NOTE: Drag and drop functionality has been removed - this method is kept for compatibility.
-     */
-    default void registerDragAndDrop() {
-        // Drag and drop functionality has been removed - method kept for compatibility
-    }
-    
-    /**
      * Check if this integration can handle the given ingredient.
      * 
      * @param ingredient The stored ingredient to check

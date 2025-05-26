@@ -1,12 +1,10 @@
 package com.enoughfolders.client.integration;
 
 import com.enoughfolders.EnoughFolders;
-import com.enoughfolders.client.gui.FolderButton;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.client.gui.IngredientSlot;
 import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.di.DependencyProvider;
-import com.enoughfolders.integrations.api.FolderTarget;
 import com.enoughfolders.integrations.api.RecipeViewingIntegration;
 import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.integrations.rei.core.REIIntegration;
@@ -16,8 +14,6 @@ import com.enoughfolders.util.DebugLogger;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -312,34 +308,6 @@ public class IntegrationHandler {
         }
         return false;
     }
-
-    /**
-     * Gets folder targets for all folder buttons, using the available recipe viewing integration.
-     * Since drag and drop functionality has been removed, this returns stub targets.
-     *
-     * @param folderButtons The folder buttons to get targets for
-     * @return List of folder targets for the available recipe viewing integration
-     */
-    @SuppressWarnings("unchecked")
-    public <T extends FolderTarget> List<T> getTypedFolderTargets(List<FolderButton> folderButtons) {
-        // Try integrations in the defined priority order (rei, jei, emi)
-        for (String integrationId : PRIORITY_ORDER) {
-            if (isIntegrationAvailable(integrationId)) {
-                Optional<RecipeViewingIntegration> integration = getRecipeViewingIntegration(integrationId);
-                if (integration.isPresent()) {
-                    DebugLogger.debugValue(DebugLogger.Category.INTEGRATION, 
-                        "Using {} folder targets (stub)", integrationId.toUpperCase());
-                    return (List<T>) integration.get().createFolderTargets(folderButtons);
-                }
-            }
-        }
-        
-        // No recipe viewing integration available
-        DebugLogger.debug(DebugLogger.Category.INTEGRATION, "No recipe viewing integration available");
-        return new ArrayList<>();
-    }
-
-
 
     /**
      * Gets a RecipeViewingIntegration for the given integration ID.

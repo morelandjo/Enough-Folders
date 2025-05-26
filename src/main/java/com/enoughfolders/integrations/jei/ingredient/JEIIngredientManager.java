@@ -1,7 +1,7 @@
 package com.enoughfolders.integrations.jei.ingredient;
 
-import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.StoredIngredient;
+import com.enoughfolders.integrations.base.AbstractIngredientManager;
 import com.enoughfolders.integrations.jei.core.JEIRuntimeManager;
 
 import mezz.jei.api.constants.VanillaTypes;
@@ -24,7 +24,7 @@ import java.util.Optional;
 /**
  * Manages ingredient conversion and rendering for JEI integration.
  */
-public class JEIIngredientManager {
+public class JEIIngredientManager extends AbstractIngredientManager {
     
     /**
      * The JEI runtime manager
@@ -37,155 +37,145 @@ public class JEIIngredientManager {
      * @param runtimeManager The JEI runtime manager
      */
     public JEIIngredientManager(JEIRuntimeManager runtimeManager) {
+        super("JEI");
         this.runtimeManager = runtimeManager;
     }
     
     /**
-     * Converts a StoredIngredient back to its original JEI ingredient object.
+     * Performs the actual conversion from StoredIngredient to ingredient object.
      *
      * @param storedIngredient The stored ingredient to convert
-     * @return Optional containing the original ingredient object, or empty if conversion failed
+     * @return The original ingredient object, or null if conversion failed
      */
-    public Optional<?> getIngredientFromStored(StoredIngredient storedIngredient) {
+    @Override
+    protected Object doGetIngredientFromStored(StoredIngredient storedIngredient) {
         if (!runtimeManager.hasRuntime()) {
-            return Optional.empty();
+            return null;
         }
         
-        try {
-            String typeName = storedIngredient.getType();
-            String value = storedIngredient.getValue();
-            
-            Optional<IJeiRuntime> runtimeOpt = runtimeManager.getJeiRuntime();
-            if (runtimeOpt.isEmpty()) {
-                return Optional.empty();
-            }
-            
-            IJeiRuntime runtime = runtimeOpt.get();
-            
-            // First try direct JEI format lookup
-            for (IIngredientType<?> type : runtime.getIngredientManager().getRegisteredIngredientTypes()) {
-                if (type.getIngredientClass().getName().equals(typeName)) {
-                    IIngredientHelper<Object> helper = getHelperForType(type);
-                    if (helper != null) {
-                        try {
-                            // Try to find the ingredient by recreating it from the UID
-                            for (Object ingredient : runtime.getIngredientManager().getAllIngredients(type)) {
-                                String ingredientUid = helper.getUid(ingredient, UidContext.Ingredient).toString();
-                                if (value.equals(ingredientUid)) {
-                                    return Optional.of(ingredient);
-                                }
+        String typeName = storedIngredient.getType();
+        String value = storedIngredient.getValue();
+        
+        Optional<IJeiRuntime> runtimeOpt = runtimeManager.getJeiRuntime();
+        if (runtimeOpt.isEmpty()) {
+            return null;
+        }
+        
+        IJeiRuntime runtime = runtimeOpt.get();
+        
+        // First try direct JEI format lookup
+        for (IIngredientType<?> type : runtime.getIngredientManager().getRegisteredIngredientTypes()) {
+            if (type.getIngredientClass().getName().equals(typeName)) {
+                IIngredientHelper<Object> helper = getHelperForType(type);
+                if (helper != null) {
+                    try {
+                        // Try to find the ingredient by recreating it from the UID
+                        for (Object ingredient : runtime.getIngredientManager().getAllIngredients(type)) {
+                            String ingredientUid = helper.getUid(ingredient, UidContext.Ingredient).toString();
+                            if (value.equals(ingredientUid)) {
+                                return ingredient;
                             }
-                        } catch (Exception e) {
-                            EnoughFolders.LOGGER.debug("Failed to match ingredient by UID for type {}: {}", typeName, e.getMessage());
                         }
+                    } catch (Exception e) {
+                        logDebug("Failed to match ingredient by UID for type {}: {}", typeName, e.getMessage());
                     }
                 }
             }
-            
-            // If direct lookup failed, try cross-integration compatibility
-            Optional<?> crossIntegrationResult = tryConvertFromOtherIntegration(storedIngredient, runtime);
-            if (crossIntegrationResult.isPresent()) {
-                return crossIntegrationResult;
-            }
-            
-        } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Failed to get ingredient from stored data", e);
         }
         
-        return Optional.empty();
+        // If direct lookup failed, try cross-integration compatibility
+        Optional<?> crossIntegrationResult = tryConvertFromOtherIntegration(storedIngredient, runtime);
+        return crossIntegrationResult.orElse(null);
     }
     
     /**
-     * Converts a JEI ingredient object into a StoredIngredient for persistence.
+     * Performs the actual conversion from ingredient object to StoredIngredient.
      *
-     * @param ingredient The JEI ingredient object to convert
-     * @return Optional containing the StoredIngredient, or empty if conversion failed
+     * @param ingredient The ingredient object to convert
+     * @return The StoredIngredient, or null if conversion failed
      */
-    public Optional<StoredIngredient> storeIngredient(Object ingredient) {
+    @Override
+    protected StoredIngredient doStoreIngredient(Object ingredient) {
         if (!runtimeManager.hasRuntime()) {
-            return Optional.empty();
+            return null;
         }
         
-        try {
-            Optional<IJeiRuntime> runtimeOpt = runtimeManager.getJeiRuntime();
-            if (runtimeOpt.isEmpty()) {
-                return Optional.empty();
-            }
+        Optional<IJeiRuntime> runtimeOpt = runtimeManager.getJeiRuntime();
+        if (runtimeOpt.isEmpty()) {
+            return null;
+        }
+        
+        IJeiRuntime runtime = runtimeOpt.get();
+        
+        Optional<? extends ITypedIngredient<?>> optTypedIngredient = runtime.getIngredientManager()
+                .createTypedIngredient(ingredient);
+        
+        if (optTypedIngredient.isPresent()) {
+            ITypedIngredient<?> typedIngredient = optTypedIngredient.get();
+            IIngredientType<?> ingredientType = typedIngredient.getType();
+            IIngredientHelper<Object> helper = getHelperForType(ingredientType);
             
-            IJeiRuntime runtime = runtimeOpt.get();
-            
-            Optional<? extends ITypedIngredient<?>> optTypedIngredient = runtime.getIngredientManager()
-                    .createTypedIngredient(ingredient);
-            
-            if (optTypedIngredient.isPresent()) {
-                ITypedIngredient<?> typedIngredient = optTypedIngredient.get();
-                IIngredientType<?> ingredientType = typedIngredient.getType();
-                IIngredientHelper<Object> helper = getHelperForType(ingredientType);
+            if (helper != null) {
+                String typeClass = ingredientType.getIngredientClass().getName();
+                Object uid = helper.getUid(ingredient, UidContext.Ingredient);
                 
-                if (helper != null) {
-                    String typeClass = ingredientType.getIngredientClass().getName();
-                    Object uid = helper.getUid(ingredient, UidContext.Ingredient);
-                    
-                    return Optional.of(new StoredIngredient(typeClass, uid.toString()));
-                }
+                return new StoredIngredient(typeClass, uid.toString());
             }
-        } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Failed to store ingredient", e);
         }
         
-        return Optional.empty();
+        return null;
     }
     
     /**
-     * Gets an ItemStack that can be used to visually represent the ingredient.
+     * Performs the actual conversion from ingredient to ItemStack.
      *
-     * @param ingredient The ingredient to get an ItemStack for
-     * @return Optional containing the ItemStack, or empty if conversion failed
+     * @param ingredient The ingredient to convert
+     * @return The ItemStack representation, or null if conversion failed
      */
-    public Optional<ItemStack> getItemStackForDisplay(Object ingredient) {
+    @Override
+    protected ItemStack doGetItemStackForDisplay(Object ingredient) {
         if (!runtimeManager.hasRuntime()) {
-            return Optional.empty();
+            return null;
         }
         
-        try {
-            if (ingredient instanceof ItemStack itemStack) {
-                return Optional.of(itemStack);
+        if (ingredient instanceof ItemStack itemStack) {
+            return itemStack;
+        }
+        
+        Optional<IJeiRuntime> runtimeOpt = runtimeManager.getJeiRuntime();
+        if (runtimeOpt.isEmpty()) {
+            return null;
+        }
+        
+        IJeiRuntime runtime = runtimeOpt.get();
+        
+        Optional<? extends ITypedIngredient<?>> optTypedIngredient = runtime.getIngredientManager()
+                .createTypedIngredient(ingredient);
+        
+        if (optTypedIngredient.isPresent()) {
+            ITypedIngredient<?> typedIngredient = optTypedIngredient.get();
+            IIngredientHelper<Object> helper = getHelperForType(typedIngredient.getType());
+            if (helper != null) {
+                ItemStack cheatStack = helper.getCheatItemStack(ingredient);
+                if (cheatStack != null) {
+                    return cheatStack;
+                }
             }
             
-            Optional<IJeiRuntime> runtimeOpt = runtimeManager.getJeiRuntime();
-            if (runtimeOpt.isEmpty()) {
-                return Optional.empty();
-            }
-            
-            IJeiRuntime runtime = runtimeOpt.get();
-            
-            Optional<? extends ITypedIngredient<?>> optTypedIngredient = runtime.getIngredientManager()
-                    .createTypedIngredient(ingredient);
-            
-            if (optTypedIngredient.isPresent()) {
-                ITypedIngredient<?> typedIngredient = optTypedIngredient.get();
-                IIngredientHelper<Object> helper = getHelperForType(typedIngredient.getType());
-                if (helper != null) {
-                    return Optional.ofNullable(helper.getCheatItemStack(ingredient));
+            if (typedIngredient.getType() instanceof IIngredientTypeWithSubtypes) {
+                if (typedIngredient.getIngredient() instanceof ItemStack) {
+                    return (ItemStack) typedIngredient.getIngredient();
                 }
                 
-                if (typedIngredient.getType() instanceof IIngredientTypeWithSubtypes) {
-                    if (typedIngredient.getIngredient() instanceof ItemStack) {
-                        return Optional.of((ItemStack) typedIngredient.getIngredient());
-                    }
-                    
-                    IIngredientTypeWithSubtypes<Item, ItemStack> itemType = VanillaTypes.ITEM_STACK;
-                    
-                    if (ingredient instanceof Item item) {
-                        return Optional.of(itemType.getDefaultIngredient(item));
-                    }
+                IIngredientTypeWithSubtypes<Item, ItemStack> itemType = VanillaTypes.ITEM_STACK;
+                
+                if (ingredient instanceof Item item) {
+                    return itemType.getDefaultIngredient(item);
                 }
             }
-        } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Failed to get ItemStack for display", e);
         }
         
-        return Optional.empty();
+        return null;
     }
     
     /**
@@ -230,7 +220,7 @@ public class JEIIngredientManager {
                 }
             }
         } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Failed to render ingredient", e);
+            logError("Failed to render ingredient", e);
         }
     }
     
@@ -254,7 +244,7 @@ public class JEIIngredientManager {
             IIngredientType<T> typedType = (IIngredientType<T>) type;
             return runtime.getIngredientManager().getIngredientHelper(typedType);
         } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Failed to get ingredient helper for type: " + type, e);
+            logError("Failed to get ingredient helper for type: {}", type, e);
             return null;
         }
     }
@@ -281,12 +271,11 @@ public class JEIIngredientManager {
                 return convertEMIItemToJEI(value, runtime);
             }
             
-            // Add more integration formats as needed
             
-            EnoughFolders.LOGGER.debug("No cross-integration conversion available for type: {}", typeName);
+            logDebug("No cross-integration conversion available for type: {}", typeName);
             
         } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Failed to convert ingredient from other integration", e);
+            logError("Failed to convert ingredient from other integration", e);
         }
         
         return Optional.empty();
@@ -308,7 +297,7 @@ public class JEIIngredientManager {
             Item item = BuiltInRegistries.ITEM.get(resourceLocation);
             
             if (item == null || item == Items.AIR) {
-                EnoughFolders.LOGGER.debug("Item not found in registry: {}", resourceLocationString);
+                logDebug("Item not found in registry: {}", resourceLocationString);
                 return Optional.empty();
             }
             
@@ -324,12 +313,12 @@ public class JEIIngredientManager {
                     .createTypedIngredient(itemStack);
             
             if (typedIngredient.isPresent()) {
-                EnoughFolders.LOGGER.debug("Successfully converted EMI ingredient {} to JEI ItemStack", resourceLocationString);
+                logDebug("Successfully converted EMI ingredient {} to JEI ItemStack", resourceLocationString);
                 return Optional.of(itemStack);
             }
             
         } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Failed to convert EMI item to JEI: {}", resourceLocationString, e);
+            logError("Failed to convert EMI item to JEI: {}", resourceLocationString, e);
         }
         
         return Optional.empty();

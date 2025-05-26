@@ -1,11 +1,9 @@
 package com.enoughfolders.integrations.api;
 
-import com.enoughfolders.client.gui.FolderButton;
 import com.enoughfolders.client.gui.FolderScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -83,12 +81,4 @@ public interface RecipeViewingIntegration {
      * @return True if it's a recipe screen for this integration, false otherwise
      */
     boolean isRecipeScreen(Screen screen);
-    
-    /**
-     * Creates folder targets that can be used for ingredient drops from this recipe viewer.
-     * 
-     * @param folderButtons The list of folder buttons to create targets for
-     * @return A list of folder targets compatible with this recipe viewer
-     */
-    List<? extends FolderTarget> createFolderTargets(List<FolderButton> folderButtons);
 }

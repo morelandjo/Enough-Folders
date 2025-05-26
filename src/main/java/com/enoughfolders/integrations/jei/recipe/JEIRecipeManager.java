@@ -1,11 +1,11 @@
 package com.enoughfolders.integrations.jei.recipe;
 
-import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.event.ClientEventHandler;
 import com.enoughfolders.client.gui.IngredientSlot;
 import com.enoughfolders.data.StoredIngredient;
+import com.enoughfolders.integrations.base.AbstractRecipeManager;
 import com.enoughfolders.integrations.jei.core.JEIRuntimeManager;
-import com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler;
+import com.enoughfolders.integrations.common.handlers.BaseRecipeGuiHandler;
 import com.enoughfolders.integrations.jei.ingredient.JEIIngredientManager;
 
 import mezz.jei.api.recipe.IFocus;
@@ -21,7 +21,7 @@ import java.util.Optional;
 /**
  * Manages recipe viewing functionality in JEI integration.
  */
-public class JEIRecipeManager {
+public class JEIRecipeManager extends AbstractRecipeManager {
 
     /**
      * The JEI runtime manager
@@ -40,103 +40,98 @@ public class JEIRecipeManager {
      * @param ingredientManager The JEI ingredient manager
      */
     public JEIRecipeManager(JEIRuntimeManager runtimeManager, JEIIngredientManager ingredientManager) {
+        super("JEI");
         this.runtimeManager = runtimeManager;
         this.ingredientManager = ingredientManager;
     }
     
     /**
-     * Shows recipes for the provided ingredient in the JEI recipe GUI.
+     * Performs the actual recipe showing logic for JEI.
      *
      * @param ingredient The ingredient to show recipes for
      */
-    public void showRecipes(Object ingredient) {
+    @Override
+    protected void doShowRecipes(Object ingredient) {
         if (!runtimeManager.hasRuntime()) {
-            EnoughFolders.LOGGER.error("Cannot show recipes: JEI runtime is not available");
+            logError("Cannot show recipes: JEI runtime is not available");
             return;
         }
         
-        try {
-            saveCurrentFolderScreen();
+        saveCurrentFolderScreen();
+        
+        Optional<IRecipesGui> recipesGuiOpt = runtimeManager.getRecipesGui();
+        if (recipesGuiOpt.isPresent()) {
+            IRecipesGui recipesGui = recipesGuiOpt.get();
             
-            Optional<IRecipesGui> recipesGuiOpt = runtimeManager.getRecipesGui();
-            if (recipesGuiOpt.isPresent()) {
-                IRecipesGui recipesGui = recipesGuiOpt.get();
+            Optional<? extends mezz.jei.api.ingredients.ITypedIngredient<?>> typedIngredient = 
+                runtimeManager.getJeiRuntime()
+                    .map(runtime -> runtime.getIngredientManager().createTypedIngredient(ingredient))
+                    .orElse(Optional.empty());
+            
+            if (typedIngredient.isPresent()) {
+                Optional<IFocusFactory> focusFactoryOpt = runtimeManager.getJeiRuntime()
+                    .map(runtime -> runtime.getJeiHelpers().getFocusFactory());
                 
-                Optional<? extends mezz.jei.api.ingredients.ITypedIngredient<?>> typedIngredient = 
-                    runtimeManager.getJeiRuntime()
-                        .map(runtime -> runtime.getIngredientManager().createTypedIngredient(ingredient))
-                        .orElse(Optional.empty());
-                
-                if (typedIngredient.isPresent()) {
-                    Optional<IFocusFactory> focusFactoryOpt = runtimeManager.getJeiRuntime()
-                        .map(runtime -> runtime.getJeiHelpers().getFocusFactory());
+                if (focusFactoryOpt.isPresent()) {
+                    IFocusFactory focusFactory = focusFactoryOpt.get();
                     
-                    if (focusFactoryOpt.isPresent()) {
-                        IFocusFactory focusFactory = focusFactoryOpt.get();
-                        
-                        @SuppressWarnings("unchecked")
-                        IFocus<?> focus = focusFactory.createFocus(
-                            RecipeIngredientRole.OUTPUT,
-                            (mezz.jei.api.ingredients.ITypedIngredient) typedIngredient.get()
-                        );
-                        
-                        recipesGui.show(focus);
-                        EnoughFolders.LOGGER.debug("Successfully showed recipes for ingredient");
-                    }
-                } else {
-                    EnoughFolders.LOGGER.error("Failed to create typed ingredient for showing recipes");
+                    @SuppressWarnings("unchecked")
+                    IFocus<?> focus = focusFactory.createFocus(
+                        RecipeIngredientRole.OUTPUT,
+                        (mezz.jei.api.ingredients.ITypedIngredient<Object>) typedIngredient.get()
+                    );
+                    
+                    recipesGui.show(focus);
+                    logDebug("Successfully showed recipes for ingredient");
                 }
+            } else {
+                logError("Failed to create typed ingredient for showing recipes");
             }
-        } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Error showing recipes for ingredient", e);
         }
     }
     
     /**
-     * Shows usages for the provided ingredient in the JEI recipe GUI.
+     * Performs the actual usage showing logic for JEI.
      *
-     * @param ingredient The ingredient to show usages for
+     * @param ingredient The ingredient to show uses for
      */
-    public void showUses(Object ingredient) {
+    @Override
+    protected void doShowUses(Object ingredient) {
         if (!runtimeManager.hasRuntime()) {
-            EnoughFolders.LOGGER.error("Cannot show uses: JEI runtime is not available");
+            logError("Cannot show uses: JEI runtime is not available");
             return;
         }
         
-        try {
-            saveCurrentFolderScreen();
+        saveCurrentFolderScreen();
+        
+        Optional<IRecipesGui> recipesGuiOpt = runtimeManager.getRecipesGui();
+        if (recipesGuiOpt.isPresent()) {
+            IRecipesGui recipesGui = recipesGuiOpt.get();
             
-            Optional<IRecipesGui> recipesGuiOpt = runtimeManager.getRecipesGui();
-            if (recipesGuiOpt.isPresent()) {
-                IRecipesGui recipesGui = recipesGuiOpt.get();
+            Optional<? extends mezz.jei.api.ingredients.ITypedIngredient<?>> typedIngredient = 
+                runtimeManager.getJeiRuntime()
+                    .map(runtime -> runtime.getIngredientManager().createTypedIngredient(ingredient))
+                    .orElse(Optional.empty());
+            
+            if (typedIngredient.isPresent()) {
+                Optional<IFocusFactory> focusFactoryOpt = runtimeManager.getJeiRuntime()
+                    .map(runtime -> runtime.getJeiHelpers().getFocusFactory());
                 
-                Optional<? extends mezz.jei.api.ingredients.ITypedIngredient<?>> typedIngredient = 
-                    runtimeManager.getJeiRuntime()
-                        .map(runtime -> runtime.getIngredientManager().createTypedIngredient(ingredient))
-                        .orElse(Optional.empty());
-                
-                if (typedIngredient.isPresent()) {
-                    Optional<IFocusFactory> focusFactoryOpt = runtimeManager.getJeiRuntime()
-                        .map(runtime -> runtime.getJeiHelpers().getFocusFactory());
+                if (focusFactoryOpt.isPresent()) {
+                    IFocusFactory focusFactory = focusFactoryOpt.get();
                     
-                    if (focusFactoryOpt.isPresent()) {
-                        IFocusFactory focusFactory = focusFactoryOpt.get();
-                        
-                        @SuppressWarnings("unchecked")
-                        IFocus<?> focus = focusFactory.createFocus(
-                            RecipeIngredientRole.INPUT,
-                            (mezz.jei.api.ingredients.ITypedIngredient) typedIngredient.get()
-                        );
-                        
-                        recipesGui.show(focus);
-                        EnoughFolders.LOGGER.debug("Successfully showed uses for ingredient");
-                    }
-                } else {
-                    EnoughFolders.LOGGER.error("Failed to create typed ingredient for showing uses");
+                    @SuppressWarnings("unchecked")
+                    IFocus<?> focus = focusFactory.createFocus(
+                        RecipeIngredientRole.INPUT,
+                        (mezz.jei.api.ingredients.ITypedIngredient<Object>) typedIngredient.get()
+                    );
+                    
+                    recipesGui.show(focus);
+                    logDebug("Successfully showed uses for ingredient");
                 }
+            } else {
+                logError("Failed to create typed ingredient for showing uses");
             }
-        } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Error showing uses for ingredient", e);
         }
     }
     
@@ -153,8 +148,8 @@ public class JEIRecipeManager {
                     int screenHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
                     folderScreen.init(screenWidth, screenHeight);
                     
-                    JEIRecipeGuiHandler.saveLastFolderScreen(folderScreen);
-                    EnoughFolders.LOGGER.debug("Saved folder screen for recipe/usage view");
+                    BaseRecipeGuiHandler.saveLastFolderScreen(folderScreen);
+                    logDebug("Saved folder screen for recipe/usage view");
                 });
         }
     }
@@ -199,7 +194,7 @@ public class JEIRecipeManager {
                 return true;
             }
         } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Error handling ingredient click: {}", e.getMessage());
+            logError("Error handling ingredient click: {}", e.getMessage());
         }
         
         return false;
@@ -210,6 +205,7 @@ public class JEIRecipeManager {
      *
      * @return true if the JEI recipe GUI is the current screen
      */
+    @Override
     public boolean isRecipeGuiOpen() {
         if (!runtimeManager.hasRuntime()) {
             return false;
@@ -225,7 +221,7 @@ public class JEIRecipeManager {
             Screen currentScreen = Minecraft.getInstance().screen;
             return currentScreen != null && currentScreen.equals(recipesGuiOpt.get());
         } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Error checking if JEI recipe GUI is open", e);
+            logError("Error checking if JEI recipe GUI is open", e);
             return false;
         }
     }

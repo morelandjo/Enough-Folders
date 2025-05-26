@@ -1,160 +1,29 @@
 package com.enoughfolders.integrations.emi.core;
 
-import com.enoughfolders.client.gui.FolderButton;
-import com.enoughfolders.client.gui.FolderScreen;
-import com.enoughfolders.integrations.api.FolderTarget;
-import com.enoughfolders.integrations.api.FolderTargetStub;
-import com.enoughfolders.util.DebugLogger;
+import com.enoughfolders.integrations.base.AbstractRecipeManager;
 
 import net.minecraft.client.gui.screens.Screen;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Manages recipe viewing operations for EMI integration.
  */
-public class EMIRecipeManager {
+public class EMIRecipeManager extends AbstractRecipeManager {
     
     /**
-     * Private constructor to prevent instantiation of this utility class.
+     * Creates a new EMI recipe manager.
      */
-    private EMIRecipeManager() {
-        // Utility class should not be instantiated
-    }
-    
-    private static boolean initialized = false;
-    private static FolderScreen lastFolderScreen = null;
-    
-    /**
-     * Initialize the EMI recipe manager.
-     */
-    public static void initialize() {
-        if (initialized) {
-            return;
-        }
-        
-        try {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Initializing EMI recipe manager", ""
-            );
-            
-            initialized = true;
-            
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "EMI recipe manager initialized", ""
-            );
-        } catch (Exception e) {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Error initializing EMI recipe manager: {}", 
-                e.getMessage()
-            );
-        }
+    public EMIRecipeManager() {
+        super("EMI");
     }
 
     /**
-     * Save the last folder screen for recipe viewing integration.
-     * @param folderScreen The folder screen to save
-     */
-    public static void saveLastFolderScreen(FolderScreen folderScreen) {
-        lastFolderScreen = folderScreen;
-        DebugLogger.debugValue(
-            DebugLogger.Category.INTEGRATION,
-            "Saved EMI folder screen reference", ""
-        );
-    }
-
-    /**
-     * Clear the saved folder screen reference.
-     */
-    public static void clearLastFolderScreen() {
-        lastFolderScreen = null;
-        DebugLogger.debugValue(
-            DebugLogger.Category.INTEGRATION,
-            "Cleared EMI folder screen reference", ""
-        );
-    }
-
-    /**
-     * Get the last saved folder screen.
-     * @return An optional containing the last folder screen, or empty if none saved
-     */
-    public static Optional<FolderScreen> getLastFolderScreen() {
-        return Optional.ofNullable(lastFolderScreen);
-    }
-
-    /**
-     * Check if the given screen is an EMI recipe screen.
-     * @param screen The screen to check
-     * @return true if the screen is an EMI recipe screen, false otherwise
-     */
-    public static boolean isRecipeScreen(Screen screen) {
-        if (screen == null) {
-            return false;
-        }
-        
-        try {
-            String className = screen.getClass().getName();
-            // Check for EMI recipe screen classes
-            return className.contains("dev.emi.emi") && 
-                   (className.contains("recipe") || className.contains("Recipe"));
-        } catch (Exception e) {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Error checking EMI recipe screen: {}", 
-                e.getMessage()
-            );
-            return false;
-        }
-    }
-
-    /**
-     * Create folder targets for the given folder buttons.
-     * @param folderButtons The folder buttons to create targets for
-     * @return A list of folder targets
-     */
-    public static List<? extends FolderTarget> createFolderTargets(List<FolderButton> folderButtons) {
-        List<FolderTarget> targets = new ArrayList<>();
-        
-        try {
-            if (!initialized || folderButtons == null || folderButtons.isEmpty()) {
-                return targets;
-            }
-            
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Creating EMI folder targets: {}", folderButtons.size()
-            );
-            
-            // Use stub folder targets (drag functionality removed)
-            for (FolderButton button : folderButtons) {
-                FolderTarget target = new FolderTargetStub(button.getFolder());
-                targets.add(target);
-            }
-            
-        } catch (Exception e) {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Error creating EMI folder targets: {}", e.getMessage()
-            );
-        }
-        
-        return targets;
-    }
-    
-    /**
-     * Show recipes that produce the given ingredient.
+     * Performs the actual recipe showing logic.
+     *
      * @param ingredient The ingredient to show recipes for
      */
-    public static void showRecipes(Object ingredient) {
-        if (!initialized || ingredient == null) {
-            return;
-        }
-        
+    @Override
+    protected void doShowRecipes(Object ingredient) {
         try {
             // Use EMI's API to show recipes
             Class<?> emiApiClass = Class.forName("dev.emi.emi.api.EmiApi");
@@ -169,29 +38,18 @@ public class EMIRecipeManager {
             java.lang.reflect.Method displayRecipesMethod = emiApiClass.getMethod("displayRecipes", emiIngredientClass);
             displayRecipesMethod.invoke(null, emiIngredient);
             
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Displayed EMI recipes for ingredient", ""
-            );
-            
         } catch (Exception e) {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Error showing EMI recipes: {}", 
-                e.getMessage()
-            );
+            // Error handled by base class
         }
     }
-    
+
     /**
-     * Show uses/usages of the given ingredient.
+     * Performs the actual uses showing logic.
+     *
      * @param ingredient The ingredient to show uses for
      */
-    public static void showUses(Object ingredient) {
-        if (!initialized || ingredient == null) {
-            return;
-        }
-        
+    @Override
+    protected void doShowUses(Object ingredient) {
         try {
             // Use EMI's API to show uses
             Class<?> emiApiClass = Class.forName("dev.emi.emi.api.EmiApi");
@@ -206,24 +64,51 @@ public class EMIRecipeManager {
             java.lang.reflect.Method displayUsesMethod = emiApiClass.getMethod("displayUses", emiIngredientClass);
             displayUsesMethod.invoke(null, emiIngredient);
             
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Displayed EMI uses for ingredient", ""
-            );
+        } catch (Exception e) {
+            // Error handled by base class
+        }
+    }
+
+    /**
+     * Check if the given screen is an EMI recipe screen.
+     * @param screen The screen to check
+     * @return true if the screen is an EMI recipe screen, false otherwise
+     */
+    public boolean isEMIRecipeScreen(Screen screen) {
+        if (screen == null) {
+            return false;
+        }
+        
+        try {
+            String className = screen.getClass().getName();
+            // Check for EMI recipe screen classes
+            return className.contains("dev.emi.emi") && 
+                   (className.contains("recipe") || className.contains("Recipe"));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Get the current hovered ingredient from EMI.
+     * @return The currently hovered ingredient, or null if none
+     */
+    public Object getHoveredIngredient() {
+        try {
+            // Use EMI's API to get hovered ingredient
+            Class<?> emiApiClass = Class.forName("dev.emi.emi.api.EmiApi");
+            java.lang.reflect.Method getHoveredStackMethod = emiApiClass.getMethod("getHoveredStack");
+            return getHoveredStackMethod.invoke(null);
             
         } catch (Exception e) {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Error showing EMI uses: {}", 
-                e.getMessage()
-            );
+            return null;
         }
     }
     
     /**
      * Convert an object to an EmiIngredient if possible.
      */
-    private static Object convertToEmiIngredient(Object ingredient) {
+    private Object convertToEmiIngredient(Object ingredient) {
         if (ingredient == null) {
             return null;
         }
@@ -243,63 +128,58 @@ public class EMIRecipeManager {
             }
             
             // If it's an ItemStack, convert it to EmiStack
-            if (ingredient instanceof net.minecraft.world.item.ItemStack) {
-                net.minecraft.world.item.ItemStack itemStack = (net.minecraft.world.item.ItemStack) ingredient;
-                java.lang.reflect.Method ofMethod = emiStackClass.getMethod("of", net.minecraft.world.item.ItemStack.class);
+            if (ingredient instanceof ItemStack) {
+                ItemStack itemStack = (ItemStack) ingredient;
+                java.lang.reflect.Method ofMethod = emiStackClass.getMethod("of", ItemStack.class);
                 return ofMethod.invoke(null, itemStack);
             }
             
             return null;
             
         } catch (Exception e) {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Error converting to EMI ingredient: {}", 
-                e.getMessage()
-            );
             return null;
         }
     }
     
     /**
-     * Get the current hovered ingredient from EMI.
-     * @return The currently hovered ingredient, or null if none
+     * Save a folder screen to be used during recipe GUI navigation.
+     * 
+     * @param folderScreen The folder screen to save
      */
-    public static Object getHoveredIngredient() {
-        if (!initialized) {
-            return null;
-        }
-        
+    public void saveLastFolderScreen(com.enoughfolders.client.gui.FolderScreen folderScreen) {
+        // EMI doesn't need folder screen persistence like JEI, so this is a no-op
+    }
+    
+    /**
+     * Clear the saved folder screen when no longer needed.
+     */
+    public void clearLastFolderScreen() {
+        // EMI doesn't need folder screen persistence like JEI, so this is a no-op
+    }
+    
+    /**
+     * Get the last folder screen saved for recipe GUI navigation.
+     * 
+     * @return Optional containing the folder screen if available
+     */
+    public java.util.Optional<com.enoughfolders.client.gui.FolderScreen> getLastFolderScreen() {
+        // EMI doesn't persist folder screens like JEI, so return empty
+        return java.util.Optional.empty();
+    }
+    
+    /**
+     * Check if the given screen is a recipe screen for this integration.
+     * 
+     * @param screen The screen to check
+     * @return True if it's a recipe screen for this integration, false otherwise
+     */
+    public static boolean isRecipeScreen(Screen screen) {
         try {
-            Class<?> emiApiClass = Class.forName("dev.emi.emi.api.EmiApi");
-            
-            java.lang.reflect.Method getHoveredStackMethod = emiApiClass.getMethod("getHoveredStack", boolean.class);
-            Object stackInteraction = getHoveredStackMethod.invoke(null, true);
-            
-            if (stackInteraction != null) {
-                // Get the stack from the interaction
-                java.lang.reflect.Method getStackMethod = stackInteraction.getClass().getMethod("getStack");
-                Object stack = getStackMethod.invoke(stackInteraction);
-                
-                // Check if it's not empty
-                if (stack != null) {
-                    java.lang.reflect.Method isEmptyMethod = stack.getClass().getMethod("isEmpty");
-                    boolean isEmpty = (Boolean) isEmptyMethod.invoke(stack);
-                    if (!isEmpty) {
-                        return stack;
-                    }
-                }
-            }
-            
-            return null;
-            
+            // Check if the screen is an EMI recipe screen
+            return screen.getClass().getName().contains("emi") && 
+                   screen.getClass().getName().toLowerCase().contains("recipe");
         } catch (Exception e) {
-            DebugLogger.debugValue(
-                DebugLogger.Category.INTEGRATION,
-                "Error getting hovered EMI ingredient: {}", 
-                e.getMessage()
-            );
-            return null;
+            return false;
         }
     }
 }

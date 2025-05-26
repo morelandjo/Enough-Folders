@@ -11,22 +11,22 @@ import java.util.List;
  */
 public class FTBIntegration {
     
+    // Use the SidebarProvider interface from the provider-based implementation
+    private final SidebarProvider sidebarProvider;
+    
     /**
      * Creates a new FTB integration instance.
      */
     public FTBIntegration() {
-        // Default constructor
+        this.sidebarProvider = SidebarProviderFactory.create();
     }
-    
-    // Use the SidebarProvider interface from the provider-based implementation
-    private static final SidebarProvider sidebarProvider = SidebarProviderFactory.create();
     
     /**
      * Check if FTB Library mod is loaded.
      * 
      * @return true if FTB Library is loaded
      */
-    public static boolean isFTBLibraryLoaded() {
+    public boolean isFTBLibraryLoaded() {
         boolean isAvailable = sidebarProvider.isSidebarAvailable();
         DebugLogger.debugValue(DebugLogger.Category.INTEGRATION, 
             "FTB check - sidebar available: {}", isAvailable);
@@ -38,7 +38,7 @@ public class FTBIntegration {
      *
      * @return A list of rectangles representing FTB sidebar buttons areas
      */
-    public static List<Rect2i> getSidebarExclusionAreas() {
+    public List<Rect2i> getSidebarExclusionAreas() {
         boolean ftbLoaded = isFTBLibraryLoaded();
         DebugLogger.debugValue(DebugLogger.Category.INTEGRATION, 
             "FTB getSidebarExclusionAreas - FTB Library loaded: {}", ftbLoaded);
@@ -66,7 +66,7 @@ public class FTBIntegration {
      * @param rectangle The rectangle to check and potentially adjust
      * @return The adjusted rectangle that doesn't overlap with FTB sidebar
      */
-    public static Rect2i avoidExclusionAreas(Rect2i rectangle) {
+    public Rect2i avoidExclusionAreas(Rect2i rectangle) {
         boolean ftbLoaded = isFTBLibraryLoaded();
         if (!ftbLoaded) {
             return rectangle;
@@ -117,7 +117,7 @@ public class FTBIntegration {
      * @param rect2 The second rectangle
      * @return True if the rectangles overlap, false otherwise
      */
-    private static boolean rectanglesOverlap(Rect2i rect1, Rect2i rect2) {
+    private boolean rectanglesOverlap(Rect2i rect1, Rect2i rect2) {
         return rect1.getX() < rect2.getX() + rect2.getWidth() &&
                rect1.getX() + rect1.getWidth() > rect2.getX() &&
                rect1.getY() < rect2.getY() + rect2.getHeight() &&
@@ -131,7 +131,7 @@ public class FTBIntegration {
      * @param rect2 The second rectangle
      * @return The percentage of rect1 that overlaps with rect2 (0.0 to 1.0)
      */
-    private static double calculateOverlapPercentage(Rect2i rect1, Rect2i rect2) {
+    private double calculateOverlapPercentage(Rect2i rect1, Rect2i rect2) {
         // Calculate overlap dimensions
         int xOverlap = Math.max(0, Math.min(rect1.getX() + rect1.getWidth(), rect2.getX() + rect2.getWidth()) - 
                                  Math.max(rect1.getX(), rect2.getX()));

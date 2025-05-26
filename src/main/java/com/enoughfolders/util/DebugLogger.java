@@ -19,7 +19,6 @@ public class DebugLogger {
         // Utility class should not be instantiated
     }
     private static Logger LOGGER;
-    private static boolean isTestEnvironment = false;
     
     /**
      * Logging categories for organizing debug messages into functional areas.
@@ -85,19 +84,13 @@ public class DebugLogger {
             CATEGORY_ENABLED.put(category, false);
         }
         
-        // Try to initialize the logger, but handle the case when running in tests
+        // Initialize the logger
         try {
             // Try to get the logger from EnoughFolders class
-            try {
-                LOGGER = EnoughFolders.LOGGER;
-            } catch (NoClassDefFoundError | ExceptionInInitializerError e) {
-                // If that fails, try to create a new logger
-                LOGGER = LogManager.getLogger(DebugLogger.class);
-            }
+            LOGGER = EnoughFolders.LOGGER;
         } catch (NoClassDefFoundError | ExceptionInInitializerError e) {
-            // We're probably running in a test environment without Log4j
-            isTestEnvironment = true;
-            System.out.println("[DebugLogger] Running in test environment without Log4j");
+            // If that fails, try to create a new logger
+            LOGGER = LogManager.getLogger(DebugLogger.class);
         }
     }
     
@@ -135,14 +128,12 @@ public class DebugLogger {
     }
     
     /**
-     * Helper method to log info messages that works in both normal and test environments.
+     * Helper method to log info messages.
      * 
      * @param message The message to log at INFO level
      */
     private static void logInfo(String message) {
-        if (isTestEnvironment) {
-            System.out.println(message);
-        } else if (LOGGER != null) {
+        if (LOGGER != null) {
             LOGGER.info(message);
         }
     }

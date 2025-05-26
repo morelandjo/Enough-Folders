@@ -6,7 +6,6 @@ import com.enoughfolders.client.data.NavigationControls;
 import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.FolderManager;
 import com.enoughfolders.client.integration.IntegrationHandler;
-import com.enoughfolders.integrations.api.FolderTarget;
 import com.enoughfolders.util.DebugLogger;
 
 import net.minecraft.client.Minecraft;
@@ -501,15 +500,6 @@ public class FolderScreen {
     }
     
     /**
-     * Gets the area where ingredients can be displayed in the active folder.
-     *
-     * @return A rectangle representing the content area
-     */
-    public Rect2i getContentDropArea() {
-        return layoutManager.getContentDropArea(isAddingFolder, gridManager.getIngredientColumns());
-    }
-    
-    /**
      * Refreshes the ingredient grid after ingredients have been added or removed.
      */
     public void onIngredientAdded() {
@@ -532,16 +522,6 @@ public class FolderScreen {
      */
     public List<FolderButton> getFolderButtons() {
         return buttonManager.getFolderButtons();
-    }
-
-    /**
-     * Gets folder targets for all folder buttons with the specified target type.
-     *
-     * @param <T> The type of folder targets to return
-     * @return List of folder targets for the available recipe viewing integration
-     */
-    public <T extends FolderTarget> List<T> getTypedFolderTargets() {
-        return integrationHandler.getTypedFolderTargets(buttonManager.getFolderButtons());
     }
 
     /**

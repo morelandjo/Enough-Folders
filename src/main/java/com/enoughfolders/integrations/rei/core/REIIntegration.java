@@ -1,80 +1,116 @@
 package com.enoughfolders.integrations.rei.core;
 
 import com.enoughfolders.EnoughFolders;
-import com.enoughfolders.client.gui.FolderButton;
 import com.enoughfolders.client.gui.FolderScreen;
-import com.enoughfolders.data.Folder;
+import com.enoughfolders.client.gui.IngredientSlot;
 import com.enoughfolders.data.StoredIngredient;
-import com.enoughfolders.integrations.ModIntegration;
-import com.enoughfolders.integrations.api.FolderTargetStub;
-import com.enoughfolders.integrations.api.RecipeViewingIntegration;
-import com.enoughfolders.integrations.rei.gui.handlers.REIFolderIngredientHandler;
+import com.enoughfolders.integrations.base.AbstractIntegration;
+import com.enoughfolders.integrations.common.handlers.BaseRecipeGuiHandler;
+import com.enoughfolders.integrations.factory.HandlerFactory;
+import com.enoughfolders.integrations.factory.IntegrationFactory;
+import com.enoughfolders.integrations.util.StackTraceUtils;
 import com.enoughfolders.util.DebugLogger;
 
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.fml.ModList;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
  * Integration with Roughly Enough Items (REI) mod.
  */
-public class REIIntegration implements ModIntegration, RecipeViewingIntegration {
+public class REIIntegration extends AbstractIntegration {
+    
+    /**
+     * REI mod identifier
+     */
+    private static final String MOD_ID = "roughlyenoughitems";
+    
+    /**
+     * REI ingredient manager instance
+     */
+    private REIIngredientManager ingredientManager;
+    
+    /**
+     * REI recipe manager instance
+     */
+    private REIRecipeManager recipeManager;
     
     /**
      * Creates a new REI integration instance.
      */
     public REIIntegration() {
-        // Default constructor
+        super(MOD_ID, "REI");
+        this.ingredientManager = new REIIngredientManager();
+        this.recipeManager = new REIRecipeManager(this.ingredientManager);
+        EnoughFolders.LOGGER.info("REI Integration initialized");
     }
     
-    private boolean initialized = false;
-    private boolean available = false;
-    
     /**
-     * Initialize the REI integration.
+     * Checks if the required REI classes are available.
+     *
+     * @return true if REI classes are available, false otherwise
      */
     @Override
-    public void initialize() {
-        if (initialized) {
-            return;
-        }
-        
+    protected boolean checkClassAvailability() {
         try {
-            // Check if REI API classes are available
             Class.forName("me.shedaniel.rei.api.client.REIRuntime");
-            
-            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
-                "REI classes found, enabling REI integration");
-            
-            available = true;
-            
-            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
-                "REI integration initialized successfully");
-            
+            Class.forName("me.shedaniel.rei.api.common.entry.EntryStack");
+            Class.forName("me.shedaniel.rei.api.client.ClientHelper");
+            return ModList.get().isLoaded(MOD_ID);
         } catch (ClassNotFoundException e) {
-            DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
-                "REI classes not found, disabling REI integration");
-            available = false;
-        } catch (Exception e) {
-            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                "Error initializing REI integration: {}", e.getMessage());
-            available = false;
+            return false;
         }
-        
-        initialized = true;
     }
     
     /**
-     * Checks if the REI integration is available.
-     * 
-     * @return true if REI is installed and integration is available, false otherwise
+     * Performs REI-specific initialization.
      */
     @Override
-    public boolean isAvailable() {
-        return available;
+    protected void doInitialize() {
+        try {
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "Initializing REI integration", ""
+            );
+            
+            // Register handler factories for all integrations
+            com.enoughfolders.integrations.factory.HandlerFactory.registerDefaultFactories();
+            
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "REI integration initialization complete", ""
+            );
+        } catch (Exception e) {
+            EnoughFolders.LOGGER.error("Failed to initialize REI integration", e);
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "REI integration initialization failed: {}", 
+                e.getMessage()
+            );
+            throw e;
+        }
+    }
+    
+    /**
+     * Gets the REI ingredient manager instance.
+     *
+     * @return The REI ingredient manager
+     */
+    public REIIngredientManager getIngredientManager() {
+        return ingredientManager;
+    }
+    
+    /**
+     * Gets the REI recipe manager instance.
+     *
+     * @return The REI recipe manager
+     */
+    public REIRecipeManager getRecipeManager() {
+        return recipeManager;
     }
     
     /**
@@ -88,353 +124,88 @@ public class REIIntegration implements ModIntegration, RecipeViewingIntegration 
     }
     
     /**
-     * Converts a StoredIngredient to a REI ingredient.
-     * 
+     * Converts a StoredIngredient back to its original REI ingredient object.
+     *
      * @param storedIngredient The stored ingredient to convert
-     * @return An Optional containing the REI ingredient, or empty if conversion failed
+     * @return Optional containing the original ingredient object, or empty if conversion failed
      */
     @Override
     public Optional<?> getIngredientFromStored(StoredIngredient storedIngredient) {
         try {
-            if (!isAvailable()) {
-                DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
-                    "REI integration not available, can't convert stored ingredient");
-                return Optional.empty();
-            }
-            
-            // First try direct REI format lookup
-            if (storedIngredient.getType().equals("net.minecraft.world.item.ItemStack")) {
-                // Parse the item ID
-                String itemId = storedIngredient.getValue();
-                DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                    "Converting stored ingredient with ID: {}", itemId);
-                
-                // Extract registry name from the item ID
-                if (itemId.contains("@")) {
-                    itemId = itemId.substring(0, itemId.indexOf("@"));
-                }
-                
-                // Get the item from the registry
-                String namespace = itemId.substring(0, itemId.indexOf(":"));
-                String path = itemId.substring(itemId.indexOf(":") + 1);
-                net.minecraft.resources.ResourceLocation resourceLocation = 
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(namespace, path);
-                    
-                net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(resourceLocation);
-                
-                if (item != null) {
-                    ItemStack itemStack = new ItemStack(item);
-                    
-                    // Create an EntryStack from the ItemStack
-                    var entryStack = me.shedaniel.rei.api.common.entry.EntryStack.of(
-                        me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes.ITEM, 
-                        itemStack
-                    );
-                    
-                    return Optional.of(entryStack);
-                }
-            }
-            
-            // If direct lookup failed, try cross-integration compatibility
-            Optional<?> crossIntegrationResult = tryConvertFromOtherIntegration(storedIngredient);
-            if (crossIntegrationResult.isPresent()) {
-                return crossIntegrationResult;
-            }
-            
+            return ingredientManager.getIngredientFromStored(storedIngredient);
         } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Error converting stored ingredient to REI ingredient: {}", e.getMessage());
-            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                "Exception details: {}", e);
-        }
-        
-        return Optional.empty();
-    }
-    
-    /**
-     * Safely gets an entry stack from a list widget, with null checks.
-     * 
-     * @param listWidget The overlay list widget to get the focused stack from
-     * @return The focused stack, or null if there is no focused stack or the widget is null
-     */
-    public me.shedaniel.rei.api.common.entry.EntryStack<?> getSafelyFocusedStack(me.shedaniel.rei.api.client.overlay.OverlayListWidget listWidget) {
-        if (listWidget == null) {
-            EnoughFolders.LOGGER.debug("List widget is null, cannot get focused stack");
-            return null;
-        }
-        
-        try {
-            return listWidget.getFocusedStack();
-        } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Error getting focused stack: {}", e.getMessage());
-            return null;
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "Error converting StoredIngredient to REI ingredient: {}", 
+                e.getMessage()
+            );
+            return Optional.empty();
         }
     }
     
     /**
-     * Stores a REI ingredient as a StoredIngredient.
-     * 
-     * @param ingredient The REI ingredient to store
-     * @return An Optional containing the StoredIngredient, or empty if conversion failed
+     * Converts a REI ingredient object into a StoredIngredient for persistence.
+     *
+     * @param ingredient The REI ingredient object to convert
+     * @return Optional containing the StoredIngredient, or empty if conversion failed
      */
     @Override
     public Optional<StoredIngredient> storeIngredient(Object ingredient) {
         try {
-            if (ingredient instanceof me.shedaniel.rei.api.common.entry.EntryStack<?> entryStack) {
-                if (entryStack.getType() == me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes.ITEM) {
-                    // Handle item entry
-                    Object value = entryStack.getValue();
-                    if (value instanceof net.minecraft.world.item.ItemStack itemStack) {
-                        String typeClass = "net.minecraft.world.item.ItemStack";
-                        String itemId = itemStack.getItem().toString();
-                        
-                        DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                            "Converting REI item entry to StoredIngredient with ID: {}", itemId);
-                            
-                        return Optional.of(new StoredIngredient(typeClass, itemId));
-                    }
-                }
-                
-                // Log unknown entry type
-                String typeString = entryStack.getType() != null ? entryStack.getType().toString() : "null";
-                DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
-                    "Unknown REI entry type: " + typeString);
-            } else {
-                String className = ingredient != null ? ingredient.getClass().getName() : "null";
-                DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
-                    "Unknown ingredient type: " + className);
-            }
+            return ingredientManager.storeIngredient(ingredient);
         } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Error storing REI ingredient: {}", e.getMessage());
-            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                "Exception details: {}", e);
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "Error converting REI ingredient to StoredIngredient: {}", 
+                e.getMessage()
+            );
+            return Optional.empty();
         }
-        
-        return Optional.empty();
     }
     
     /**
-     * Gets an ItemStack for displaying a REI ingredient.
-     * 
-     * @param ingredient The REI ingredient to get an ItemStack for
-     * @return An Optional containing the ItemStack, or empty if conversion failed
+     * Gets an ItemStack that can be used to visually represent the ingredient.
+     *
+     * @param ingredient The ingredient to get an ItemStack for
+     * @return Optional containing the ItemStack, or empty if conversion failed
      */
     @Override
     public Optional<ItemStack> getItemStackForDisplay(Object ingredient) {
         try {
-            if (!isAvailable()) {
-                DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
-                    "REI integration not available, can't get item stack for display");
-                return Optional.empty();
-            }
-            
-            EnoughFolders.LOGGER.debug("Getting ItemStack for display from: {}", 
-                ingredient != null ? ingredient.getClass().getName() : "null");
-            
-            if (ingredient instanceof me.shedaniel.rei.api.common.entry.EntryStack<?> entryStack) {
-                if (entryStack.getType() == me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes.ITEM) {
-                    Object value = entryStack.getValue();
-                    if (value instanceof ItemStack itemStack) {
-                        DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
-                            "Successfully converted REI EntryStack to ItemStack for display");
-                        return Optional.of(itemStack);
-                    }
-                }
-            } else if (ingredient instanceof StoredIngredient storedIngredient) {
-                // If it's a StoredIngredient, try to parse it directly
-                if (storedIngredient.getType().equals("net.minecraft.world.item.ItemStack")) {
-                    String itemId = storedIngredient.getValue();
-                    
-                    DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                        "Converting stored ingredient to ItemStack with ID: {}", itemId);
-                    
-                    // Extract registry name from the item ID
-                    if (itemId.contains("@")) {
-                        itemId = itemId.substring(0, itemId.indexOf("@"));
-                    }
-                    
-                    // Get the item from the registry
-                    String namespace = itemId.substring(0, itemId.indexOf(":"));
-                    String path = itemId.substring(itemId.indexOf(":") + 1);
-                    net.minecraft.resources.ResourceLocation resourceLocation = 
-                        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(namespace, path);
-                        
-                    net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(resourceLocation);
-                    
-                    if (item != null) {
-                        ItemStack itemStack = new ItemStack(item);
-                        EnoughFolders.LOGGER.debug("Successfully created ItemStack for '{}': {}", 
-                            itemId, itemStack.getItem().toString());
-                        return Optional.of(itemStack);
-                    } 
-                } else {
-                    EnoughFolders.LOGGER.debug("StoredIngredient has unsupported type: {}", 
-                        storedIngredient.getType());
-                }
-            } else {
-                EnoughFolders.LOGGER.debug("Unsupported ingredient type: {}", 
-                    ingredient != null ? ingredient.getClass().getName() : "null");
-            }
+            return ingredientManager.getItemStackForDisplay(ingredient);
         } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Error getting ItemStack for display: {}", e.getMessage());
-            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                "Exception details: {}", e);
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "Error getting ItemStack for REI ingredient: {}", 
+                e.getMessage()
+            );
+            return Optional.empty();
         }
-        
-        return Optional.empty();
     }
-    
-
     
     /**
-     * Gets the ingredient currently under the mouse cursor in the REI UI.
+     * Gets the ingredient currently under the mouse cursor in REI.
      * 
-     * @return Optional containing the ingredient, or empty if none is found
+     * @return Optional containing the ingredient under mouse, or empty if none
      */
     public Optional<Object> getIngredientUnderMouse() {
-        System.out.println("REI getIngredientUnderMouse called - SYSTEM PRINT");
-        EnoughFolders.LOGGER.info("getIngredientUnderMouse called");
-        try {
-            if (!isAvailable()) {
-                EnoughFolders.LOGGER.info("REI integration not available, can't get ingredient under mouse");
-                return Optional.empty();
-            }
-            
-            EnoughFolders.LOGGER.info("REI integration is available, proceeding");
-            
-            // Get REI runtime
-            try {
-                me.shedaniel.rei.api.client.REIRuntime runtime = me.shedaniel.rei.api.client.REIRuntime.getInstance();
-                if (runtime == null) {
-                    EnoughFolders.LOGGER.info("REI runtime is null, can't get ingredient under mouse");
-                    return Optional.empty();
-                }
-                
-                EnoughFolders.LOGGER.info("REI runtime found");
-                
-                // Get the current Minecraft instance and screen
-                net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
-                net.minecraft.client.gui.screens.Screen currentScreen = minecraft.screen;
-                
-                if (currentScreen == null) {
-                    EnoughFolders.LOGGER.info("No current screen available");
-                    return Optional.empty();
-                }
-                
-                EnoughFolders.LOGGER.info("Current screen: {}", currentScreen.getClass().getSimpleName());
-                
-                // ---- APPROACH 1: Try to get the focused stack from REI's overlay first ----
-                if (runtime.isOverlayVisible()) {
-                    EnoughFolders.LOGGER.info("REI overlay is visible, checking overlay entries");
-                    
-                    // Try to get the hovered entry from REI's overlay                    
-                    Optional<me.shedaniel.rei.api.client.overlay.ScreenOverlay> overlayOpt = runtime.getOverlay();
-                    if (overlayOpt.isPresent()) {
-                        me.shedaniel.rei.api.client.overlay.ScreenOverlay overlay = overlayOpt.get();
-                        
-                        // Check entry list
-                        me.shedaniel.rei.api.client.overlay.OverlayListWidget entryList = overlay.getEntryList();
-                        if (entryList != null) {
-                            me.shedaniel.rei.api.common.entry.EntryStack<?> focusedStack = getSafelyFocusedStack(entryList);
-                            if (focusedStack != null && !focusedStack.isEmpty()) {
-                                EnoughFolders.LOGGER.info("Found focused entry in main entry list");
-                                return Optional.of(focusedStack);
-                            }
-                        }
-                        
-                        // Check favorites list
-                        Optional<me.shedaniel.rei.api.client.overlay.OverlayListWidget> favoritesListOpt = overlay.getFavoritesList();
-                        if (favoritesListOpt.isPresent()) {
-                            me.shedaniel.rei.api.client.overlay.OverlayListWidget favoritesList = favoritesListOpt.get();
-                            if (favoritesList != null) {
-                                me.shedaniel.rei.api.common.entry.EntryStack<?> focusedStack = getSafelyFocusedStack(favoritesList);
-                                if (focusedStack != null && !focusedStack.isEmpty()) {
-                                    EnoughFolders.LOGGER.info("Found focused entry in favorites list");
-                                    return Optional.of(focusedStack);
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // ---- APPROACH 2: Try getting the focused entry using the current screen ----
-                // Get current mouse position
-                double mouseX = minecraft.mouseHandler.xpos() * (double) minecraft.getWindow().getGuiScaledWidth() / (double) minecraft.getWindow().getScreenWidth();
-                double mouseY = minecraft.mouseHandler.ypos() * (double) minecraft.getWindow().getGuiScaledHeight() / (double) minecraft.getWindow().getScreenHeight();
-                me.shedaniel.math.Point mousePoint = new me.shedaniel.math.Point(mouseX, mouseY);
-                
-                EnoughFolders.LOGGER.info("Mouse position: ({}, {})", mouseX, mouseY);
-                
-                // Try getting the stack at the current mouse position
-                me.shedaniel.rei.api.common.entry.EntryStack<?> focusedStack = 
-                    me.shedaniel.rei.api.client.registry.screen.ScreenRegistry.getInstance()
-                        .getFocusedStack(currentScreen, mousePoint);
-                
-                if (focusedStack != null && !focusedStack.isEmpty()) {
-                    EnoughFolders.LOGGER.info("Found focused entry under mouse cursor: {}", 
-                        focusedStack.getType().toString());
-                    return Optional.of(focusedStack);
-                }
-                
-                // ---- APPROACH 3: Try to access REI's internal state for keyboard interactions ----
-                try {
-                    // For keyboard interactions, try to check if there's a selected entry in the search field context
-                    if (runtime.isOverlayVisible()) {
-                        Optional<me.shedaniel.rei.api.client.overlay.ScreenOverlay> overlayOpt = runtime.getOverlay();
-                        if (overlayOpt.isPresent()) {
-                            me.shedaniel.rei.api.client.overlay.ScreenOverlay overlay = overlayOpt.get();
-                            me.shedaniel.rei.api.client.overlay.OverlayListWidget entryList = overlay.getEntryList();
-                            
-                            if (entryList != null) {
-                                // Try to get the currently selected (keyboard navigated) entry
-                                try {
-                                    // REI should have a currently focused widget that we can access
-                                    // Even if mouse isn't over it, keyboard navigation should set focus
-                                    me.shedaniel.rei.api.common.entry.EntryStack<?> selectedStack = entryList.getFocusedStack();
-                                    if (selectedStack != null && !selectedStack.isEmpty()) {
-                                        EnoughFolders.LOGGER.info("Found selected entry via keyboard navigation");
-                                        return Optional.of(selectedStack);
-                                    }
-                                } catch (Exception ignored) {
-                                    // getFocusedStack might not be available in all REI versions
-                                }
-                                
-                                // Try alternative approach: Check the REI search field for selected entries
-                                try {
-                                    // Sometimes the focus is in the search field context rather than directly on entries
-                                    // Try to get focused widget from the overlay itself rather than just the entry list
-                                    EnoughFolders.LOGGER.info("Checking REI overlay for focused widget beyond entry list");
-                                    
-                                    // If we still don't have focus, this might be a limitation of the current REI API
-                                    // For now, we'll log this scenario and return empty
-                                    // Future improvements could involve REI plugin hooks or alternative detection methods
-                                    
-                                } catch (Exception e) {
-                                    EnoughFolders.LOGGER.debug("Could not access REI search context: {}", e.getMessage());
-                                }
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    EnoughFolders.LOGGER.debug("Failed to get keyboard-selected ingredient: {}", e.getMessage());
-                }
-                
-                EnoughFolders.LOGGER.info("No ingredient found under mouse cursor");
-            } catch (AssertionError e) {
-                // This is expected if REI is not fully initialized
-                EnoughFolders.LOGGER.info("REI internals not initialized yet: {}", e.getMessage());
-                return Optional.empty();
-            }
-            
-        } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Error getting ingredient under mouse: {}", e.getMessage());
-            e.printStackTrace();
-            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                "Exception details: {}", e);
+        if (!isAvailable()) {
+            return Optional.empty();
         }
         
-        return Optional.empty();
+        try {
+            Object hoveredIngredient = recipeManager.getHoveredIngredient();
+            return Optional.ofNullable(hoveredIngredient);
+        } catch (Exception e) {
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "Error getting ingredient under mouse: {}",
+                e.getMessage()
+            );
+            return Optional.empty();
+        }
     }
-
+    
     /**
      * Shows recipes for the provided ingredient in the REI recipe GUI.
      *
@@ -442,50 +213,13 @@ public class REIIntegration implements ModIntegration, RecipeViewingIntegration 
      */
     public void showRecipes(Object ingredient) {
         try {
-            if (!isAvailable()) {
-                EnoughFolders.LOGGER.error("Cannot show recipes: REI integration not available");
-                return;
-            }
-            
-            // Save the current folder screen before showing recipes
-            saveCurrentFolderScreen();
-            
-            // Check if REI is fully initialized
-            try {
-                // Get REI runtime
-                me.shedaniel.rei.api.client.REIRuntime runtime = me.shedaniel.rei.api.client.REIRuntime.getInstance();
-                if (runtime == null) {
-                    EnoughFolders.LOGGER.error("Cannot show recipes: REI runtime is null");
-                    return;
-                }
-                
-                // Create a view screen for the ingredient
-                if (ingredient instanceof me.shedaniel.rei.api.common.entry.EntryStack<?> entryStack) {
-                    // Use entry stack directly
-                    me.shedaniel.rei.api.client.view.ViewSearchBuilder.builder()
-                        .addRecipesFor(entryStack)
-                        .open();
-                    EnoughFolders.LOGGER.debug("Successfully showed recipes for EntryStack");
-                } else {
-                    // Try to convert the ingredient to an entry stack
-                    Optional<me.shedaniel.rei.api.common.entry.EntryStack<?>> entryStackOpt = convertToEntryStack(ingredient);
-                    if (entryStackOpt.isPresent()) {
-                        me.shedaniel.rei.api.client.view.ViewSearchBuilder.builder()
-                            .addRecipesFor(entryStackOpt.get())
-                            .open();
-                        EnoughFolders.LOGGER.debug("Successfully showed recipes for converted ingredient");
-                    } else {
-                        EnoughFolders.LOGGER.error("Failed to convert ingredient for showing recipes");
-                    }
-                }
-            } catch (AssertionError e) {
-                // This is expected if REI is not fully initialized
-                EnoughFolders.LOGGER.error("REI internals not initialized yet: {}", e.getMessage());
-            }
+            recipeManager.showRecipes(ingredient);
         } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Error showing recipes for ingredient: {}", e.getMessage());
-            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                "Exception details: {}", e);
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "Error showing REI recipes: {}", 
+                e.getMessage()
+            );
         }
     }
     
@@ -496,184 +230,14 @@ public class REIIntegration implements ModIntegration, RecipeViewingIntegration 
      */
     public void showUses(Object ingredient) {
         try {
-            if (!isAvailable()) {
-                EnoughFolders.LOGGER.error("Cannot show uses: REI integration not available");
-                return;
-            }
-            
-            // Save the current folder screen before showing uses
-            saveCurrentFolderScreen();
-            
-            // Check if REI is fully initialized
-            try {
-                // Get REI runtime
-                me.shedaniel.rei.api.client.REIRuntime runtime = me.shedaniel.rei.api.client.REIRuntime.getInstance();
-                if (runtime == null) {
-                    EnoughFolders.LOGGER.error("Cannot show uses: REI runtime is null");
-                    return;
-                }
-                
-                // Create a view screen for the ingredient
-                if (ingredient instanceof me.shedaniel.rei.api.common.entry.EntryStack<?> entryStack) {
-                    // Use entry stack directly
-                    me.shedaniel.rei.api.client.view.ViewSearchBuilder.builder()
-                        .addUsagesFor(entryStack)
-                        .open();
-                    EnoughFolders.LOGGER.debug("Successfully showed uses for EntryStack");
-                } else {
-                    // Try to convert the ingredient to an entry stack
-                    Optional<me.shedaniel.rei.api.common.entry.EntryStack<?>> entryStackOpt = convertToEntryStack(ingredient);
-                    if (entryStackOpt.isPresent()) {
-                        me.shedaniel.rei.api.client.view.ViewSearchBuilder.builder()
-                            .addUsagesFor(entryStackOpt.get())
-                            .open();
-                        EnoughFolders.LOGGER.debug("Successfully showed uses for converted ingredient");
-                    } else {
-                        EnoughFolders.LOGGER.error("Failed to convert ingredient for showing uses");
-                    }
-                }
-            } catch (AssertionError e) {
-                // This is expected if REI is not fully initialized
-                EnoughFolders.LOGGER.error("REI internals not initialized yet: {}", e.getMessage());
-            }
+            recipeManager.showUses(ingredient);
         } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Error showing uses for ingredient: {}", e.getMessage());
-            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                "Exception details: {}", e);
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "Error showing REI uses: {}", 
+                e.getMessage()
+            );
         }
-    }
-    
-    /**
-     * Helper method to convert an object to a REI EntryStack.
-     * 
-     * @param ingredient The ingredient to convert
-     * @return Optional containing the EntryStack, or empty if conversion failed
-     */
-    private Optional<me.shedaniel.rei.api.common.entry.EntryStack<?>> convertToEntryStack(Object ingredient) {
-        try {
-            if (ingredient instanceof me.shedaniel.rei.api.common.entry.EntryStack<?>) {
-                EnoughFolders.LOGGER.debug("Ingredient is already an EntryStack, returning directly");
-                return Optional.of((me.shedaniel.rei.api.common.entry.EntryStack<?>) ingredient);
-            }
-            
-            // Convert ItemStack to EntryStack
-            if (ingredient instanceof ItemStack itemStack) {
-                EnoughFolders.LOGGER.debug("Converting ItemStack to EntryStack: {}", itemStack.getItem());
-                return Optional.of(me.shedaniel.rei.api.common.entry.EntryStack.of(
-                    me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes.ITEM, 
-                    itemStack
-                ));
-            }
-            
-            // Try to convert StoredIngredient
-            if (ingredient instanceof StoredIngredient storedIngredient) {
-                EnoughFolders.LOGGER.debug("Converting StoredIngredient to EntryStack: {}", storedIngredient.getValue());
-                Optional<?> reiIngredient = getIngredientFromStored(storedIngredient);
-                if (reiIngredient.isPresent()) {
-                    return convertToEntryStack(reiIngredient.get());
-                }
-            }
-            
-            EnoughFolders.LOGGER.error("Don't know how to convert ingredient of type: {}", 
-                ingredient != null ? ingredient.getClass().getName() : "null");
-            
-        } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Error converting ingredient to EntryStack: {}", e.getMessage());
-            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                "Exception details: {}", e);
-        }
-        
-        return Optional.empty();
-    }
-    
-    /**
-     * Saves the current folder screen so it can be displayed on recipe screens.
-     */
-    private void saveCurrentFolderScreen() {
-        net.minecraft.client.gui.screens.Screen currentScreen = net.minecraft.client.Minecraft.getInstance().screen;
-        if (currentScreen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>) {
-            net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> containerScreen = 
-                (net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>) currentScreen;
-            
-            com.enoughfolders.client.event.ClientEventHandler.getFolderScreen(containerScreen)
-                .ifPresent(folderScreen -> {
-                    // Initialize the folder screen with current dimensions
-                    int screenWidth = net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScaledWidth();
-                    int screenHeight = net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScaledHeight();
-                    folderScreen.init(screenWidth, screenHeight);
-                    
-                    // Save the folder screen for later use
-                    com.enoughfolders.integrations.rei.gui.handlers.REIRecipeGuiHandler.saveLastFolderScreen(folderScreen);
-                    EnoughFolders.LOGGER.debug("Saved folder screen for REI recipe/usage view");
-                });
-        }
-    }
-    
-    /**
-     * Renders a stored ingredient in the GUI.
-     *
-     * @param graphics The graphics context to render with
-     * @param ingredient The stored ingredient to render
-     * @param x The x position to render at
-     * @param y The y position to render at
-     * @param width The width of the rendering area
-     * @param height The height of the rendering area
-     */
-    @Override
-    public void renderIngredient(net.minecraft.client.gui.GuiGraphics graphics, StoredIngredient ingredient, int x, int y, int width, int height) {
-        if (!isAvailable()) {
-            return;
-        }
-
-        try {
-            // Try to convert the stored ingredient back to a REI ingredient
-            Optional<?> ingredientOpt = getIngredientFromStored(ingredient);
-            if (ingredientOpt.isEmpty()) {
-                return;
-            }
-
-            // Get the item stack for display
-            Optional<ItemStack> itemStackOpt = getItemStackForDisplay(ingredientOpt.get());
-            if (itemStackOpt.isPresent()) {
-                ItemStack itemStack = itemStackOpt.get();
-                
-                // Draw the item
-                graphics.renderItem(itemStack, x, y);
-                
-                DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
-                    "Successfully rendered REI ingredient at " + x + "," + y);
-            } else {
-                DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
-                    "Failed to get ItemStack for rendering REI ingredient");
-            }
-        } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Failed to render REI ingredient", e);
-            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                "Exception details: {}", e);
-        }
-    }
-
-    /**
-     * Stub for ingredient drop on folder - no longer supports drag-and-drop.
-     * 
-     * @param folder The folder that would receive the ingredient
-     * @return Always returns false as drag functionality is disabled
-     */
-    public boolean handleIngredientDrop(Folder folder) {
-        // Drag functionality has been removed
-        DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
-            "Drag and drop functionality has been removed");
-        return false;
-    }
-    
-    /**
-     * Gets the display name of the integration.
-     * 
-     * @return The display name
-     */
-    @Override
-    public String getDisplayName() {
-        return "REI";
     }
     
     /**
@@ -685,12 +249,36 @@ public class REIIntegration implements ModIntegration, RecipeViewingIntegration 
     @Override
     public void connectToFolderScreen(FolderScreen folderScreen, AbstractContainerScreen<?> containerScreen) {
         try {
-            // Create handler if available
             if (isAvailable()) {
-                REIFolderIngredientHandler handler = new REIFolderIngredientHandler(this);
+                // Try to create REI folder ingredient handler using factory
+                try {
+                    Object folderIngredientHandler = HandlerFactory.createHandler(
+                        IntegrationFactory.IntegrationType.REI,
+                        HandlerFactory.HandlerType.FOLDER_SCREEN,
+                        Object.class
+                    );
+                    
+                    // Handler created successfully, register ingredient click handler
+                    folderScreen.registerIngredientClickHandler((slot, button, shift, ctrl) -> 
+                        handleIngredientClick(slot, button, shift, ctrl));
+                    
+                    DebugLogger.debugValue(
+                        DebugLogger.Category.INTEGRATION,
+                        "Connected folder screen to REI via factory", ""
+                    );
+                } catch (Exception factoryException) {
+                    // Fallback to direct connection
+                    DebugLogger.debugValue(
+                        DebugLogger.Category.INTEGRATION,
+                        "Factory creation failed, using direct connection: {}", 
+                        factoryException.getMessage()
+                    );
+                    
+                    folderScreen.registerIngredientClickHandler((slot, button, shift, ctrl) -> 
+                        handleIngredientClick(slot, button, shift, ctrl));
+                }
                 
-                // Connect handler to folder screen
-                handler.connectToFolderScreen(folderScreen, containerScreen);
+                EnoughFolders.LOGGER.debug("Connected folder screen to REI");
             }
         } catch (Exception e) {
             EnoughFolders.LOGGER.debug("Could not connect folder to REI: {}", e.getMessage());
@@ -704,7 +292,7 @@ public class REIIntegration implements ModIntegration, RecipeViewingIntegration 
      */
     @Override
     public void saveLastFolderScreen(FolderScreen folderScreen) {
-        com.enoughfolders.integrations.rei.gui.handlers.REIRecipeGuiHandler.saveLastFolderScreen(folderScreen);
+        BaseRecipeGuiHandler.saveLastFolderScreen(folderScreen);
     }
     
     /**
@@ -712,7 +300,7 @@ public class REIIntegration implements ModIntegration, RecipeViewingIntegration 
      */
     @Override
     public void clearLastFolderScreen() {
-        com.enoughfolders.integrations.rei.gui.handlers.REIRecipeGuiHandler.clearLastFolderScreen();
+        BaseRecipeGuiHandler.clearLastFolderScreen();
     }
     
     /**
@@ -722,35 +310,7 @@ public class REIIntegration implements ModIntegration, RecipeViewingIntegration 
      */
     @Override
     public Optional<FolderScreen> getLastFolderScreen() {
-        return com.enoughfolders.integrations.rei.gui.handlers.REIRecipeGuiHandler.getLastFolderScreen();
-    }
-    
-    /**
-     * Check if the given screen is a recipe screen for this integration.
-     * 
-     * @param screen The screen to check
-     * @return True if it's a recipe screen for this integration, false otherwise
-     */
-    @Override
-    public boolean isRecipeScreen(Screen screen) {
-        if (screen == null || !isAvailable()) {
-            return false;
-        }
-        
-        // Check if the screen's class name contains REI recipe screen identifiers
-        String className = screen.getClass().getName();
-        boolean isREIScreen = className.contains("shedaniel.rei") && 
-               (className.contains("RecipeScreen") || 
-                className.contains("ViewSearchBuilder") || 
-                className.contains("ViewsScreen") ||
-                className.contains("DefaultDisplayViewingScreen"));
-                
-        if (isREIScreen) {
-            DebugLogger.debugValue(DebugLogger.Category.REI_INTEGRATION, 
-                "Detected REI recipe screen: {}", className);
-        }
-        
-        return isREIScreen;
+        return BaseRecipeGuiHandler.getLastFolderScreen();
     }
     
     /**
@@ -766,8 +326,8 @@ public class REIIntegration implements ModIntegration, RecipeViewingIntegration 
         }
         
         try {
-            // Check the stack trace for REI-specific calls that indicate a recipe screen transition
-            return com.enoughfolders.integrations.util.StackTraceUtils.isREIRecipeTransition();
+            // Using centralized stack trace utility for REI transitions
+            return StackTraceUtils.isREIRecipeTransition();
         } catch (Exception e) {
             EnoughFolders.LOGGER.debug("Error checking for REI recipe transition: {}", e.getMessage());
         }
@@ -776,114 +336,69 @@ public class REIIntegration implements ModIntegration, RecipeViewingIntegration 
     }
     
     /**
-     * Creates stub folder targets that replace the drag-and-drop functionality.
+     * Check if the given screen is a recipe screen for this integration.
      * 
-     * @param folderButtons The list of folder buttons
-     * @return List of stub targets as drag-and-drop functionality has been removed
+     * @param screen The screen to check
+     * @return True if it's a recipe screen for this integration, false otherwise
      */
     @Override
-    public List<FolderTargetStub> createFolderTargets(List<FolderButton> folderButtons) {
-        // Drag functionality has been removed, so we return stub targets
-        DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
-            "Drag and drop functionality has been removed - creating stub folder targets");
-        
-        List<FolderTargetStub> stubTargets = new java.util.ArrayList<>();
-        for (FolderButton button : folderButtons) {
-            stubTargets.add(new FolderTargetStub(button.getFolder()));
-        }
-        return stubTargets;
+    public boolean isRecipeScreen(Screen screen) {
+        return recipeManager.isRecipeScreen(screen);
     }
     
     /**
-     * Attempts to convert ingredients stored by other integrations (EMI, JEI) to REI format.
-     *
-     * @param storedIngredient The stored ingredient from another integration
-     * @return Optional containing the converted ingredient, or empty if conversion failed
+     * Get the display name of this integration.
+     * 
+     * @return The display name
      */
-    private Optional<?> tryConvertFromOtherIntegration(StoredIngredient storedIngredient) {
-        try {
-            String typeName = storedIngredient.getType();
-            String value = storedIngredient.getValue();
-            
-            // Handle EMI format: type="minecraft:item", value="minecraft:stone"
-            if ("minecraft:item".equals(typeName)) {
-                return convertEMIItemToREI(value);
-            }
-            
-            // Handle JEI format if needed (JEI uses full class names)
-            if ("net.minecraft.world.item.ItemStack".equals(typeName)) {
-                // This should be handled by the main method already, but included for completeness
-                return convertJEIItemToREI(value);
-            }
-            
-            
-            EnoughFolders.LOGGER.debug("No cross-integration conversion available for type: {}", typeName);
-            
-        } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Failed to convert ingredient from other integration", e);
-        }
-        
-        return Optional.empty();
+    @Override
+    public String getDisplayName() {
+        return getModName();
     }
     
     /**
-     * Converts an EMI-format item (ResourceLocation string) to a REI EntryStack.
+     * Renders a stored ingredient in the GUI.
      *
-     * @param resourceLocationString The ResourceLocation string (e.g., "minecraft:stone")
-     * @return Optional containing the converted EntryStack, or empty if conversion failed
+     * @param graphics The graphics context to render with
+     * @param ingredient The stored ingredient to render
+     * @param x The x position to render at
+     * @param y The y position to render at
+     * @param width The width of the rendering area
+     * @param height The height of the rendering area
      */
-    private Optional<?> convertEMIItemToREI(String resourceLocationString) {
+    @Override
+    public void renderIngredient(GuiGraphics graphics, StoredIngredient ingredient, int x, int y, int width, int height) {
         try {
-            EnoughFolders.LOGGER.debug("Converting EMI item to REI format: {}", resourceLocationString);
-            
-            // Parse the ResourceLocation
-            net.minecraft.resources.ResourceLocation resourceLocation = 
-                net.minecraft.resources.ResourceLocation.parse(resourceLocationString);
-            
-            // Get the item from the registry
-            net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(resourceLocation);
-            
-            if (item != null && item != net.minecraft.world.item.Items.AIR) {
-                // Create ItemStack and convert to REI EntryStack
-                ItemStack itemStack = new ItemStack(item);
-                var entryStack = me.shedaniel.rei.api.common.entry.EntryStack.of(
-                    me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes.ITEM, 
-                    itemStack
-                );
-                
-                EnoughFolders.LOGGER.debug("Successfully converted EMI item to REI: {}", resourceLocationString);
-                return Optional.of(entryStack);
-            } else {
-                EnoughFolders.LOGGER.warn("Failed to find item in registry: {}", resourceLocationString);
-            }
+            ingredientManager.renderIngredient(graphics, ingredient, x, y, width, height);
         } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Failed to convert EMI item to REI format: {}", resourceLocationString, e);
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "Error rendering REI ingredient: {}", 
+                e.getMessage()
+            );
         }
-        
-        return Optional.empty();
     }
     
     /**
-     * Converts a JEI-format item UID to a REI EntryStack.
+     * Handle a click on an ingredient slot in a folder.
      *
-     * @param itemUid The JEI item UID string
-     * @return Optional containing the converted EntryStack, or empty if conversion failed
+     * @param slot The ingredient slot that was clicked
+     * @param button The mouse button used (0 = left, 1 = right)
+     * @param shift Whether shift was held
+     * @param ctrl Whether ctrl was held
+     * @return true if the click was handled, false otherwise
      */
-    private Optional<?> convertJEIItemToREI(String itemUid) {
+    public boolean handleIngredientClick(IngredientSlot slot, int button, 
+                                          boolean shift, boolean ctrl) {
         try {
-            // Extract registry name from the item ID (handle @ and other separators)
-            String itemId = itemUid;
-            if (itemId.contains("@")) {
-                itemId = itemId.substring(0, itemId.indexOf("@"));
-            }
-            
-            // Parse as ResourceLocation and convert similar to EMI
-            return convertEMIItemToREI(itemId);
-            
+            return recipeManager.handleIngredientClick(slot, button, shift, ctrl);
         } catch (Exception e) {
-            EnoughFolders.LOGGER.error("Failed to convert JEI item to REI format: {}", itemUid, e);
+            DebugLogger.debugValue(
+                DebugLogger.Category.INTEGRATION,
+                "Error handling REI ingredient click: {}", 
+                e.getMessage()
+            );
+            return false;
         }
-        
-        return Optional.empty();
     }
 }

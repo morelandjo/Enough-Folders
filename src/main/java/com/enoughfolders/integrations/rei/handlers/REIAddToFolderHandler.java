@@ -55,8 +55,6 @@ public class REIAddToFolderHandler {
                 // No active folder, show message to user
                 DebugLogger.debug(DebugLogger.Category.REI_INTEGRATION, 
                     "No active folder available for adding ingredient");
-                System.out.println("REI HANDLER: No active folder available - SYSTEM PRINT");
-                return;
             }
             System.out.println("REI HANDLER: Active folder found: " + activeFolder.get().getName() + " - SYSTEM PRINT");
             
@@ -65,20 +63,16 @@ public class REIAddToFolderHandler {
             System.out.println("REI HANDLER: Got REI integration instance - SYSTEM PRINT");
             
             
-            // Get the ingredient under mouse directly (no need for reflection since we have the proper instance)
+            // Get the ingredient under mouse directly
             EnoughFolders.LOGGER.info("About to call getIngredientUnderMouse directly");
-            System.out.println("REI HANDLER: About to call getIngredientUnderMouse directly - SYSTEM PRINT");
             EnoughFolders.LOGGER.info("REI integration class: {}", reiIntegration.getClass().getName());
-            System.out.println("REI HANDLER: REI integration class: " + reiIntegration.getClass().getName());
             
             // Call getIngredientUnderMouse directly
             Optional<?> ingredientOpt = reiIntegration.getIngredientUnderMouse();
-            System.out.println("REI HANDLER: getIngredientUnderMouse direct call completed - SYSTEM PRINT");
             EnoughFolders.LOGGER.info("getIngredientUnderMouse direct call completed successfully");
             
             EnoughFolders.LOGGER.info("getIngredientUnderMouse completed, result: {}", 
                 ingredientOpt.isPresent() ? "ingredient found" : "no ingredient");
-            System.out.println("REI HANDLER: getIngredientUnderMouse result: " + (ingredientOpt.isPresent() ? "ingredient found" : "no ingredient") + " - SYSTEM PRINT");
             
             EnoughFolders.LOGGER.debug("REI integration found, checking for ingredients under mouse");
             
@@ -87,7 +81,6 @@ public class REIAddToFolderHandler {
                 Object ingredient = ingredientOpt.get();
                 EnoughFolders.LOGGER.info("Found REI ingredient under mouse: {}", 
                     ingredient != null ? ingredient.getClass().getName() : "null");
-                System.out.println("REI HANDLER: Found REI ingredient under mouse: " + (ingredient != null ? ingredient.getClass().getName() : "null") + " - SYSTEM PRINT");
                 
                 // Store the ingredient directly
                 Optional<StoredIngredient> storedIngredientOpt = reiIntegration.storeIngredient(ingredient);

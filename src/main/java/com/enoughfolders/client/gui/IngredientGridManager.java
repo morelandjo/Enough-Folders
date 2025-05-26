@@ -4,7 +4,6 @@ import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.util.DebugLogger;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.renderer.Rect2i;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -165,19 +164,6 @@ public class IngredientGridManager implements LayoutManager.LayoutChangeListener
             updatePagination();
             return layoutManager.getHeight();
         }).orElse(UIConstants.FOLDER_AREA_HEIGHT + 10);
-    }
-    
-    /**
-     * Gets the area where ingredients can be dropped in the active folder.
-     *
-     * @param isAddingFolder Whether we're currently in add folder mode
-     * @param folderRowsCount Number of folder button rows
-     * @return A rectangle representing the drop area
-     */
-    public Rect2i getContentDropArea(boolean isAddingFolder, int folderRowsCount) {
-        layoutManager.setIsAddingFolder(isAddingFolder);
-        layoutManager.setFolderRowsCount(folderRowsCount);
-        return layoutManager.getContentDropArea(isAddingFolder, ingredientColumns);
     }
     
     /**

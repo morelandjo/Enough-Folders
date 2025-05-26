@@ -2,7 +2,7 @@ package com.enoughfolders.integrations.jei.gui.renderers;
 
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.gui.FolderScreen;
-import com.enoughfolders.integrations.jei.gui.handlers.JEIRecipeGuiHandler;
+import com.enoughfolders.integrations.common.handlers.BaseRecipeGuiHandler;
 import com.enoughfolders.util.DebugLogger;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -91,7 +91,7 @@ public class JEIRecipeScreenRenderer {
             }
             
             // Get the folder screen associated with this JEI screen
-            Optional<FolderScreen> folderScreenOpt = JEIRecipeGuiHandler.getLastFolderScreen();
+            Optional<FolderScreen> folderScreenOpt = BaseRecipeGuiHandler.getLastFolderScreen();
             if (folderScreenOpt.isPresent()) {
                 FolderScreen folderScreen = folderScreenOpt.get();
                 

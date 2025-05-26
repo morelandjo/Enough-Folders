@@ -2,7 +2,8 @@ package com.enoughfolders.integrations.emi.gui.renderers;
 
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.gui.FolderScreen;
-import com.enoughfolders.integrations.emi.core.EMIRecipeManager;
+import com.enoughfolders.di.IntegrationProviderRegistry;
+import com.enoughfolders.integrations.emi.core.EMIIntegration;
 import com.enoughfolders.util.DebugLogger;
 import com.enoughfolders.util.DebugLogger.Category;
 import net.minecraft.client.Minecraft;
@@ -58,6 +59,15 @@ public class EMIRecipeScreenRenderer {
     // Track screen dimensions to detect changes
     private static int lastScreenWidth = 0;
     private static int lastScreenHeight = 0;
+    
+    /**
+     * Gets the EMI integration instance.
+     */
+    private static Optional<EMIIntegration> getEMIIntegration() {
+        return IntegrationProviderRegistry.getIntegrationByClassName("com.enoughfolders.integrations.emi.core.EMIIntegration")
+            .filter(EMIIntegration.class::isInstance)
+            .map(EMIIntegration.class::cast);
+    }
 
     /**
      * Event handler for post-render events on screens.
@@ -73,12 +83,6 @@ public class EMIRecipeScreenRenderer {
         
         Screen screen = event.getScreen();
         String screenClassName = screen != null ? screen.getClass().getName() : "null";
-        
-        // Log screen classes periodically to help identify EMI screens
-        var player = Minecraft.getInstance().player;
-        if (player != null && player.tickCount % 100 == 0) {
-            DebugLogger.debugValue(Category.INTEGRATION, "Current screen class: {}", screenClassName);
-        }
         
         try {
             // Check if the screen is an EMI recipe screen
@@ -104,7 +108,9 @@ public class EMIRecipeScreenRenderer {
             }
             
             // Get the folder screen associated with this EMI screen
-            Optional<FolderScreen> folderScreenOpt = EMIRecipeManager.getLastFolderScreen();
+            Optional<FolderScreen> folderScreenOpt = getEMIIntegration()
+                .map(emi -> emi.getRecipeManager().getLastFolderScreen())
+                .orElse(Optional.empty());
             if (folderScreenOpt.isPresent()) {
                 FolderScreen folderScreen = folderScreenOpt.get();
                 
@@ -145,7 +151,9 @@ public class EMIRecipeScreenRenderer {
             }
             
             // Get the folder screen associated with this EMI screen
-            Optional<FolderScreen> folderScreenOpt = EMIRecipeManager.getLastFolderScreen();
+            Optional<FolderScreen> folderScreenOpt = getEMIIntegration()
+                .map(emi -> emi.getRecipeManager().getLastFolderScreen())
+                .orElse(Optional.empty());
             if (folderScreenOpt.isPresent()) {
                 FolderScreen folderScreen = folderScreenOpt.get();
                 

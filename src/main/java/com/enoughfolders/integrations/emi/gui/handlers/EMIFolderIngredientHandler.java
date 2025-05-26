@@ -1,11 +1,14 @@
 package com.enoughfolders.integrations.emi.gui.handlers;
 
 import com.enoughfolders.client.gui.FolderScreen;
+import com.enoughfolders.di.IntegrationProviderRegistry;
 import com.enoughfolders.integrations.emi.core.EMIIngredientManager;
-import com.enoughfolders.integrations.emi.core.EMIRecipeManager;
+import com.enoughfolders.integrations.emi.core.EMIIntegration;
 import com.enoughfolders.util.DebugLogger;
 
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+
+import java.util.Optional;
 
 /**
  * Handles interactions between EMI and folder screens.
@@ -14,6 +17,15 @@ public class EMIFolderIngredientHandler {
     
     private final FolderScreen folderScreen;
     private final AbstractContainerScreen<?> containerScreen;
+    
+    /**
+     * Gets the EMI integration instance.
+     */
+    private static Optional<EMIIntegration> getEMIIntegration() {
+        return IntegrationProviderRegistry.getIntegrationByClassName("com.enoughfolders.integrations.emi.core.EMIIntegration")
+            .filter(EMIIntegration.class::isInstance)
+            .map(EMIIntegration.class::cast);
+    }
     
     /**
      * Creates a new EMI folder ingredient handler.
@@ -36,7 +48,9 @@ public class EMIFolderIngredientHandler {
      */
     public void showRecipes(Object ingredient) {
         try {
-            EMIRecipeManager.showRecipes(ingredient);
+            getEMIIntegration().ifPresent(emi -> {
+                emi.showRecipes(ingredient);
+            });
         } catch (Exception e) {
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
@@ -51,7 +65,9 @@ public class EMIFolderIngredientHandler {
      */
     public void showUses(Object ingredient) {
         try {
-            EMIRecipeManager.showUses(ingredient);
+            getEMIIntegration().ifPresent(emi -> {
+                emi.showUses(ingredient);
+            });
         } catch (Exception e) {
             DebugLogger.debugValue(
                 DebugLogger.Category.INTEGRATION,
