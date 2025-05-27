@@ -163,7 +163,7 @@ public class IngredientGridManager implements LayoutManager.LayoutChangeListener
             
             updatePagination();
             return layoutManager.getHeight();
-        }).orElse(UIConstants.FOLDER_AREA_HEIGHT + 10);
+        }).orElse(UIConstants.FOLDER_AREA_HEIGHT + 15);
     }
     
     /**

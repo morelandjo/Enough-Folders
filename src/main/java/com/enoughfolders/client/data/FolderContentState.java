@@ -1,7 +1,7 @@
 package com.enoughfolders.client.data;
 
-import com.enoughfolders.client.gui.FolderButton;
 import com.enoughfolders.client.gui.IngredientSlot;
+import net.minecraft.client.gui.components.Button;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ public class FolderContentState {
     private final int currentPage;
     private final int totalPages;
     private final int folderRowsCount;
-    private final List<FolderButton> folderButtons;
+    private final List<Button> folderButtons;
     private final List<IngredientSlot> ingredientSlots;
     
     /**
@@ -28,10 +28,10 @@ public class FolderContentState {
      */
     public FolderContentState(
             boolean isAddingFolder, 
-            int currentPage, 
+                        int currentPage, 
             int totalPages, 
             int folderRowsCount,
-            List<FolderButton> folderButtons,
+            List<Button> folderButtons,
             List<IngredientSlot> ingredientSlots) {
         this.isAddingFolder = isAddingFolder;
         this.currentPage = currentPage;
@@ -82,7 +82,7 @@ public class FolderContentState {
      * 
      * @return The list of folder buttons
      */
-    public List<FolderButton> getFolderButtons() {
+    public List<Button> getFolderButtons() {
         return folderButtons;
     }
 

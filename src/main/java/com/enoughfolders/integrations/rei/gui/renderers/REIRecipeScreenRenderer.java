@@ -122,8 +122,8 @@ public class REIRecipeScreenRenderer {
                 // Render the folder screen
                 GuiGraphics guiGraphics = event.getGuiGraphics();
                 folderScreen.render(guiGraphics, 
-                    (int)Minecraft.getInstance().mouseHandler.xpos(), 
-                    (int)Minecraft.getInstance().mouseHandler.ypos(), 
+                    event.getMouseX(), 
+                    event.getMouseY(), 
                     event.getPartialTick());
             } else {
                 DebugLogger.debug(Category.REI_INTEGRATION, "No folder screen available for REI recipe screen");

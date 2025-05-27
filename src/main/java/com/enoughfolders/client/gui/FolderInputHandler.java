@@ -116,10 +116,10 @@ public class FolderInputHandler {
             return true;
         }
         
-        List<FolderButton> folderButtons = contentState.getFolderButtons();
-        for (FolderButton folderButton : folderButtons) {
-            if (folderButton.isPointInButton((int) mouseX, (int) mouseY)) {
-                folderButton.onClick();
+        List<Button> folderButtons = contentState.getFolderButtons();
+        for (Button folderButton : folderButtons) {
+            if (folderButton.isMouseOver(mouseX, mouseY)) {
+                folderButton.onClick(mouseX, mouseY);
                 return true;
             }
         }
@@ -211,6 +211,12 @@ public class FolderInputHandler {
                 createFolderCallback.accept(newFolderNameInput.getValue());
                 newFolderNameInput.setValue("");
                 toggleAddFolderModeCallback.run();
+                return true;
+            }
+            
+            if (keyCode == 256) { // Escape key
+                newFolderNameInput.setValue(""); // Clear input
+                toggleAddFolderModeCallback.run(); // Exit add folder mode
                 return true;
             }
             

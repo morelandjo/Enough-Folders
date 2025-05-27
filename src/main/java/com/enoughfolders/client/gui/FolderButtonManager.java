@@ -4,9 +4,12 @@ import com.enoughfolders.data.Folder;
 import com.enoughfolders.data.FolderManager;
 import com.enoughfolders.util.DebugLogger;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -14,7 +17,8 @@ import java.util.function.Consumer;
  */
 public class FolderButtonManager implements LayoutManager.LayoutChangeListener {
     
-    private final List<FolderButton> folderButtons = new ArrayList<>();
+    private final List<Button> folderButtons = new ArrayList<>();
+    private final Map<Button, Folder> buttonToFolderMap = new HashMap<>();
     private final FolderManager folderManager;
     private Button addFolderButton;
     private int folderRowsCount = 1;
@@ -50,12 +54,9 @@ public class FolderButtonManager implements LayoutManager.LayoutChangeListener {
      */
     public Button createAddFolderButton(Button.OnPress onAddFolderPressed) {
         int[] addButtonPos = layoutManager.getAddFolderButtonPosition();
-        addFolderButton = new Button.Builder(
-                net.minecraft.network.chat.Component.literal("+"), 
-                onAddFolderPressed)
-                .pos(addButtonPos[0], addButtonPos[1])
-                .size(UIConstants.FOLDER_WIDTH, UIConstants.FOLDER_HEIGHT)
-                .build();
+        addFolderButton = new InvisibleButton(addButtonPos[0], addButtonPos[1], 
+                UIConstants.FOLDER_WIDTH, UIConstants.FOLDER_HEIGHT,
+                Component.empty(), onAddFolderPressed);
         addFolderButton.active = true;
         
         return addFolderButton;
@@ -108,15 +109,11 @@ public class FolderButtonManager implements LayoutManager.LayoutChangeListener {
             final Folder buttonFolder = folder;
             Button.OnPress onPressHandler = button -> onFolderClickedCallback.accept(buttonFolder);
             
-            FolderButton button = new FolderButton(
-                    currentX, 
-                    currentY, 
-                    UIConstants.FOLDER_WIDTH, 
-                    UIConstants.FOLDER_HEIGHT, 
-                    folder,
-                    onPressHandler
-            );
+            Button button = new InvisibleButton(currentX, currentY, UIConstants.FOLDER_WIDTH, UIConstants.FOLDER_HEIGHT, 
+                    Component.empty(), onPressHandler);
+            
             folderButtons.add(button);
+            buttonToFolderMap.put(button, folder);
             
             currentX += UIConstants.FOLDER_WIDTH + UIConstants.FOLDER_COLUMN_SPACING;
         }
@@ -134,8 +131,18 @@ public class FolderButtonManager implements LayoutManager.LayoutChangeListener {
      *
      * @return List of folder buttons
      */
-    public List<FolderButton> getFolderButtons() {
+    public List<Button> getFolderButtons() {
         return folderButtons;
+    }
+    
+    /**
+     * Gets the folder associated with a button.
+     *
+     * @param button The button to get the folder for
+     * @return The folder, or null if not found
+     */
+    public Folder getFolderForButton(Button button) {
+        return buttonToFolderMap.get(button);
     }
     
     /**

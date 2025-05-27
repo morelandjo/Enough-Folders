@@ -4,6 +4,7 @@ import com.enoughfolders.client.data.FolderContentState;
 import com.enoughfolders.client.data.NavigationControls;
 import com.enoughfolders.client.data.RenderContext;
 import com.enoughfolders.client.data.RenderState;
+import com.enoughfolders.data.Folder;
 import com.enoughfolders.util.DebugLogger;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -71,8 +72,11 @@ public class FolderScreenRenderer {
         renderBackground(graphics);
         
         // Render folder buttons
-        for (FolderButton button : contentState.getFolderButtons()) {
-            button.renderWidget(graphics, mouseX, mouseY, partialTick);
+        for (Button button : contentState.getFolderButtons()) {
+            button.render(graphics, mouseX, mouseY, partialTick);
+            
+            // Render folder icon and text on top of the standard button
+            renderFolderIconAndText(graphics, button);
         }
         
         DebugLogger.debugValue(DebugLogger.Category.RENDERING, "Rendered {} folder buttons", 
@@ -170,15 +174,19 @@ public class FolderScreenRenderer {
      * @param mouseY The mouse y position
      * @param folderButtons The folder buttons
      */
-    private void renderTooltips(GuiGraphics graphics, int mouseX, int mouseY, List<FolderButton> folderButtons) {
-        for (FolderButton button : folderButtons) {
-            if (button.isPointInButton(mouseX, mouseY)) {
-                graphics.renderTooltip(
-                        context.getParentScreen().getMinecraft().font, 
-                        Component.literal(button.getFolder().getName()),
-                        mouseX, 
-                        mouseY
-                );
+    private void renderTooltips(GuiGraphics graphics, int mouseX, int mouseY, List<Button> folderButtons) {
+        for (Button button : folderButtons) {
+            if (button.isMouseOver(mouseX, mouseY)) {
+                // Get the folder for this button from the button manager
+                Folder folder = context.getButtonManager().getFolderForButton(button);
+                if (folder != null) {
+                    graphics.renderTooltip(
+                            context.getParentScreen().getMinecraft().font, 
+                            Component.literal(folder.getName()),
+                            mouseX, 
+                            mouseY
+                    );
+                }
             }
         }
     }
@@ -238,6 +246,49 @@ public class FolderScreenRenderer {
         DebugLogger.debugValues(DebugLogger.Category.RENDERING,
             "Delete button drawn at {},{} using texture at {},{}", 
             x, y, textureU, textureV);
+    }
+
+    /**
+     * Renders the folder icon and text over a standard button.
+     *
+     * @param graphics The graphics context to render with
+     * @param button The button to render the folder graphics on
+     */
+    private void renderFolderIconAndText(GuiGraphics graphics, Button button) {
+        Folder folder = context.getButtonManager().getFolderForButton(button);
+        if (folder == null) {
+            return;
+        }
+        
+        // Calculate icon position to center it on the button
+        int iconX = button.getX() + (button.getWidth() - 16) / 2;
+        int iconY = button.getY() + (button.getHeight() - 16) / 2;
+        
+        // Determine texture coordinates based on folder state
+        int textureU, textureV;
+        
+        if (folder.isActive()) {
+            textureU = button.isHovered() ? 16 : 0;
+            textureV = 48;
+        } else {
+            textureU = button.isHovered() ? 16 : 0;
+            textureV = 32;
+        }
+        
+        // Render the folder icon (16x16 icon in a 64x64 texture atlas)
+        graphics.blit(UIConstants.FOLDER_TEXTURE, iconX, iconY, textureU, textureV, 16, 16, 64, 64);
+        
+        // Draw folder name below the button
+        String shortName = folder.getShortName();
+        int textX = button.getX() + (button.getWidth() - context.getParentScreen().getMinecraft().font.width(shortName)) / 2;
+        int textY = button.getY() + button.getHeight() + 2;
+        graphics.drawString(
+                context.getParentScreen().getMinecraft().font, 
+                shortName,
+                textX,
+                textY,
+                0xFFFFFF
+        );
     }
 
     /**

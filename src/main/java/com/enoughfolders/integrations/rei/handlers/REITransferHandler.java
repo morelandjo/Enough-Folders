@@ -2,7 +2,7 @@ package com.enoughfolders.integrations.rei.handlers;
 
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.client.event.ClientEventHandler;
-import com.enoughfolders.client.gui.FolderButton;
+import net.minecraft.client.gui.components.Button;
 import com.enoughfolders.client.gui.FolderScreen;
 import com.enoughfolders.di.DependencyProvider;
 import com.enoughfolders.integrations.rei.core.REIIntegration;
@@ -98,24 +98,28 @@ public class REITransferHandler implements TransferHandler {
         EntryStack<?> entryStack = firstInput.get(0);
         
         // Check if drop is on a folder button
-        for (FolderButton button : folderScreen.getFolderButtons()) {
+        for (Button button : folderScreen.getFolderButtons()) {
             if (IntegrationUtils.isPointInRect(mouseX, mouseY, 
                     button.getX(), 
                     button.getY(), 
                     button.getWidth(), 
                     button.getHeight())) {
                 
+                // Get the folder for this button
+                var folder = folderScreen.getFolderForButton(button);
+                if (folder == null) continue;
+                
                 // Use the REI integration to convert and add the ingredient
                 DependencyProvider.get(REIIntegration.class).ifPresent(integration -> {
                     integration.storeIngredient(entryStack).ifPresent(ingredient -> {
-                        EnoughFolders.getInstance().getFolderManager().addIngredient(button.getFolder(), ingredient);
+                        EnoughFolders.getInstance().getFolderManager().addIngredient(folder, ingredient);
                         folderScreen.onIngredientAdded();
                     });
                 });
                 
                 return Result.createSuccessful()
                     .tooltip(Component.translatable("enoughfolders.message.ingredient_added_to_folder", 
-                        button.getFolder().getName()));
+                        folder.getName()));
             }
         }
         

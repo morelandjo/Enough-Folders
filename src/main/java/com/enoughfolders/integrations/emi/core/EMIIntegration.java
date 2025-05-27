@@ -46,6 +46,15 @@ public class EMIIntegration extends AbstractIntegration {
         this.ingredientManager = new EMIIngredientManager();
         this.recipeManager = new EMIRecipeManager();
         EnoughFolders.LOGGER.info("EMI Integration initialized");
+        DebugLogger.debugValues(
+            DebugLogger.Category.INTEGRATION, 
+            "EMI Integration created - instance: {}, recipe manager instance: {}", 
+            System.identityHashCode(this), 
+            System.identityHashCode(this.recipeManager));
+        DebugLogger.debugValues(DebugLogger.Category.INTEGRATION, 
+            "EMI Integration created - instance: {}, recipe manager instance: {}", 
+            System.identityHashCode(this), 
+            System.identityHashCode(this.recipeManager));
     }
     
     /**
@@ -333,6 +342,12 @@ public class EMIIntegration extends AbstractIntegration {
     @Override
     public void clearLastFolderScreen() {
         try {
+            DebugLogger.debugValues(
+                DebugLogger.Category.INTEGRATION, 
+                "EMI Integration clearLastFolderScreen called - instance: {}, recipe manager instance: {}", 
+                System.identityHashCode(this), 
+                System.identityHashCode(this.recipeManager)
+            );
             recipeManager.clearLastFolderScreen();
         } catch (Exception e) {
             DebugLogger.debugValue(
@@ -351,6 +366,12 @@ public class EMIIntegration extends AbstractIntegration {
     @Override
     public Optional<FolderScreen> getLastFolderScreen() {
         try {
+            DebugLogger.debugValues(
+                DebugLogger.Category.INTEGRATION, 
+                "EMI Integration getLastFolderScreen called - instance: {}, recipe manager instance: {}", 
+                System.identityHashCode(this), 
+                System.identityHashCode(this.recipeManager)
+            );
             return recipeManager.getLastFolderScreen();
         } catch (Exception e) {
             DebugLogger.debugValue(

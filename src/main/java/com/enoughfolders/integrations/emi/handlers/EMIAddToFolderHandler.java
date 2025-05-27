@@ -64,23 +64,62 @@ public class EMIAddToFolderHandler extends BaseAddToFolderHandler {
         @Override
         public Optional<Object> getIngredientUnderCursor() {
             try {
-                return emiIntegration.getIngredientUnderMouse();
+                Optional<Object> ingredient = emiIntegration.getIngredientUnderMouse();
+                
+                if (ingredient.isEmpty()) {
+                    DebugLogger.debug(DebugLogger.Category.INTEGRATION, "No EMI ingredient found under cursor");
+                } else {
+                    DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Found EMI ingredient under cursor: " + ingredient.get().getClass().getName());
+                }
+                
+                return ingredient;
             } catch (Exception e) {
                 EnoughFolders.LOGGER.error("Error getting EMI ingredient under cursor", e);
+                DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Exception getting EMI ingredient: " + e.getMessage());
                 return Optional.empty();
             }
         }
 
         @Override
         public Optional<StoredIngredient> convertToStoredIngredient(Object ingredient) {
-            return emiIntegration.storeIngredient(ingredient);
+            try {
+                Optional<StoredIngredient> result = emiIntegration.storeIngredient(ingredient);
+                if (result.isEmpty()) {
+                    DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Failed to convert EMI ingredient to StoredIngredient");
+                } else {
+                    StoredIngredient stored = result.get();
+                    DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Converted EMI ingredient to StoredIngredient: type=" + 
+                        stored.getType() + ", value=" + stored.getValue());
+                }
+                return result;
+            } catch (Exception e) {
+                EnoughFolders.LOGGER.error("Error converting EMI ingredient", e);
+                DebugLogger.debug(DebugLogger.Category.INTEGRATION, "Exception converting EMI ingredient: " + e.getMessage());
+                return Optional.empty();
+            }
         }
 
         @Override
         public boolean isOverlayVisible() {
             try {
-                // For EMI, we check if we can get an ingredient under mouse to determine if overlay is visible
-                return true; // EMI is generally always available when the integration is loaded
+                // Check if we can get an ingredient under mouse to determine if overlay is visible
+                Class<?> emiApiClass = Class.forName("dev.emi.emi.api.EmiApi");
+                
+                // Try to check if search is focused - this is a reliable way to know EMI is active
+                try {
+                    java.lang.reflect.Method isSearchFocusedMethod = emiApiClass.getMethod("isSearchFocused");
+                    Boolean isSearchFocused = (Boolean) isSearchFocusedMethod.invoke(null);
+                    if (isSearchFocused) {
+                        return true;
+                    }
+                } catch (NoSuchMethodException e) {
+                    // Method doesn't exist, continue with other checks
+                }
+                
+                // Try to get a hovered stack as another way to check if EMI is active
+                java.lang.reflect.Method getHoveredStackMethod = emiApiClass.getMethod("getHoveredStack", boolean.class);
+                Object emiStackInteraction = getHoveredStackMethod.invoke(null, true);
+                return emiStackInteraction != null;
             } catch (Exception e) {
                 EnoughFolders.LOGGER.error("Error checking EMI overlay visibility", e);
                 return false;

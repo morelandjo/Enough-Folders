@@ -97,42 +97,108 @@ public class EMIPluginEntrypoint implements EmiPlugin {
                         String className = screen.getClass().getName();
                         boolean isEMIScreen = className.contains("dev.emi.emi");
                         
+                        DebugLogger.debugValues(
+                            DebugLogger.Category.INTEGRATION,
+                            "Checking screen: {} - isEMIScreen: {}",
+                            className, isEMIScreen
+                        );
+                        
                         if (isEMIScreen) {
                             // Check if we have a saved folder screen from EMI integration
                             try {
-                                Class<?> emiRecipeManagerClass = Class.forName("com.enoughfolders.integrations.emi.core.EMIRecipeManager");
-                                java.lang.reflect.Method getLastFolderScreenMethod = emiRecipeManagerClass.getMethod("getLastFolderScreen");
-                                @SuppressWarnings("unchecked")
-                                java.util.Optional<Object> folderScreenOpt = (java.util.Optional<Object>) getLastFolderScreenMethod.invoke(null);
+                                DebugLogger.debugValue(
+                                    DebugLogger.Category.INTEGRATION,
+                                    "Attempting to get EMI integration for recipe screen: {}", className
+                                );
                                 
-                                if (folderScreenOpt.isPresent()) {
-                                    Object folderScreen = folderScreenOpt.get();
-                                    
-                                    // Get the screen area
-                                    java.lang.reflect.Method getScreenAreaMethod = folderScreen.getClass().getMethod("getScreenArea");
-                                    Rect2i screenArea = (Rect2i) getScreenAreaMethod.invoke(folderScreen);
-                                    
-                                    // Add some padding around the folder screen
-                                    Bounds bounds = new Bounds(
-                                        screenArea.getX() - 2,
-                                        screenArea.getY() - 2,
-                                        screenArea.getWidth() + 4,
-                                        screenArea.getHeight() + 4
-                                    );
-                                    
-                                    consumer.accept(bounds);
+                                // Use the DependencyProvider to get the EMI integration instance
+                                Class<?> dependencyProviderClass = Class.forName("com.enoughfolders.di.DependencyProvider");
+                                java.lang.reflect.Method getMethod = dependencyProviderClass.getMethod("get", Class.class);
+                                Class<?> emiIntegrationClass = Class.forName("com.enoughfolders.integrations.emi.core.EMIIntegration");
+                                
+                                @SuppressWarnings("unchecked")
+                                java.util.Optional<Object> emiIntegrationOpt = (java.util.Optional<Object>) getMethod.invoke(null, emiIntegrationClass);
+                                
+                                DebugLogger.debugValues(
+                                    DebugLogger.Category.INTEGRATION,
+                                    "EMI integration present: {}",
+                                    emiIntegrationOpt.isPresent()
+                                );
+                                
+                                if (emiIntegrationOpt.isPresent()) {
+                                    // Now we have the EMI integration instance
+                                    Object emiIntegration = emiIntegrationOpt.get();
                                     
                                     DebugLogger.debugValues(
                                         DebugLogger.Category.INTEGRATION,
-                                        "EMI exclusion zone added for recipe screen {} at ({}, {}) with size {}x{}",
-                                        className, screenArea.getX(), screenArea.getY(), screenArea.getWidth(), screenArea.getHeight()
+                                        "EMI Plugin - got integration instance: {}", 
+                                        System.identityHashCode(emiIntegration)
+                                    );
+                                    
+                                    // Check if it's a recipe viewing integration
+                                    Class<?> recipeViewingInterfaceClass = Class.forName("com.enoughfolders.integrations.api.RecipeViewingIntegration");
+                                    
+                                    DebugLogger.debugValues(
+                                        DebugLogger.Category.INTEGRATION,
+                                        "EMI integration is RecipeViewingIntegration: {}",
+                                        recipeViewingInterfaceClass.isInstance(emiIntegration)
+                                    );
+                                    
+                                    if (recipeViewingInterfaceClass.isInstance(emiIntegration)) {
+                                        // Get the getLastFolderScreen method directly from the RecipeViewingIntegration interface
+                                        java.lang.reflect.Method getLastFolderScreenMethod = recipeViewingInterfaceClass.getMethod("getLastFolderScreen");
+                                        
+                                        // Call the method on our integration instance
+                                        @SuppressWarnings("unchecked")
+                                        java.util.Optional<Object> folderScreenOpt = (java.util.Optional<Object>) getLastFolderScreenMethod.invoke(emiIntegration);
+                                        
+                                        DebugLogger.debugValues(
+                                            DebugLogger.Category.INTEGRATION,
+                                            "Last folder screen present: {}",
+                                            folderScreenOpt.isPresent()
+                                        );
+                                        
+                                        if (folderScreenOpt.isPresent()) {
+                                            Object folderScreen = folderScreenOpt.get();
+                                            
+                                            // Get the screen area
+                                            java.lang.reflect.Method getScreenAreaMethod = folderScreen.getClass().getMethod("getScreenArea");
+                                            Rect2i screenArea = (Rect2i) getScreenAreaMethod.invoke(folderScreen);
+                                            
+                                            // Add some padding around the folder screen
+                                            Bounds bounds = new Bounds(
+                                                screenArea.getX() - 2,
+                                                screenArea.getY() - 2,
+                                                screenArea.getWidth() + 4,
+                                                screenArea.getHeight() + 4
+                                            );
+                                            
+                                            consumer.accept(bounds);
+                                            
+                                            DebugLogger.debugValues(
+                                                DebugLogger.Category.INTEGRATION,
+                                                "EMI exclusion zone added for recipe screen {} at ({}, {}) with size {}x{}",
+                                                className, screenArea.getX(), screenArea.getY(), screenArea.getWidth(), screenArea.getHeight()
+                                            );
+                                        } else {
+                                            DebugLogger.debugValue(
+                                                DebugLogger.Category.INTEGRATION,
+                                                "No saved folder screen found for recipe screen: {}", className
+                                            );
+                                        }
+                                    }
+                                } else {
+                                    DebugLogger.debugValue(
+                                        DebugLogger.Category.INTEGRATION,
+                                        "EMI integration not available for recipe screen: {}", className
                                     );
                                 }
                             } catch (Exception e) {
                                 DebugLogger.debugValue(
                                     DebugLogger.Category.INTEGRATION,
-                                    "Error adding EMI exclusion zone for recipe screen {}: {}", e.getMessage()
+                                    "Error adding EMI exclusion zone for recipe screen: {}", e.getMessage()
                                 );
+                                e.printStackTrace(); // More detailed logging for debugging
                             }
                         }
                     }

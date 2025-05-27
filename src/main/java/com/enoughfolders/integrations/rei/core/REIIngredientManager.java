@@ -38,8 +38,6 @@ public class REIIngredientManager extends AbstractIngredientManager {
             if (storedIngredient.getType().equals("net.minecraft.world.item.ItemStack")) {
                 // Parse the item ID
                 String itemId = storedIngredient.getValue();
-                DebugLogger.debugValue(DebugLogger.Category.INTEGRATION, 
-                    "Converting stored ingredient with ID: {}", itemId);
                 
                 // Extract registry name from the item ID
                 if (itemId.contains("@")) {
@@ -79,14 +77,10 @@ public class REIIngredientManager extends AbstractIngredientManager {
      */
     private Object createREIEntryStack(ItemStack itemStack) {
         try {
-            Class<?> entryStackClass = Class.forName("me.shedaniel.rei.api.common.entry.EntryStack");
-            Class<?> vanillaTypesClass = Class.forName("me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes");
+            Class<?> entryStacksClass = Class.forName("me.shedaniel.rei.api.common.util.EntryStacks");
             
-            java.lang.reflect.Field itemField = vanillaTypesClass.getField("ITEM");
-            Object itemType = itemField.get(null);
-            
-            java.lang.reflect.Method ofMethod = entryStackClass.getMethod("of", Object.class, Object.class);
-            return ofMethod.invoke(null, itemType, itemStack);
+            java.lang.reflect.Method ofMethod = entryStacksClass.getMethod("of", ItemStack.class);
+            return ofMethod.invoke(null, itemStack);
         } catch (Exception e) {
             EnoughFolders.LOGGER.error("Failed to create REI EntryStack", e);
             return null;

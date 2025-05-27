@@ -1,6 +1,7 @@
 package com.enoughfolders.integrations.emi.core;
 
 import com.enoughfolders.integrations.base.AbstractRecipeManager;
+import com.enoughfolders.util.DebugLogger;
 
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.item.ItemStack;
@@ -97,9 +98,36 @@ public class EMIRecipeManager extends AbstractRecipeManager {
         try {
             // Use EMI's API to get hovered ingredient
             Class<?> emiApiClass = Class.forName("dev.emi.emi.api.EmiApi");
-            java.lang.reflect.Method getHoveredStackMethod = emiApiClass.getMethod("getHoveredStack");
-            return getHoveredStackMethod.invoke(null);
             
+            // EMI provides a getHoveredStack method that takes a boolean parameter
+            // to determine whether to include standard stacks
+            java.lang.reflect.Method getHoveredStackMethod = emiApiClass.getMethod("getHoveredStack", boolean.class);
+            
+            // Call getHoveredStack(true) to include standard stacks
+            Object emiStackInteraction = getHoveredStackMethod.invoke(null, true);
+            
+            if (emiStackInteraction != null) {
+                // EmiStackInteraction has a getStack() method to get the actual ingredient
+                java.lang.reflect.Method getStackMethod = emiStackInteraction.getClass().getMethod("getStack");
+                Object emiStack = getStackMethod.invoke(emiStackInteraction);
+                
+                if (emiStack != null) {
+                    // Check if the stack is empty
+                    Class<?> emiIngredientClass = Class.forName("dev.emi.emi.api.stack.EmiIngredient");
+                    if (emiIngredientClass.isInstance(emiStack)) {
+                        java.lang.reflect.Method isEmptyMethod = emiStack.getClass().getMethod("isEmpty");
+                        Boolean isEmpty = (Boolean) isEmptyMethod.invoke(emiStack);
+                        
+                        if (isEmpty) {
+                            return null;
+                        }
+                        
+                        return emiStack;
+                    }
+                }
+            }
+            
+            return null;
         } catch (Exception e) {
             return null;
         }
@@ -142,19 +170,26 @@ public class EMIRecipeManager extends AbstractRecipeManager {
     }
     
     /**
+     * The saved folder screen for recipe GUI navigation
+     */
+    private com.enoughfolders.client.gui.FolderScreen savedFolderScreen;
+
+    /**
      * Save a folder screen to be used during recipe GUI navigation.
      * 
      * @param folderScreen The folder screen to save
      */
     public void saveLastFolderScreen(com.enoughfolders.client.gui.FolderScreen folderScreen) {
-        // EMI doesn't need folder screen persistence like JEI, so this is a no-op
+        this.savedFolderScreen = folderScreen;
+        DebugLogger.debug(DebugLogger.Category.INTEGRATION, "EMI: Saved folder screen for recipe navigation");
     }
     
     /**
      * Clear the saved folder screen when no longer needed.
      */
     public void clearLastFolderScreen() {
-        // EMI doesn't need folder screen persistence like JEI, so this is a no-op
+        this.savedFolderScreen = null;
+        DebugLogger.debug(DebugLogger.Category.INTEGRATION, "EMI: Cleared saved folder screen");
     }
     
     /**
@@ -163,8 +198,7 @@ public class EMIRecipeManager extends AbstractRecipeManager {
      * @return Optional containing the folder screen if available
      */
     public java.util.Optional<com.enoughfolders.client.gui.FolderScreen> getLastFolderScreen() {
-        // EMI doesn't persist folder screens like JEI, so return empty
-        return java.util.Optional.empty();
+        return java.util.Optional.ofNullable(savedFolderScreen);
     }
     
     /**

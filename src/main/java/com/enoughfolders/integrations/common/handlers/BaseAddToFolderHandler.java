@@ -38,9 +38,8 @@ public abstract class BaseAddToFolderHandler {
             // No active folder, display a message to the user
             var player = Minecraft.getInstance().player;
             if (player != null) {
-                player.displayClientMessage(
-                    Component.translatable("enoughfolders.message.no_active_folder"), false);
-            }
+                EnoughFolders.LOGGER.debug("No active folder available, displaying message to player");
+                        }
             DebugLogger.debug(DebugLogger.Category.INPUT, 
                 "No active folder available for adding ingredient");
             return;
@@ -73,8 +72,7 @@ public abstract class BaseAddToFolderHandler {
                     EnoughFolders.LOGGER.error("Failed to convert {} ingredient to StoredIngredient", integrationName);
                     var player = Minecraft.getInstance().player;
                     if (player != null) {
-                        player.displayClientMessage(
-                            Component.translatable("enoughfolders.message.ingredient_conversion_failed"), false);
+                        EnoughFolders.LOGGER.debug("Conversion failed, displaying message to player");
                     }
                 }
             } else {
@@ -84,13 +82,11 @@ public abstract class BaseAddToFolderHandler {
                 var player = Minecraft.getInstance().player;
                 if (!retriever.isOverlayVisible()) {
                     if (player != null) {
-                        player.displayClientMessage(
-                            Component.translatable("enoughfolders.message.integration_not_visible", integrationName), false);
+                        EnoughFolders.LOGGER.debug("Integration overlay not visible, cannot retrieve ingredient");
                     }
                 } else {
                     if (player != null) {
-                        player.displayClientMessage(
-                            Component.translatable("enoughfolders.message.no_ingredient_under_cursor"), false);
+                        EnoughFolders.LOGGER.debug("Integration overlay not visible, cannot retrieve ingredient");
                     }
                 }
             }
@@ -98,8 +94,8 @@ public abstract class BaseAddToFolderHandler {
             EnoughFolders.LOGGER.error("Error interacting with {} runtime", integrationName, e);
             var player = Minecraft.getInstance().player;
             if (player != null) {
-                player.displayClientMessage(
-                    Component.translatable("enoughfolders.message.integration_error", integrationName), false);
+                EnoughFolders.LOGGER.debug("Exception occurred, displaying error message to player");
+                player.sendSystemMessage(Component.translatable("enoughfolders.error.runtime_interaction", integrationName));
             }
         }
     }

@@ -66,9 +66,20 @@ public final class StackTraceUtils {
      */
     public static boolean isEMIRecipeTransition() {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        return containsClassAndMethod(stackTrace, "dev.emi.emi", 
-                new String[]{"display", "show", "view"}, 
-                new String[]{"RecipeScreen", "EmiScreen"});
+        boolean result = containsClassAndMethod(stackTrace, "dev.emi.emi", 
+                new String[]{"display", "show", "view", "open"}, 
+                new String[]{"RecipeScreen", "EmiScreen", "EmiApi"});
+        
+        if (result) {
+            System.out.println("EMI Recipe Transition Detected! Stack trace:");
+            for (StackTraceElement element : stackTrace) {
+                if (element.getClassName().contains("emi")) {
+                    System.out.println("  " + element.getClassName() + "." + element.getMethodName());
+                }
+            }
+        }
+        
+        return result;
     }
 
     /**

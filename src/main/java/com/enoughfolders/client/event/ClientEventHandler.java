@@ -40,6 +40,7 @@ public class ClientEventHandler {
         // Default constructor
     }
     private static final Map<AbstractContainerScreen<?>, FolderScreen> FOLDER_SCREENS = new HashMap<>();
+    private static final Map<Screen, FolderScreen> RECIPE_SCREENS = new HashMap<>();
     
     /**
      * Initialize event handler.
@@ -69,7 +70,9 @@ public class ClientEventHandler {
      */
     @SubscribeEvent
     public static void onScreenOpened(ScreenEvent.Opening event) {
-        if (event.getScreen() instanceof AbstractContainerScreen<?> containerScreen) {
+        Screen newScreen = event.getScreen();
+        
+        if (newScreen instanceof AbstractContainerScreen<?> containerScreen) {
             DebugLogger.debugValue(DebugLogger.Category.GUI_STATE, 
                 "Container screen opened: {}", containerScreen.getClass().getName());
             
@@ -88,6 +91,29 @@ public class ClientEventHandler {
             
             DebugLogger.debugValues(DebugLogger.Category.GUI_STATE, 
                 "Folder screen initialized with width: {}, height: {}", width, height);
+        } else {
+            // Check if this is a recipe screen that should have folder GUI
+            for (RecipeViewingIntegration integration : getRecipeViewingIntegrations()) {
+                if (integration.isAvailable() && integration.isRecipeScreen(newScreen)) {
+                    // This is a recipe screen, check if we have a saved folder screen
+                    Optional<FolderScreen> savedFolderScreen = integration.getLastFolderScreen();
+                    if (savedFolderScreen.isPresent()) {
+                        DebugLogger.debug(DebugLogger.Category.GUI_STATE, 
+                            "Recipe screen opened, restoring folder screen for " + integration.getDisplayName());
+                        
+                        // For recipe screens, we need to create a temporary mapping to enable folder rendering
+                        // We'll use a special map entry for recipe screens
+                        RECIPE_SCREENS.put(newScreen, savedFolderScreen.get());
+                        
+                        // Re-initialize the folder screen for the new dimensions
+                        Minecraft minecraft = Minecraft.getInstance();
+                        int width = minecraft.getWindow().getGuiScaledWidth();
+                        int height = minecraft.getWindow().getGuiScaledHeight();
+                        savedFolderScreen.get().init(width, height);
+                    }
+                    break;
+                }
+            }
         }
     }
     
@@ -117,7 +143,18 @@ public class ClientEventHandler {
             // Remove the folder screen from container map
             FOLDER_SCREENS.remove(containerScreen);
         } else {
-            System.out.println("Screen closing - not a container screen: " + (currentScreen != null ? currentScreen.getClass().getSimpleName() : "null"));
+            // Clean up recipe screen mappings
+            RECIPE_SCREENS.remove(currentScreen);
+            DebugLogger.debugValue(DebugLogger.Category.GUI_STATE, 
+                "Screen closing - removed from recipe screens: {}", 
+                currentScreen != null ? currentScreen.getClass().getSimpleName() : "null");
+            
+            // For EMI recipe screens, don't clear immediately since EMI might be transitioning between screens
+            if (currentScreen != null && currentScreen.getClass().getName().contains("dev.emi.emi")) {
+                DebugLogger.debug(DebugLogger.Category.GUI_STATE, 
+                    "EMI recipe screen closing - delaying folder screen cleanup");
+                goingToRecipeScreen = true; // Prevent clearing for EMI screens
+            }
         }
         
         // Only clear the saved folder screens when NOT going to a recipe screen
@@ -178,15 +215,21 @@ public class ClientEventHandler {
      */
     @SubscribeEvent
     public static void onScreenDrawForeground(ScreenEvent.Render.Post event) {
-        if (event.getScreen() instanceof AbstractContainerScreen<?> containerScreen) {
+        Screen currentScreen = event.getScreen();
+        FolderScreen folderScreen = null;
+        
+        if (currentScreen instanceof AbstractContainerScreen<?> containerScreen) {
             // Render folder screen overlay for container screens
-            FolderScreen folderScreen = FOLDER_SCREENS.get(containerScreen);
-            if (folderScreen != null) {
-                folderScreen.render(event.getGuiGraphics(), event.getMouseX(), event.getMouseY(), event.getPartialTick());
-                DebugLogger.debug(DebugLogger.Category.RENDERING, "Rendered folder screen in foreground");
-            }
+            folderScreen = FOLDER_SCREENS.get(containerScreen);
+        } else {
+            // Check if this is a recipe screen with a saved folder screen
+            folderScreen = RECIPE_SCREENS.get(currentScreen);
         }
-       
+        
+        if (folderScreen != null) {
+            folderScreen.render(event.getGuiGraphics(), event.getMouseX(), event.getMouseY(), event.getPartialTick());
+            DebugLogger.debug(DebugLogger.Category.RENDERING, "Rendered folder screen in foreground");
+        }
     }
     
     /**
@@ -220,35 +263,29 @@ public class ClientEventHandler {
         else {
             Screen currentScreen = event.getScreen();
             
-            // Check for recipe screens
-            for (RecipeViewingIntegration integration : getRecipeViewingIntegrations()) {
-                if (!integration.isAvailable()) {
-                    continue;
+            // Check if we have a folder screen for this recipe screen
+            FolderScreen folderScreen = RECIPE_SCREENS.get(currentScreen);
+            if (folderScreen != null) {
+                DebugLogger.debugValues(DebugLogger.Category.GUI_STATE, 
+                    "Processing mouse click on recipe screen with folder GUI at ({}, {})", 
+                    event.getMouseX(), event.getMouseY());
+                
+                // Save the folder screen to all integrations to preserve state
+                for (RecipeViewingIntegration integration : getRecipeViewingIntegrations()) {
+                    if (integration.isAvailable()) {
+                        integration.saveLastFolderScreen(folderScreen);
+                    }
                 }
                 
-                try {
-                    // Check if this is a recipe screen and we have a saved folder screen
-                    if (integration.isRecipeScreen(currentScreen)) {
-                        Optional<FolderScreen> folderScreenOpt = integration.getLastFolderScreen();
-                        
-                        if (folderScreenOpt.isPresent()) {
-                            // Handle the click in the folder screen if it's visible
-                            FolderScreen folderScreen = folderScreenOpt.get();
-                            if (folderScreen.isVisible(event.getMouseX(), event.getMouseY())) {
-                                if (folderScreen.mouseClicked(event.getMouseX(), event.getMouseY(), event.getButton())) {
-                                    event.setCanceled(true);
-                                    break;
-                                }
-                            }
-                        }
+                // Handle the click in the folder screen if it's visible
+                if (folderScreen.isVisible(event.getMouseX(), event.getMouseY())) {
+                    if (folderScreen.mouseClicked(event.getMouseX(), event.getMouseY(), event.getButton())) {
+                        DebugLogger.debug(DebugLogger.Category.GUI_STATE, 
+                            "Mouse click handled by folder screen on recipe screen, canceling event");
+                        event.setCanceled(true);
                     }
-                } catch (Exception e) {
-                    // Error handling recipe screen click, log and continue
-                    DebugLogger.debugValue(DebugLogger.Category.GUI_STATE, 
-                        "Error handling recipe screen mouse click: {}", 
-                        e.getMessage());
                 }
-            }            
+            }
         }
     }
     
@@ -261,23 +298,28 @@ public class ClientEventHandler {
      */
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onScreenKeyPressed(ScreenEvent.KeyPressed.Pre event) {
-        if (event.getScreen() instanceof AbstractContainerScreen<?> containerScreen) {
-            FolderScreen folderScreen = FOLDER_SCREENS.get(containerScreen);
-            if (folderScreen != null) {
-                // If input box is active (adding folder mode and input box focused),
-                // cancel all key events to prevent inventory from closing
-                if (folderScreen.isAddingFolder() && folderScreen.isInputFocused()) {
-                    // For 'e' key (inventory) and escape key, always cancel the event
-                    // 256 = escape key, 69 = 'e' key
-                    if (event.getKeyCode() == 69 || event.getKeyCode() == 256) {
-                        event.setCanceled(true);
-                    }
-                }
-                
-                // Process the key event in the folder screen
-                if (folderScreen.keyPressed(event.getKeyCode(), event.getScanCode(), event.getModifiers())) {
-                    event.setCanceled(true);
-                }
+        Screen currentScreen = event.getScreen();
+        FolderScreen folderScreen = null;
+        
+        if (currentScreen instanceof AbstractContainerScreen<?> containerScreen) {
+            folderScreen = FOLDER_SCREENS.get(containerScreen);
+        } else {
+            // Check if this is a recipe screen with a folder GUI
+            folderScreen = RECIPE_SCREENS.get(currentScreen);
+        }
+        
+        if (folderScreen != null) {
+            // If input box is active (adding folder mode and input box focused),
+            // cancel all key events to prevent keybinds from triggering and inventory from closing
+            if (folderScreen.isAddingFolder() && folderScreen.isInputFocused()) {
+                // Cancel ALL key events while typing in the folder name input
+                // This prevents other mods' keybinds from triggering (like 't' for search)
+                event.setCanceled(true);
+            }
+            
+            // Process the key event in the folder screen
+            if (folderScreen.keyPressed(event.getKeyCode(), event.getScanCode(), event.getModifiers())) {
+                event.setCanceled(true);
             }
         }
     }
@@ -289,12 +331,19 @@ public class ClientEventHandler {
      */
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onScreenCharTyped(ScreenEvent.CharacterTyped.Pre event) {
-        if (event.getScreen() instanceof AbstractContainerScreen<?> containerScreen) {
-            FolderScreen folderScreen = FOLDER_SCREENS.get(containerScreen);
-            if (folderScreen != null) {
-                if (folderScreen.charTyped(event.getCodePoint(), event.getModifiers())) {
-                    event.setCanceled(true);
-                }
+        Screen currentScreen = event.getScreen();
+        FolderScreen folderScreen = null;
+        
+        if (currentScreen instanceof AbstractContainerScreen<?> containerScreen) {
+            folderScreen = FOLDER_SCREENS.get(containerScreen);
+        } else {
+            // Check if this is a recipe screen with a folder GUI
+            folderScreen = RECIPE_SCREENS.get(currentScreen);
+        }
+        
+        if (folderScreen != null) {
+            if (folderScreen.charTyped(event.getCodePoint(), event.getModifiers())) {
+                event.setCanceled(true);
             }
         }
     }
@@ -346,8 +395,10 @@ public class ClientEventHandler {
         Minecraft minecraft = Minecraft.getInstance();
         
         // Clear screens when leaving a world
-        if (minecraft.level == null && !FOLDER_SCREENS.isEmpty()) {
+        if (minecraft.level == null && (!FOLDER_SCREENS.isEmpty() || !RECIPE_SCREENS.isEmpty())) {
             FOLDER_SCREENS.clear();
+            RECIPE_SCREENS.clear();
+            DebugLogger.debug(DebugLogger.Category.GUI_STATE, "Cleared all folder screens when leaving world");
         }
     }
      /**
@@ -412,5 +463,4 @@ public class ClientEventHandler {
             EnoughFolders.LOGGER.debug("Could not connect folder to {} recipe viewer: {}", integrationId, e.getMessage());
         }
     }
-
 }

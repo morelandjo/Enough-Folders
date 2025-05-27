@@ -395,6 +395,50 @@ public class FolderScreen {
     }
     
     /**
+     * Handles mouse movement events on the folder screen.
+     * This is essential for updating button hover states.
+     *
+     * @param mouseX The mouse x position
+     * @param mouseY The mouse y position
+     */
+    public void mouseMoved(double mouseX, double mouseY) {
+        DebugLogger.debugValues(DebugLogger.Category.INPUT, "FolderScreen.mouseMoved called: x={}, y={}", mouseX, mouseY);
+        
+        // Update hover state for all folder buttons
+        List<Button> folderButtons = buttonManager.getFolderButtons();
+        DebugLogger.debugValues(DebugLogger.Category.INPUT, "Updating hover for {} folder buttons", folderButtons.size());
+        for (Button button : folderButtons) {
+            button.mouseMoved(mouseX, mouseY);
+        }
+        
+        // Update hover state for add folder button
+        Button addFolderButton = buttonManager.getAddFolderButton();
+        if (addFolderButton != null) {
+            addFolderButton.mouseMoved(mouseX, mouseY);
+        }
+        
+        // Update hover state for delete button
+        if (deleteButton != null) {
+            deleteButton.mouseMoved(mouseX, mouseY);
+        }
+        
+        // Update hover state for pagination buttons if they exist
+        Button prevPageButton = gridManager.getPrevPageButton();
+        Button nextPageButton = gridManager.getNextPageButton();
+        if (prevPageButton != null) {
+            prevPageButton.mouseMoved(mouseX, mouseY);
+        }
+        if (nextPageButton != null) {
+            nextPageButton.mouseMoved(mouseX, mouseY);
+        }
+        
+        // Update hover state for folder name input
+        if (newFolderNameInput != null) {
+            newFolderNameInput.mouseMoved(mouseX, mouseY);
+        }
+    }
+
+    /**
      * Handles keyboard key press events.
      *
      * @param keyCode The key code
@@ -520,8 +564,18 @@ public class FolderScreen {
      *
      * @return List of all folder buttons
      */
-    public List<FolderButton> getFolderButtons() {
+    public List<Button> getFolderButtons() {
         return buttonManager.getFolderButtons();
+    }
+
+    /**
+     * Gets the folder associated with a button.
+     *
+     * @param button The button to get the folder for
+     * @return The folder associated with the button, or null if not found
+     */
+    public Folder getFolderForButton(Button button) {
+        return buttonManager.getFolderForButton(button);
     }
 
     /**
