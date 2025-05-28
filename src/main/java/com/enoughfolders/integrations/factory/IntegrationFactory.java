@@ -3,7 +3,6 @@ package com.enoughfolders.integrations.factory;
 import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.integrations.ModIntegration;
 import com.enoughfolders.integrations.base.AbstractIntegration;
-import com.enoughfolders.integrations.emi.core.EMIIntegration;
 import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.integrations.rei.core.REIIntegration;
 import com.enoughfolders.integrations.util.PluginUtils;
@@ -98,7 +97,6 @@ public final class IntegrationFactory {
 
             // Register integration suppliers
             registerIntegrationSupplier(IntegrationType.JEI, JEIIntegration::new);
-            registerIntegrationSupplier(IntegrationType.EMI, EMIIntegration::new);
             registerIntegrationSupplier(IntegrationType.REI, REIIntegration::new);
 
             initialized = true;

@@ -1,17 +1,18 @@
+/*
+ * TEMPORARILY DISABLED FOR 1.21.4 - EMI hasn't updated yet
+ * This file will be re-enabled once EMI supports Minecraft 1.21.4
+ */
 package com.enoughfolders.di.providers;
 
+// All content commented out until EMI supports 1.21.4
+
+/*
 import com.enoughfolders.di.IntegrationProvider;
 import com.enoughfolders.integrations.emi.core.EMIIntegration;
 import net.neoforged.fml.ModList;
 
-/**
- * Provider for EMI integration.
- */
 public class EMIIntegrationProvider implements IntegrationProvider<EMIIntegration> {
     
-    /**
-     * Creates a new EMI integration provider.
-     */
     public EMIIntegrationProvider() {
         // Default constructor
     }
@@ -46,3 +47,4 @@ public class EMIIntegrationProvider implements IntegrationProvider<EMIIntegratio
         return false;
     }
 }
+*/

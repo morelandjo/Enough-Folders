@@ -4,7 +4,6 @@ import com.enoughfolders.EnoughFolders;
 import com.enoughfolders.data.StoredIngredient;
 import com.enoughfolders.integrations.jei.core.JEIIntegration;
 import com.enoughfolders.integrations.rei.core.REIIntegration;
-import com.enoughfolders.integrations.emi.core.EMIIntegration;
 import com.enoughfolders.util.DebugLogger;
 import com.enoughfolders.di.IntegrationProviderRegistry;
 import com.enoughfolders.di.DependencyProvider;
@@ -27,8 +26,7 @@ public class RecipeIntegrationHelper {
      */
     private static final String[] PRIORITY_ORDER = {
         "jei",   
-        "rei",
-        "emi"
+        "rei"
     };
     
     /**
@@ -38,8 +36,7 @@ public class RecipeIntegrationHelper {
      */
     public static boolean isRecipeViewingAvailable() {
         return IntegrationProviderRegistry.hasIntegrationWithShortId("rei") ||
-               IntegrationProviderRegistry.hasIntegrationWithShortId("jei") ||
-               IntegrationProviderRegistry.hasIntegrationWithShortId("emi");
+               IntegrationProviderRegistry.hasIntegrationWithShortId("jei");
     }
     
     /**
@@ -107,16 +104,6 @@ public class RecipeIntegrationHelper {
                         }
                         return false;
                     }).orElse(false);
-            } else if ("emi".equals(integrationId)) {
-                return DependencyProvider.get(EMIIntegration.class)
-                    .map(emi -> {
-                        Optional<?> emiIngredient = emi.getIngredientFromStored(ingredient);
-                        if (emiIngredient.isPresent()) {
-                            emi.showRecipes(emiIngredient.get());
-                            return true;
-                        }
-                        return false;
-                    }).orElse(false);
             }
         } catch (Exception e) {
             EnoughFolders.LOGGER.error("Error showing recipes with {}: {}", 
@@ -152,16 +139,6 @@ public class RecipeIntegrationHelper {
                         Optional<?> jeiIngredient = jei.getIngredientFromStored(ingredient);
                         if (jeiIngredient.isPresent()) {
                             jei.showUses(jeiIngredient.get());
-                            return true;
-                        }
-                        return false;
-                    }).orElse(false);
-            } else if ("emi".equals(integrationId)) {
-                return DependencyProvider.get(EMIIntegration.class)
-                    .map(emi -> {
-                        Optional<?> emiIngredient = emi.getIngredientFromStored(ingredient);
-                        if (emiIngredient.isPresent()) {
-                            emi.showUses(emiIngredient.get());
                             return true;
                         }
                         return false;

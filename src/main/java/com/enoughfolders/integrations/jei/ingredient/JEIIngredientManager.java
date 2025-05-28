@@ -294,10 +294,15 @@ public class JEIIngredientManager extends AbstractIngredientManager {
             ResourceLocation resourceLocation = ResourceLocation.parse(resourceLocationString);
             
             // Get the item from the registry
-            Item item = BuiltInRegistries.ITEM.get(resourceLocation);
-            
-            if (item == null || item == Items.AIR) {
+            var itemOptional = BuiltInRegistries.ITEM.get(resourceLocation);
+            if (!itemOptional.isPresent()) {
                 logDebug("Item not found in registry: {}", resourceLocationString);
+                return Optional.empty();
+            }
+            
+            Item item = itemOptional.get().value();
+            if (item == null || item == Items.AIR) {
+                logDebug("Item is null or air: {}", resourceLocationString);
                 return Optional.empty();
             }
             

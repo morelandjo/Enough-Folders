@@ -92,7 +92,7 @@ configurations {
     // Create separate configurations for different recipe viewers
     jeiRuntime
     reiRuntime  
-    emiRuntime
+    // emiRuntime  // Disabled for 1.21.4 until EMI updates
 }
 
 neoForge {
@@ -148,6 +148,8 @@ sourceSets {
         runtimeClasspath += sourceSets.main.runtimeClasspath
     }
     
+    // EMI source set - DISABLED for 1.21.4 until EMI updates
+    /*
     emiClient {
         java {
             srcDirs = ['src/main/java']
@@ -158,6 +160,7 @@ sourceSets {
         compileClasspath += sourceSets.main.compileClasspath
         runtimeClasspath += sourceSets.main.runtimeClasspath
     }
+    */
 }
 
 dependencies {
@@ -177,52 +180,53 @@ dependencies {
    
     
     // REI dependencies
-    compileOnly("me.shedaniel:RoughlyEnoughItems-api-neoforge:16.0.797") {
+    compileOnly("me.shedaniel:RoughlyEnoughItems-api-neoforge:18.0.804") {
         exclude group: 'net.minecraftforge'
     }
-    compileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-neoforge:16.0.797") {
+    compileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-neoforge:18.0.804") {
         exclude group: 'net.minecraftforge'
     }
-    compileOnly("dev.architectury:architectury-neoforge:13.0.8") {
+    compileOnly("dev.architectury:architectury-neoforge:15.0.3") {
         exclude group: 'net.minecraftforge'
     }
-    compileOnly("me.shedaniel.cloth:cloth-config-neoforge:15.0.140") {
+    compileOnly("me.shedaniel.cloth:cloth-config-neoforge:17.0.144") {
         exclude group: 'net.minecraftforge'
     }
     
     // REI runtime dependencies for specific REI runtime and development
-    reiRuntime("me.shedaniel:RoughlyEnoughItems-neoforge:16.0.797") {
+    reiRuntime("me.shedaniel:RoughlyEnoughItems-neoforge:18.0.804") {
         exclude group: 'net.minecraftforge'
     }
-    reiRuntime("dev.architectury:architectury-neoforge:13.0.8") {
+    reiRuntime("dev.architectury:architectury-neoforge:15.0.3") {
         exclude group: 'net.minecraftforge'
     }
-    reiRuntime("me.shedaniel.cloth:cloth-config-neoforge:15.0.140") {
+    reiRuntime("me.shedaniel.cloth:cloth-config-neoforge:17.0.144") {
         exclude group: 'net.minecraftforge'
     }
     
-    // EMI dependencies
-    compileOnly "dev.emi:emi-neoforge:1.1.22+1.21.1:api"
+    // EMI dependencies - DISABLED for 1.21.4 until EMI updates
+    // compileOnly "dev.emi:emi-neoforge:1.1.22+1.21.1:api"
     
-    // EMI runtime for specific EMI runtime and development
-    emiRuntime "dev.emi:emi-neoforge:1.1.22+1.21.1"
+    // EMI runtime for specific EMI runtime and development - DISABLED
+    // emiRuntime "dev.emi:emi-neoforge:1.1.22+1.21.1"
     
     // Source set specific dependencies
     jeiClientRuntimeOnly("mezz.jei:jei-${mc_version}-neoforge:${jei_version}") {
         exclude group: 'net.minecraftforge'
     }
     
-    reiClientRuntimeOnly("me.shedaniel:RoughlyEnoughItems-neoforge:16.0.797") {
+    reiClientRuntimeOnly("me.shedaniel:RoughlyEnoughItems-neoforge:18.0.804") {
         exclude group: 'net.minecraftforge'
     }
-    reiClientRuntimeOnly("dev.architectury:architectury-neoforge:13.0.8") {
+    reiClientRuntimeOnly("dev.architectury:architectury-neoforge:15.0.3") {
         exclude group: 'net.minecraftforge'
     }
-    reiClientRuntimeOnly("me.shedaniel.cloth:cloth-config-neoforge:15.0.140") {
+    reiClientRuntimeOnly("me.shedaniel.cloth:cloth-config-neoforge:17.0.144") {
         exclude group: 'net.minecraftforge'
     }
     
-    emiClientRuntimeOnly "dev.emi:emi-neoforge:1.1.22+1.21.1"
+    // EMI client runtime - DISABLED for 1.21.4 until EMI updates
+    // emiClientRuntimeOnly "dev.emi:emi-neoforge:1.1.22+1.21.1"
     
    
     
@@ -253,12 +257,14 @@ neoForge {
             gameDirectory = project.file('run/rei')
         }
         
-        // Client with only EMI
+        // Client with only EMI - DISABLED for 1.21.4 until EMI updates
+        /*
         clientEMI {
             client()
             systemProperty 'enoughfolders.debug', 'true'
             gameDirectory = project.file('run/emi')
         }
+        */
        
         server {
             server()
@@ -290,10 +296,13 @@ afterEvaluate {
         clientREITask.classpath = clientREITask.classpath + configurations.reiRuntime
     }
     
+    // EMI disabled for 1.21.4 until EMI updates
+    /*
     def clientEMITask = tasks.findByName('runClientEMI')
     if (clientEMITask) {
         clientEMITask.classpath = clientEMITask.classpath + configurations.emiRuntime
     }
+    */
 }
 
 // Debug task to check what dependencies are included in each run configuration
@@ -309,10 +318,13 @@ tasks.register('debugRunDependencies') {
             println "  ${file.name}"
         }
         
+        // EMI disabled for 1.21.4 until EMI updates
+        /*
         println "\n=== EMI Runtime Dependencies ==="
         configurations.emiRuntime.files.each { file ->
             println "  ${file.name}"
         }
+        */
     }
 }
 

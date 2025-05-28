@@ -190,9 +190,12 @@ public abstract class AbstractIngredientManager {
      */
     protected Optional<ItemStack> createItemStack(ResourceLocation resourceLocation, int count) {
         try {
-            Item item = BuiltInRegistries.ITEM.get(resourceLocation);
-            if (item != null && item != Items.AIR) {
-                return Optional.of(new ItemStack(item, Math.max(1, count)));
+            var itemOptional = BuiltInRegistries.ITEM.get(resourceLocation);
+            if (itemOptional.isPresent()) {
+                Item item = itemOptional.get().value();
+                if (item != Items.AIR) {
+                    return Optional.of(new ItemStack(item, Math.max(1, count)));
+                }
             }
         } catch (Exception e) {
             logDebug("Failed to create ItemStack for {}: {}", resourceLocation, e.getMessage());

@@ -95,7 +95,7 @@ public abstract class BaseAddToFolderHandler {
             var player = Minecraft.getInstance().player;
             if (player != null) {
                 EnoughFolders.LOGGER.debug("Exception occurred, displaying error message to player");
-                player.sendSystemMessage(Component.translatable("enoughfolders.error.runtime_interaction", integrationName));
+                player.displayClientMessage(Component.translatable("enoughfolders.error.runtime_interaction", integrationName), false);
             }
         }
     }

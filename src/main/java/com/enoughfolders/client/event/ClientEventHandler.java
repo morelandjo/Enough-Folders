@@ -14,7 +14,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.EventBusSubscriber.Bus;
@@ -42,6 +41,9 @@ public class ClientEventHandler {
     private static final Map<AbstractContainerScreen<?>, FolderScreen> FOLDER_SCREENS = new HashMap<>();
     private static final Map<Screen, FolderScreen> RECIPE_SCREENS = new HashMap<>();
     
+    // Test event counter to verify our event registration is working
+    private static int testTickCounter = 0;
+    
     /**
      * Initialize event handler.
      */
@@ -61,6 +63,16 @@ public class ClientEventHandler {
      */
     public static Optional<FolderScreen> getFolderScreen(AbstractContainerScreen<?> screen) {
         return Optional.ofNullable(FOLDER_SCREENS.get(screen));
+    }
+    
+    /**
+     * Gets the FolderScreen associated with the given recipe screen.
+     * 
+     * @param screen The recipe screen to get the folder screen for
+     * @return Optional containing the folder screen if it exists, or empty if none exists for the given screen
+     */
+    public static Optional<FolderScreen> getRecipeScreen(Screen screen) {
+        return Optional.ofNullable(RECIPE_SCREENS.get(screen));
     }
     
     /**
@@ -176,7 +188,7 @@ public class ClientEventHandler {
      * 
      * @return List of recipe viewing integrations
      */
-    private static List<RecipeViewingIntegration> getRecipeViewingIntegrations() {
+    public static List<RecipeViewingIntegration> getRecipeViewingIntegrations() {
         List<RecipeViewingIntegration> integrations = new ArrayList<>();
         
         // Add JEI integration if available
@@ -233,122 +245,6 @@ public class ClientEventHandler {
     }
     
     /**
-     * Event handler for mouse clicks on screens.
-     * 
-     * @param event The mouse button pressed pre event
-     */
-    @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onScreenMouseClicked(ScreenEvent.MouseButtonPressed.Pre event) {
-        if (event.getScreen() instanceof AbstractContainerScreen<?> containerScreen) {
-            FolderScreen folderScreen = FOLDER_SCREENS.get(containerScreen);
-            if (folderScreen != null) {
-                // Save the folder screen
-                for (RecipeViewingIntegration integration : getRecipeViewingIntegrations()) {
-                    if (integration.isAvailable()) {
-                        integration.saveLastFolderScreen(folderScreen);
-                        DebugLogger.debugValue(DebugLogger.Category.GUI_STATE, 
-                            "Saved folder screen in mouse click handler to preserve it during {} navigation", 
-                            integration.getDisplayName());
-                    }
-                }
-                
-                // Process the click if it's in the folder UI area
-                if (folderScreen.isVisible(event.getMouseX(), event.getMouseY())) {
-                    if (folderScreen.mouseClicked(event.getMouseX(), event.getMouseY(), event.getButton())) {
-                        event.setCanceled(true);
-                    }
-                }
-            }
-        }
-        else {
-            Screen currentScreen = event.getScreen();
-            
-            // Check if we have a folder screen for this recipe screen
-            FolderScreen folderScreen = RECIPE_SCREENS.get(currentScreen);
-            if (folderScreen != null) {
-                DebugLogger.debugValues(DebugLogger.Category.GUI_STATE, 
-                    "Processing mouse click on recipe screen with folder GUI at ({}, {})", 
-                    event.getMouseX(), event.getMouseY());
-                
-                // Save the folder screen to all integrations to preserve state
-                for (RecipeViewingIntegration integration : getRecipeViewingIntegrations()) {
-                    if (integration.isAvailable()) {
-                        integration.saveLastFolderScreen(folderScreen);
-                    }
-                }
-                
-                // Handle the click in the folder screen if it's visible
-                if (folderScreen.isVisible(event.getMouseX(), event.getMouseY())) {
-                    if (folderScreen.mouseClicked(event.getMouseX(), event.getMouseY(), event.getButton())) {
-                        DebugLogger.debug(DebugLogger.Category.GUI_STATE, 
-                            "Mouse click handled by folder screen on recipe screen, canceling event");
-                        event.setCanceled(true);
-                    }
-                }
-            }
-        }
-    }
-    
-   
-    
-    /**
-     * Event handler for keyboard input.
-     * 
-     * @param event The key pressed pre event
-     */
-    @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onScreenKeyPressed(ScreenEvent.KeyPressed.Pre event) {
-        Screen currentScreen = event.getScreen();
-        FolderScreen folderScreen = null;
-        
-        if (currentScreen instanceof AbstractContainerScreen<?> containerScreen) {
-            folderScreen = FOLDER_SCREENS.get(containerScreen);
-        } else {
-            // Check if this is a recipe screen with a folder GUI
-            folderScreen = RECIPE_SCREENS.get(currentScreen);
-        }
-        
-        if (folderScreen != null) {
-            // If input box is active (adding folder mode and input box focused),
-            // cancel all key events to prevent keybinds from triggering and inventory from closing
-            if (folderScreen.isAddingFolder() && folderScreen.isInputFocused()) {
-                // Cancel ALL key events while typing in the folder name input
-                // This prevents other mods' keybinds from triggering (like 't' for search)
-                event.setCanceled(true);
-            }
-            
-            // Process the key event in the folder screen
-            if (folderScreen.keyPressed(event.getKeyCode(), event.getScanCode(), event.getModifiers())) {
-                event.setCanceled(true);
-            }
-        }
-    }
-    
-    /**
-     * Event handler for character typed events.
-     * 
-     * @param event The character typed pre event
-     */
-    @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onScreenCharTyped(ScreenEvent.CharacterTyped.Pre event) {
-        Screen currentScreen = event.getScreen();
-        FolderScreen folderScreen = null;
-        
-        if (currentScreen instanceof AbstractContainerScreen<?> containerScreen) {
-            folderScreen = FOLDER_SCREENS.get(containerScreen);
-        } else {
-            // Check if this is a recipe screen with a folder GUI
-            folderScreen = RECIPE_SCREENS.get(currentScreen);
-        }
-        
-        if (folderScreen != null) {
-            if (folderScreen.charTyped(event.getCodePoint(), event.getModifiers())) {
-                event.setCanceled(true);
-            }
-        }
-    }
-    
-    /**
      * Event handler for screen rendering post-processing.
      * 
      * @param event The screen render post event
@@ -391,6 +287,13 @@ public class ClientEventHandler {
      */
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
+        // Test event to verify our event registration is working
+        testTickCounter++;
+        if (testTickCounter % 100 == 0) { // Log every 100 ticks (5 seconds at 20 TPS)
+            DebugLogger.debugValue(DebugLogger.Category.MOUSE, 
+                "CLIENT_TICK test event working: tick #{}", testTickCounter);
+        }
+        
         // Static state moved out to avoid potential issues
         Minecraft minecraft = Minecraft.getInstance();
         

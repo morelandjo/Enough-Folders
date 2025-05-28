@@ -49,17 +49,15 @@ public class REIIngredientManager extends AbstractIngredientManager {
                 String path = itemId.substring(itemId.indexOf(":") + 1);
                 ResourceLocation resourceLocation = ResourceLocation.fromNamespaceAndPath(namespace, path);
                     
-                var itemOptional = BuiltInRegistries.ITEM.get(resourceLocation);
-                if (itemOptional.isPresent()) {
-                    Item item = itemOptional.get().value();
-                    if (item != null) {
-                        ItemStack itemStack = new ItemStack(item);
-                        
-                        // Create an EntryStack from the ItemStack
-                        Object entryStack = createREIEntryStack(itemStack);
-                        if (entryStack != null) {
-                            return entryStack;
-                        }
+                Item item = BuiltInRegistries.ITEM.get(resourceLocation);
+                
+                if (item != null) {
+                    ItemStack itemStack = new ItemStack(item);
+                    
+                    // Create an EntryStack from the ItemStack
+                    Object entryStack = createREIEntryStack(itemStack);
+                    if (entryStack != null) {
+                        return entryStack;
                     }
                 }
             }

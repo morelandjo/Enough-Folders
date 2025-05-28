@@ -117,16 +117,19 @@ public class IngredientHelper {
             if ("item".equals(type)) {
                 String[] parts = value.split("#", 2);
                 ResourceLocation itemId = ResourceLocation.parse(parts[0]);
-                Item item = BuiltInRegistries.ITEM.get(itemId);
+                var itemOptional = BuiltInRegistries.ITEM.get(itemId);
                 
-                ItemStack itemStack = new ItemStack(item);
-                
-                // Handle component data if it was stored
-                if (parts.length > 1 && parts[1].startsWith("BlockEntityData:")) {
-                    EnoughFolders.LOGGER.debug("Found component data in stored ingredient: {}", parts[1]);
+                if (itemOptional.isPresent()) {
+                    Item item = itemOptional.get().value();
+                    ItemStack itemStack = new ItemStack(item);
+                    
+                    // Handle component data if it was stored
+                    if (parts.length > 1 && parts[1].startsWith("BlockEntityData:")) {
+                        EnoughFolders.LOGGER.debug("Found component data in stored ingredient: {}", parts[1]);
+                    }
+                    
+                    return (ITypedIngredient<T>) jeiRuntime.getIngredientManager().createTypedIngredient(itemStack).orElse(null);
                 }
-                
-                return (ITypedIngredient<T>) jeiRuntime.getIngredientManager().createTypedIngredient(itemStack).orElse(null);
             }
 
             return null;

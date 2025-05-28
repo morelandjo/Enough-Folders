@@ -40,9 +40,7 @@ public class REIRecipeScreenRenderer {
         "me.shedaniel.rei.impl.client.view.ViewsScreen",
         "me.shedaniel.rei.impl.client.gui.widget.EntryWidget",
         "me.shedaniel.rei.impl.client.gui.widget.favorites.FavoritesListWidget",
-        "me.shedaniel.rei.impl.client.gui.widget.EntryListWidget",
-        "me.shedaniel.rei.impl.client.gui.screen.DefaultDisplayViewingScreen",
-        "me.shedaniel.rei.impl.client.gui.screen.RecipeViewingScreen"
+        "me.shedaniel.rei.impl.client.gui.widget.EntryListWidget"
     };
     
     static {
@@ -179,7 +177,7 @@ public class REIRecipeScreenRenderer {
             DebugLogger.debugValue(Category.REI_INTEGRATION, "Error in REI mouse click handling: {}", e.getMessage());
         }
     }
-
+    
     /**
      * Checks if the given screen is a REI recipe screen.
      *
@@ -196,22 +194,20 @@ public class REIRecipeScreenRenderer {
         // Check against known REI screen class names
         for (String reiClass : REI_SCREEN_CLASSES) {
             if (className.equals(reiClass)) {
-                DebugLogger.debugValue(Category.REI_INTEGRATION, 
-                    "Matched exact REI screen: {}", className);
                 return true;
             }
         }
         
         // Also check if the class name contains certain REI-specific fragments
         boolean isREIScreen = className.contains("shedaniel.rei") && 
-               (className.contains("Screen") || 
-                className.contains("Widget") || 
-                className.contains("View") ||
-                className.contains("Display"));
+               (className.contains("RecipeScreen") || 
+                className.contains("ViewSearchBuilder") || 
+                className.contains("ViewsScreen") ||
+                className.contains("DefaultDisplayViewingScreen"));
                 
         if (isREIScreen) {
             DebugLogger.debugValue(Category.REI_INTEGRATION, 
-                "Detected REI screen via pattern matching: {}", className);
+                "Detected REI recipe screen: {}", className);
         }
         
         return isREIScreen;

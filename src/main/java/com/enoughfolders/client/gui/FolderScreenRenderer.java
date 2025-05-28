@@ -8,6 +8,7 @@ import com.enoughfolders.data.Folder;
 import com.enoughfolders.util.DebugLogger;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
@@ -213,8 +214,7 @@ public class FolderScreenRenderer {
         int textureU = 0;
         int textureV = isHovered ? 16 : 0;
         
-        graphics.blit(TEXTURE, x, y, textureU, textureV, width, height, 64, 64);
-        
+        graphics.blit(RenderType::guiTextured, TEXTURE, x, y, textureU, textureV, width, height, 64, 64);                
         DebugLogger.debugValues(DebugLogger.Category.RENDERING, 
             "Add button drawn at {},{} using texture at {},{} with size {}x{}", 
             x, y, textureU, textureV, width, height);
@@ -241,7 +241,7 @@ public class FolderScreenRenderer {
         int textureU = 16;
         int textureV = 0;
         
-        graphics.blit(TEXTURE, x, y, textureU, textureV, width, height, 64, 64);
+        graphics.blit(RenderType::guiTextured, TEXTURE, x, y, textureU, textureV, width, height, 64, 64);
         
         DebugLogger.debugValues(DebugLogger.Category.RENDERING,
             "Delete button drawn at {},{} using texture at {},{}", 
@@ -276,7 +276,7 @@ public class FolderScreenRenderer {
         }
         
         // Render the folder icon (16x16 icon in a 64x64 texture atlas)
-        graphics.blit(UIConstants.FOLDER_TEXTURE, iconX, iconY, textureU, textureV, 16, 16, 64, 64);
+        graphics.blit(RenderType::guiTextured, UIConstants.FOLDER_TEXTURE, iconX, iconY, textureU, textureV, 16, 16, 64, 64);
         
         // Draw folder name below the button
         String shortName = folder.getShortName();

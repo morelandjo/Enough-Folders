@@ -1,7 +1,7 @@
 package com.enoughfolders.di;
 
 import com.enoughfolders.EnoughFolders;
-import com.enoughfolders.di.providers.EMIIntegrationProvider;
+// import com.enoughfolders.di.providers.EMIIntegrationProvider; // DISABLED - EMI not available for 1.21.4
 import com.enoughfolders.di.providers.JEIIntegrationProvider;
 import com.enoughfolders.di.providers.REIIntegrationProvider;
 import com.enoughfolders.integrations.ModIntegration;
@@ -62,12 +62,13 @@ public class IntegrationProviderRegistry {
             EnoughFolders.LOGGER.info("Running in JEI-only mode, REI integration disabled");
         }
 
-        // Register EMI integration provider
-        if (!jeiOnly && !reiOnly) {
-            registerProvider(new EMIIntegrationProvider());
-        } else {
-            EnoughFolders.LOGGER.info("Running in exclusive mode, EMI integration disabled");
-        }
+        // Register EMI integration provider - DISABLED for 1.21.4
+        // EMI has not updated to 1.21.4 yet, so this is temporarily disabled
+        // if (!jeiOnly && !reiOnly) {
+        //     registerProvider(new EMIIntegrationProvider());
+        // } else {
+        //     EnoughFolders.LOGGER.info("Running in exclusive mode, EMI integration disabled");
+        // }
 
         // Initialize all registered integrations
         instances.forEach(integration -> {
@@ -197,14 +198,14 @@ public class IntegrationProviderRegistry {
     /**
      * Check if an integration with the given short ID exists.
      * 
-     * @param shortId The short ID of the integration ("rei", "jei", "emi", etc.)
+     * @param shortId The short ID of the integration ("rei", "jei", etc.) - "emi" disabled for 1.21.4
      * @return true if an integration with the given short ID exists, false otherwise
      */
     public static boolean hasIntegrationWithShortId(String shortId) {
         return switch (shortId.toLowerCase()) {
             case "rei" -> DependencyProvider.get(com.enoughfolders.integrations.rei.core.REIIntegration.class).isPresent();
             case "jei" -> DependencyProvider.get(com.enoughfolders.integrations.jei.core.JEIIntegration.class).isPresent();
-            case "emi" -> DependencyProvider.get(com.enoughfolders.integrations.emi.core.EMIIntegration.class).isPresent();
+            // case "emi" -> DependencyProvider.get(com.enoughfolders.integrations.emi.core.EMIIntegration.class).isPresent(); // DISABLED for 1.21.4
             default -> false;
         };
     }
