@@ -23,7 +23,7 @@ public abstract class BaseAddToFolderHandler {
     }
 
     /**
-     * Handles the key press to add an ingredient to the active folder.
+     * Handles the key press to add or remove an ingredient from the active folder.
      *
      * @param integrationName The name of the integration for logging purposes
      * @param retriever The ingredient retriever for the specific integration
@@ -46,6 +46,21 @@ public abstract class BaseAddToFolderHandler {
         }
 
         EnoughFolders.LOGGER.debug("Active folder found: {}", activeFolder.get().getName());
+
+        // First, check if mouse is hovering over a folder ingredient slot for removal
+        Optional<StoredIngredient> hoveredIngredient = getHoveredFolderIngredient();
+        if (hoveredIngredient.isPresent()) {
+            // Remove the ingredient from the folder
+            folderManager.removeIngredient(activeFolder.get(), hoveredIngredient.get());
+            DebugLogger.debugValues(DebugLogger.Category.INPUT, 
+                "Removed {} ingredient from folder '{}'", integrationName, activeFolder.get().getName());
+            
+            var player = Minecraft.getInstance().player;
+            if (player != null) {
+                EnoughFolders.LOGGER.debug("Ingredient removed from folder, displaying message to player");
+            }
+            return;
+        }
 
         try {
             // Try to get ingredient under cursor using integration-specific method
@@ -155,5 +170,146 @@ public abstract class BaseAddToFolderHandler {
             }
         }
         return true;
+    }
+
+    /**
+     * Gets the folder ingredient currently under the mouse cursor.
+     * 
+     * @return Optional containing the StoredIngredient if hovering over one, empty otherwise
+     */
+    private static Optional<StoredIngredient> getHoveredFolderIngredient() {
+        try {
+            // Get current mouse position scaled to GUI coordinates
+            Minecraft minecraft = Minecraft.getInstance();
+            double mouseX = minecraft.mouseHandler.xpos() * 
+                (double)minecraft.getWindow().getGuiScaledWidth() / 
+                (double)minecraft.getWindow().getScreenWidth();
+            double mouseY = minecraft.mouseHandler.ypos() * 
+                (double)minecraft.getWindow().getGuiScaledHeight() / 
+                (double)minecraft.getWindow().getScreenHeight();
+            
+            DebugLogger.debugValues(DebugLogger.Category.INPUT, 
+                "Mouse position: ({}, {})", (int)mouseX, (int)mouseY);
+            
+            // Get the current folder screen
+            Optional<com.enoughfolders.client.gui.FolderScreen> folderScreenOpt = getCurrentFolderScreen();
+            if (folderScreenOpt.isEmpty()) {
+                DebugLogger.debug(DebugLogger.Category.INPUT, "No folder screen available for hover detection");
+                return Optional.empty();
+            }
+            
+            com.enoughfolders.client.gui.FolderScreen folderScreen = folderScreenOpt.get();
+            DebugLogger.debug(DebugLogger.Category.INPUT, "Found folder screen for hover detection");
+            
+            // Check if mouse is within folder screen bounds
+            boolean isVisible = folderScreen.isVisible(mouseX, mouseY);
+            DebugLogger.debugValues(DebugLogger.Category.INPUT, 
+                "Folder screen visibility check: {}", isVisible);
+            
+            if (!isVisible) {
+                DebugLogger.debug(DebugLogger.Category.INPUT, "Mouse not over folder screen area");
+                return Optional.empty();
+            }
+            
+            // Check all ingredient slots for hover
+            var ingredientSlots = folderScreen.getIngredientSlots();
+            DebugLogger.debugValues(DebugLogger.Category.INPUT, 
+                "Checking {} ingredient slots for hover", ingredientSlots.size());
+            
+            for (var slot : ingredientSlots) {
+                boolean isHovered = slot.isHovered((int)mouseX, (int)mouseY);
+                if (isHovered) {
+                    DebugLogger.debugValues(DebugLogger.Category.INPUT, 
+                        "Found hovered ingredient slot at mouse position ({}, {})", (int)mouseX, (int)mouseY);
+                    StoredIngredient ingredient = slot.getIngredient();
+                    DebugLogger.debugValues(DebugLogger.Category.INPUT, 
+                        "Ingredient in hovered slot: {}", ingredient != null ? ingredient.toString() : "null");
+                    return Optional.of(ingredient);
+                }
+            }
+            
+            DebugLogger.debug(DebugLogger.Category.INPUT, "No ingredient slot hovered at current mouse position");
+            return Optional.empty();
+            
+        } catch (Exception e) {
+            EnoughFolders.LOGGER.error("Error detecting hovered folder ingredient", e);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Gets the current folder screen from either container screens or recipe screens.
+     * 
+     * @return Optional containing the FolderScreen if available, empty otherwise
+     */
+    private static Optional<com.enoughfolders.client.gui.FolderScreen> getCurrentFolderScreen() {
+        Minecraft minecraft = Minecraft.getInstance();
+        DebugLogger.debugValues(DebugLogger.Category.INPUT, 
+            "Current screen: {}", minecraft.screen != null ? minecraft.screen.getClass().getSimpleName() : "null");
+        
+        // First try container screens
+        if (minecraft.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> containerScreen) {
+            DebugLogger.debug(DebugLogger.Category.INPUT, "Checking container screen for folder screen");
+            var folderScreenOpt = com.enoughfolders.client.event.ClientEventHandler.getFolderScreen(containerScreen);
+            if (folderScreenOpt.isPresent()) {
+                DebugLogger.debug(DebugLogger.Category.INPUT, "Found folder screen from container screen");
+                return folderScreenOpt;
+            } else {
+                DebugLogger.debug(DebugLogger.Category.INPUT, "No folder screen found from container screen");
+            }
+        }
+        
+        // Then try recipe screens through integrations
+        try {
+            DebugLogger.debug(DebugLogger.Category.INPUT, "Checking recipe screen integrations for folder screen");
+            
+            // Check JEI integration
+            var jeiIntegrationOpt = com.enoughfolders.di.DependencyProvider.get(
+                com.enoughfolders.integrations.jei.core.JEIIntegration.class);
+            if (jeiIntegrationOpt.isPresent()) {
+                var jeiIntegration = jeiIntegrationOpt.get();
+                if (jeiIntegration.isAvailable()) {
+                    var folderScreenOpt = jeiIntegration.getLastFolderScreen();
+                    if (folderScreenOpt.isPresent()) {
+                        DebugLogger.debug(DebugLogger.Category.INPUT, "Found folder screen from JEI integration");
+                        return folderScreenOpt;
+                    }
+                }
+            }
+            
+            // Check REI integration
+            var reiIntegrationOpt = com.enoughfolders.di.DependencyProvider.get(
+                com.enoughfolders.integrations.rei.core.REIIntegration.class);
+            if (reiIntegrationOpt.isPresent()) {
+                var reiIntegration = reiIntegrationOpt.get();
+                if (reiIntegration.isAvailable()) {
+                    var folderScreenOpt = reiIntegration.getLastFolderScreen();
+                    if (folderScreenOpt.isPresent()) {
+                        DebugLogger.debug(DebugLogger.Category.INPUT, "Found folder screen from REI integration");
+                        return folderScreenOpt;
+                    }
+                }
+            }
+            
+            // Check EMI integration
+            var emiIntegrationOpt = com.enoughfolders.di.DependencyProvider.get(
+                com.enoughfolders.integrations.emi.core.EMIIntegration.class);
+            if (emiIntegrationOpt.isPresent()) {
+                var emiIntegration = emiIntegrationOpt.get();
+                if (emiIntegration.isAvailable()) {
+                    var folderScreenOpt = emiIntegration.getLastFolderScreen();
+                    if (folderScreenOpt.isPresent()) {
+                        DebugLogger.debug(DebugLogger.Category.INPUT, "Found folder screen from EMI integration");
+                        return folderScreenOpt;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            DebugLogger.debug(DebugLogger.Category.INTEGRATION, 
+                "Error accessing integration folder screen: " + e.getMessage());
+        }
+        
+        DebugLogger.debug(DebugLogger.Category.INPUT, "No folder screen found from any source");
+        return Optional.empty();
     }
 }
