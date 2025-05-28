@@ -180,27 +180,27 @@ dependencies {
    
     
     // REI dependencies
-    compileOnly("me.shedaniel:RoughlyEnoughItems-api-neoforge:18.0.804") {
+    compileOnly("me.shedaniel:RoughlyEnoughItems-api-neoforge:${rei_version}") {
         exclude group: 'net.minecraftforge'
     }
-    compileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-neoforge:18.0.804") {
+    compileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-neoforge:${rei_version}") {
         exclude group: 'net.minecraftforge'
     }
-    compileOnly("dev.architectury:architectury-neoforge:15.0.3") {
+    compileOnly("dev.architectury:architectury-neoforge:${architectury_version}") {
         exclude group: 'net.minecraftforge'
     }
-    compileOnly("me.shedaniel.cloth:cloth-config-neoforge:17.0.144") {
+    compileOnly("me.shedaniel.cloth:cloth-config-neoforge:${cloth_config_version}") {
         exclude group: 'net.minecraftforge'
     }
     
     // REI runtime dependencies for specific REI runtime and development
-    reiRuntime("me.shedaniel:RoughlyEnoughItems-neoforge:18.0.804") {
+    reiRuntime("me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}") {
         exclude group: 'net.minecraftforge'
     }
-    reiRuntime("dev.architectury:architectury-neoforge:15.0.3") {
+    reiRuntime("dev.architectury:architectury-neoforge:${architectury_version}") {
         exclude group: 'net.minecraftforge'
     }
-    reiRuntime("me.shedaniel.cloth:cloth-config-neoforge:17.0.144") {
+    reiRuntime("me.shedaniel.cloth:cloth-config-neoforge:${cloth_config_version}") {
         exclude group: 'net.minecraftforge'
     }
     
@@ -215,13 +215,13 @@ dependencies {
         exclude group: 'net.minecraftforge'
     }
     
-    reiClientRuntimeOnly("me.shedaniel:RoughlyEnoughItems-neoforge:18.0.804") {
+    reiClientRuntimeOnly("me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}") {
         exclude group: 'net.minecraftforge'
     }
-    reiClientRuntimeOnly("dev.architectury:architectury-neoforge:15.0.3") {
+    reiClientRuntimeOnly("dev.architectury:architectury-neoforge:${architectury_version}") {
         exclude group: 'net.minecraftforge'
     }
-    reiClientRuntimeOnly("me.shedaniel.cloth:cloth-config-neoforge:17.0.144") {
+    reiClientRuntimeOnly("me.shedaniel.cloth:cloth-config-neoforge:${cloth_config_version}") {
         exclude group: 'net.minecraftforge'
     }
     
