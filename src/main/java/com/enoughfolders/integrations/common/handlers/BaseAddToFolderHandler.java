@@ -86,7 +86,7 @@ public abstract class BaseAddToFolderHandler {
                     }
                 } else {
                     if (player != null) {
-                        EnoughFolders.LOGGER.debug("Integration overlay not visible, cannot retrieve ingredient");
+                        EnoughFolders.LOGGER.debug("Integration overlay is visible but no ingredient found under cursor");
                     }
                 }
             }

@@ -101,7 +101,9 @@ public class RecipeIntegrationHandler {
      */
     private static void tryReiAddToFolder() {
         try {
-            com.enoughfolders.integrations.rei.handlers.REIAddToFolderHandler.handleAddToFolderKeyPress();
+            Class<?> reiHandlerClass = Class.forName("com.enoughfolders.integrations.rei.handlers.REIAddToFolderHandler");
+            java.lang.reflect.Method handleMethod = reiHandlerClass.getMethod("handleAddToFolderKeyPress");
+            handleMethod.invoke(null);
             DebugLogger.debug(DebugLogger.Category.INPUT, "REI add to folder handler executed");
         } catch (Throwable t) {
             // If it fails for any reason, log it but don't crash

@@ -96,7 +96,14 @@ public class RecipeScreenHandler extends BaseRecipeGuiHandler<Screen> implements
     
     @Override
     public Optional<IClickableIngredient<?>> getClickableIngredientUnderMouse(double mouseX, double mouseY) {
-        //no clickable ingredients
+        // This method is for providing additional clickable ingredients beyond JEI's normal detection.
+        // Since we don't have any custom ingredients in recipe screens, we return empty to let
+        // JEI handle its normal ingredient detection without interference.
+        
+        DebugLogger.debugValues(DebugLogger.Category.JEI_INTEGRATION, 
+            "RecipeScreenHandler.getClickableIngredientUnderMouse called at ({}, {}) - returning empty to allow normal JEI detection", 
+            mouseX, mouseY);
+        
         return Optional.empty();
     }
 }
